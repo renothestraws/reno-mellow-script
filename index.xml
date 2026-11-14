@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<index version="1" name="ReNo Mellow Scripts">
+  <category name="StemSplit">
+    <reapack name="ReNo StemSplit - Stems.lua" type="script" desc="ReNo StemSplit (AI stem separation)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 S\u233?paration de stems par IA en local, inspir\u233?e du Stem Splitter de Logic Pro. Stems : voix, batterie, basse, guitare, piano, autres (6 ou 4 stems). Drums : batterie d\u233?coup\u233?e en kick, snare, toms, cymbales (4, 5 ou 6 pi\u232?ces). N\u233?cessite Python 3.10 \u224? 3.13 ; le moteur (environ 1,5 Go, 4,5 Go avec GPU NVIDIA) s'installe une seule fois via le bouton Install engine, puis tout fonctionne hors ligne.}]]></description>
+        <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
+      </metadata>
+      <version name="1.5" author="ReNo Mellow" time="2026-11-14T19:29:01Z">
+        <changelog><![CDATA[Première version : actions Stems, Drums et Install, détection et test automatiques du GPU NVIDIA]]></changelog>
+        <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/ReNo%20StemSplit%20-%20Stems.lua</source>
+        <source main="main" file="ReNo StemSplit - Drums.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/ReNo%20StemSplit%20-%20Drums.lua</source>
+        <source main="main" file="ReNo StemSplit - Install.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/ReNo%20StemSplit%20-%20Install.lua</source>
+        <source file="ReNo_StemSplit_core.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/ReNo_StemSplit_core.lua</source>
+        <source file="stemsplit_engine.py">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/stemsplit_engine.py</source>
+        <source file="stemsplit_install.py">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/stemsplit_install.py</source>
+      </version>
+    </reapack>
+  </category>
+  <metadata>
+    <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 ReNo Mellow Scripts : scripts Lua gratuits pour REAPER (s\u233?paration de stems par IA, outils de sc\u232?ne...).\par
+Les plug-ins JSFX ReNo Mellow sont dans le d\u233?p\u244?t reno-mellow.}]]></description>
+    <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
+  </metadata>
+</index>
