@@ -9,7 +9,10 @@ Exemple : python3 make_index.py renothestraws reno-mellow-script main
 Chaque dossier à la racine (StemSplit/, REABACK/, ...) = une catégorie ReaPack.
 Chaque .lua dont l'en-tête contient "-- @description" devient un paquet :
   -- @description, -- @version, -- @author, -- @about, -- @changelog (une ligne chacun)
-  -- @provides suivi de lignes "--   fichier" ("--   [main] fichier" = action supplémentaire)
+  -- @provides suivi de lignes "--   chemin" (chemins relatifs au dossier de la catégorie) :
+       "--   [main] Scripts/x.lua"                     = action supplémentaire
+       "--   [webinterface] www/page.html > page.html" = fichier d'un autre type (data, webinterface,
+                                                        projecttpl...) ; après ">" : chemin d'installation
 Les fichiers fournis par un paquet portent "@noindex".
 Aucune installation n'est nécessaire (Python 3 seul).
 """
@@ -51,10 +54,21 @@ def lua_header(path):
                     tags[key] = m.group(2).strip()
                 continue
             if in_prov:
+                if not re.match(r"--\s{2,}\S", line):
+                    break                      # fin du bloc @provides = fin de l'en-tête
                 item = line[2:].strip()
                 if item:
-                    main = item.startswith("[main]")
-                    provides.append((item[6:].strip() if main else item, main))
+                    tags_ = []
+                    m2 = re.match(r"\[([^\]]*)\]\s*(.*)", item)
+                    if m2:
+                        tags_ = [t.strip() for t in m2.group(1).split(",") if t.strip()]
+                        item = m2.group(2)
+                    if " > " in item:
+                        path, target = [z.strip() for z in item.split(" > ", 1)]
+                    else:
+                        path, target = item, os.path.basename(item)
+                    kind = next((t for t in tags_ if t != "main"), None)
+                    provides.append((path, target, "main" in tags_, kind))
     if "noindex" in tags or "description" not in tags:
         return None
     for k in ("version", "author"):
@@ -81,7 +95,7 @@ def main():
                   if os.path.isdir(os.path.join(root, d)) and d not in IGNORE and not d.startswith("."))
     for cat in cats:
         pk = []
-        for p in sorted(glob.glob(os.path.join(root, cat, "*.lua"))):
+        for p in sorted(glob.glob(os.path.join(root, cat, "**", "*.lua"), recursive=True)):
             h = lua_header(p)
             if h:
                 pk.append((p, h))
@@ -90,6 +104,7 @@ def main():
         x.append('  <category name=%s>' % quoteattr(cat))
         for p, (t, provides) in pk:
             fn = os.path.basename(p)
+            rel = os.path.relpath(p, os.path.join(root, cat)).replace(os.sep, "/")
             url = lambda name: escape(raw + quote(cat + "/" + name))
             x.append('    <reapack name=%s type="script" desc=%s>' % (quoteattr(fn), quoteattr(t["description"])))
             if "about" in t:
@@ -100,11 +115,12 @@ def main():
             x.append('      <version name=%s author=%s time=%s>' % (quoteattr(t["version"]), quoteattr(t["author"]), quoteattr(now)))
             if "changelog" in t:
                 x.append('        <changelog><![CDATA[%s]]></changelog>' % t["changelog"])
-            x.append('        <source main="main">%s</source>' % url(fn))
-            for name, is_main in provides:
-                if not os.path.isfile(os.path.join(root, cat, name)):
-                    sys.exit("%s : fichier fourni introuvable : %s" % (fn, name))
-                x.append('        <source%s file=%s>%s</source>' % (' main="main"' if is_main else '', quoteattr(name), url(name)))
+            x.append('        <source main="main">%s</source>' % url(rel))
+            for path, target, is_main, kind in provides:
+                if not os.path.isfile(os.path.join(root, cat, path)):
+                    sys.exit("%s : fichier fourni introuvable : %s" % (fn, path))
+                attrs = (' main="main"' if is_main else '') + (' type=%s' % quoteattr(kind) if kind else '')
+                x.append('        <source%s file=%s>%s</source>' % (attrs, quoteattr(target), url(path)))
             x.append('      </version>')
             x.append('    </reapack>')
             n += 1

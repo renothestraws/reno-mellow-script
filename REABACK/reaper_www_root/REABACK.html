@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0f1115">
+<title>REABACK</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #181b22;
+    --panel2: #212633;
+    --line: #2b3040;
+    --text: #e9ecf3;
+    --dim: #8d95a8;
+    --accent: #4c8dff;
+    --on: #2e9e4f;
+    --on-hi: #3dbf64;
+    --yellow: #ffe81a;
+    --green: #3ddc5a;
+    --red: #ff4d4d;
+    --orange: #ffb347;
+    --blue: #8ec5ff;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); }
+  body {
+    font: 16px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    touch-action: manipulation;
+    -webkit-user-select: none; user-select: none;
+    display: flex; flex-direction: column;
+    height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  button {
+    font: inherit; color: var(--text); background: var(--panel2);
+    border: 1px solid var(--line); border-radius: 12px;
+    min-height: 44px; padding: 0 10px; cursor: pointer;
+  }
+  button:active { background: #2b3350; }
+  button:disabled { opacity: .35; pointer-events: none; }
+  button.lit { background: var(--on); border-color: var(--on-hi); color: #fff; }
+  button.lit:active { background: var(--on-hi); }
+
+  /* ---------- header + transport ---------- */
+  #top { flex: none; padding: 10px 14px 8px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .bar { display: flex; align-items: baseline; gap: 10px; }
+  .brand { font-weight: 800; letter-spacing: .08em; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--red); margin-left: 6px; }
+  .dot.ok { background: var(--green); }
+  #pos { margin-left: auto; font: 700 1.5rem/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  #pstate { color: var(--dim); font-size: .85rem; min-width: 4.5em; text-align: right; }
+  .transport { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.5fr) minmax(0,.9fr) minmax(0,1fr); gap: 8px; margin-top: 10px; }
+  .transport button { min-height: 62px; font-weight: 700; font-size: .88rem; padding: 0 4px; }
+  #bPlay { font-size: 1rem; }
+  .toggles { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+  .toggles button { min-height: 44px; font-size: .8rem; padding: 0 4px; }
+
+  #banner { flex: none; background: #4a1d1d; color: #ffd4d4; padding: 8px 14px; font-size: .9rem; }
+  #banner[hidden], #tools[hidden], #toast[hidden] { display: none; }
+
+  /* ---------- edit tools ---------- */
+  #tools { flex: none; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 14px; max-height: 38vh; overflow: auto; }
+  #tools .line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+  #tools .line:last-child { margin-bottom: 0; }
+  #tools .warn { color: var(--orange); font-size: .9rem; flex: 1 1 100%; }
+  #tools .warn.bad { color: var(--red); }
+  #tools select { flex: 1 1 100%; min-height: 44px; border-radius: 12px; background: var(--panel2); color: var(--text); border: 1px solid var(--line); padding: 0 8px; font: inherit; }
+  #tools label { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--dim); }
+  #tools input[type=checkbox] { width: 22px; height: 22px; }
+
+  /* ---------- list ---------- */
+  #list { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 8px 10px; }
+  .empty { color: var(--dim); text-align: center; padding: 40px 10px; }
+  .row {
+    display: grid; grid-template-columns: 54px minmax(0,1fr) auto; align-items: center; gap: 4px 10px;
+    padding: 10px 10px; margin: 0 0 6px calc(var(--d) * 18px);
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  }
+  .row.nested { background: #162033; border-color: #25344f; }
+  .row:active { background: var(--panel2); }
+  .rid { text-align: center; font: 700 1.05rem/1.1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .rid small { display: block; color: var(--orange); font-size: .72rem; font-weight: 600; }
+  .rname { font-size: 1.05rem; font-weight: 600; overflow-wrap: anywhere; }
+  .rname .badge { color: var(--dim); font-weight: 400; font-size: .75rem; margin-left: 6px; }
+  .mother .rname { color: var(--blue); }
+  .rcom { color: var(--dim); font-size: .85rem; margin-top: 2px; overflow-wrap: anywhere; }
+  .rdur { font: 600 .95rem ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--dim); }
+  .redit { grid-column: 1 / -1; display: none; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  body.edit .redit { display: flex; }
+  .redit button { flex: 1 1 72px; min-height: 44px; font-size: .88rem; padding: 0 4px; }
+
+  .row.insel .rname { color: var(--green); font-style: italic; }
+  .row.playing { border-color: #7a6f10; box-shadow: 0 0 0 1px #7a6f10 inset; }
+  .row.playing .rname { color: var(--yellow); font-size: 1.45rem; font-style: normal; }
+  .row.playing.insel .rname { font-style: italic; }
+  .row.off .rname { color: var(--red); text-decoration: line-through; font-weight: 400; }
+  .row.off .rid { color: var(--red); font-size: .85rem; }
+  .row.off .rdur { opacity: .5; }
+
+  /* ---------- totals + toast ---------- */
+  #totals { flex: none; background: var(--panel); border-top: 1px solid var(--line); padding: 8px 14px calc(8px + env(safe-area-inset-bottom)); }
+  #totals div { display: flex; justify-content: space-between; gap: 10px; }
+  #totals .t1 { color: var(--green); font-weight: 700; }
+  #totals .t2 { color: var(--dim); font-size: .85rem; }
+  #totals span:last-child { font: 700 1rem ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  #toast {
+    position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); max-width: 90vw;
+    background: #000c; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: .9rem; pointer-events: none;
+    backdrop-filter: blur(6px);
+  }
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div class="bar">
+    <span class="brand">REABACK<span id="dot" class="dot"></span></span>
+    <span id="pos">0:00.000</span>
+    <span id="pstate">Stopped</span>
+  </div>
+  <div class="transport">
+    <button id="bPrev">Previous</button>
+    <button id="bPlay">Play/Stop</button>
+    <button id="bStop">Stop</button>
+    <button id="bNext">Next</button>
+  </div>
+  <div class="toggles">
+    <button id="bMetro">Metronome</button>
+    <button id="bCount">Count-in</button>
+    <button id="bAutoStop">Auto stop</button>
+    <button id="bSmooth">Smooth seek</button>
+    <button id="bFollow" class="lit">Follow</button>
+    <button id="bEdit">Edit</button>
+    <button id="bLive" style="grid-column: 1 / -1">Live loop</button>
+  </div>
+</header>
+
+<div id="banner" hidden></div>
+
+<section id="tools" hidden>
+  <div class="line" id="pendingLine">
+    <div class="warn" id="pendingMsg"></div>
+    <button id="bApply">Apply IDs</button>
+    <button id="bReset">Reset order</button>
+    <button id="bExport">Export .txt</button>
+  </div>
+  <div class="line">
+    <select id="setSel"></select>
+    <button id="bLoad" style="flex:1">Load</button>
+    <button id="bSave" style="flex:1">Save set</button>
+    <button id="bDelSet" style="flex:1">Delete</button>
+  </div>
+  <div class="line">
+    <label><input type="checkbox" id="applyOnLoad"> Apply IDs immediately when loading a set</label>
+  </div>
+</section>
+
+<main id="list"><div class="empty">Connecting to REAPER...</div></main>
+
+<footer id="totals"></footer>
+<div id="toast" hidden></div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ */
+/* Configuration                                                       */
+/* ------------------------------------------------------------------ */
+const SEC = "REABACK_REMOTE";                  // ExtState section shared with REABACK.lua
+const CFG = {
+  poll: 150,                                   // ms between two polls of REAPER
+  // Used only when REABACK.lua is not running (Play/Stop falls back to plain REAPER actions)
+  playId: 1007,                                // Transport: Play
+  repeatId: 1068,                              // Transport: Toggle repeat
+  stopPlayingId: 40328,
+  metroId: 40364,                              // overridden by the ids found by REABACK.lua
+  countId: "_SWS_AWCOUNTPLAYTOG",               // SWS/AW: Toggle count-in before playback (needs SWS)
+  autoStopId: 41834,                           // Transport: Toggle stop playback at end of loop if repeat is disabled
+  smoothId: 40390,                             // Options: Toggle smooth seek
+};
+const EPS = 1e-6;
+
+/* ------------------------------------------------------------------ */
+/* State                                                               */
+/* ------------------------------------------------------------------ */
+const S = {
+  conn: false, online: false,
+  hb: "", hbAt: 0, ver: "", ack: "",
+  tr: { state: 0, pos: 0, rep: false },
+  metro: false, count: false, autoStop: false, smooth: false,
+  snap: null,
+  edit: false, follow: true,
+  lastStatus: "", lastPlayKey: "",
+};
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+function fmtTime(sec) {
+  sec = Math.max(0, sec || 0);
+  let ms = Math.round(sec * 1000);
+  const h = Math.floor(ms / 3600000); ms -= h * 3600000;
+  const m = Math.floor(ms / 60000);   ms -= m * 60000;
+  const s = Math.floor(ms / 1000);    ms -= s * 1000;
+  const p2 = (n) => String(n).padStart(2, "0");
+  return (h > 0 ? `${h}:${p2(m)}:${p2(s)}` : `${m}:${p2(s)}`) + "." + String(ms).padStart(3, "0");
+}
+function esc(s) {                               // HTML escape
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { t.hidden = true; }, 3200);
+}
+
+/* ------------------------------------------------------------------ */
+/* Talking to REAPER's web interface                                   */
+/* ------------------------------------------------------------------ */
+async function api(cmds) {                      // cmds: array of commands, sent as /_/cmd1;cmd2
+  const res = await fetch("/_/" + cmds.join(";"), { cache: "no-store" });
+  return res.text();
+}
+function direct(cmd) { return api([String(cmd)]).catch(() => {}); }   // run a REAPER action
+
+// Commands for REABACK.lua go through ExtState "cmd" (one at a time, acknowledged through "ack")
+const queue = [];
+let sending = false, seqN = 0;
+const encPart = (v) => encodeURIComponent(String(v ?? ""));
+function send(op, a1 = "", a2 = "") {
+  if (!S.online) { toast("REABACK script is not running"); return; }
+  queue.push([op, a1, a2]);
+  pump();
+}
+async function pump() {
+  if (sending) return;
+  sending = true;
+  try {
+    while (queue.length) {
+      const [op, a1, a2] = queue.shift();
+      const seq = Date.now().toString(36) + (++seqN);
+      const value = [seq, op, a1, a2].map(encPart).join("|");
+      await api([`SET/EXTSTATE/${SEC}/cmd/${encodeURIComponent(value)}`]);
+      const t0 = Date.now();
+      while (S.ack !== seq && Date.now() - t0 < 3000) await sleep(40);
+    }
+  } catch (e) { /* connection problem: shown by the poller */ }
+  sending = false;
+}
+
+/* ------------------------------------------------------------------ */
+/* Polling                                                             */
+/* ------------------------------------------------------------------ */
+function parseReply(text) {
+  const out = { ext: {}, cmds: [], tr: null };
+  for (const line of text.split(/\r?\n/)) {
+    if (!line) continue;
+    const f = line.split("\t");
+    if (f[0] === "TRANSPORT") out.tr = { state: parseInt(f[1], 10) || 0, pos: parseFloat(f[2]) || 0, rep: (parseInt(f[3], 10) || 0) > 0 };
+    else if (f[0] === "EXTSTATE") out.ext[f[2]] = f.slice(3).join("\t");
+    else if (f[0] === "CMDSTATE") out.cmds.push(parseInt(f[2], 10) || 0);   // same order as requested
+  }
+  return out;
+}
+
+async function loadSnapshot() {
+  const text = await api([`GET/EXTSTATE/${SEC}/snap`]);
+  const v = parseReply(text).ext.snap;
+  if (!v) return;
+  try { S.snap = JSON.parse(v); } catch (e) { return; }
+  if (S.snap.cmdMetro) CFG.metroId = S.snap.cmdMetro;
+  if (S.snap.cmdCount) CFG.countId = S.snap.cmdCount;
+  renderList();
+  renderTools();
+  renderTotals();
+  const st = S.snap.status || "";
+  if (st && st !== S.lastStatus) toast(st);
+  S.lastStatus = st;
+}
+
+async function poll() {
+  try {
+    const text = await api([
+      "TRANSPORT",
+      `GET/EXTSTATE/${SEC}/ver`, `GET/EXTSTATE/${SEC}/hb`, `GET/EXTSTATE/${SEC}/ack`,
+      `GET/${CFG.metroId}`, `GET/${CFG.countId}`, `GET/${CFG.autoStopId}`, `GET/${CFG.smoothId}`,
+    ]);
+    const r = parseReply(text);
+    S.conn = true;
+    if (r.tr) S.tr = r.tr;
+    // toggle states come back in the order they were requested: metronome, count-in, auto stop, smooth seek
+    S.metro = (r.cmds[0] || 0) > 0;
+    S.count = (r.cmds[1] || 0) > 0;
+    S.autoStop = (r.cmds[2] || 0) > 0;
+    S.smooth = (r.cmds[3] || 0) > 0;
+    S.ack = r.ext.ack || "";
+
+    const hb = r.ext.hb || "";
+    if (hb !== S.hb) { S.hb = hb; S.hbAt = Date.now(); }
+    S.online = hb !== "" && Date.now() - S.hbAt < 3500;
+
+    const ver = r.ext.ver || "";
+    if (S.online && ver && ver !== S.ver) { S.ver = ver; await loadSnapshot(); }
+  } catch (e) {
+    S.conn = false; S.online = false;
+  }
+  renderLive();
+  setTimeout(poll, CFG.poll);
+}
+
+/* ------------------------------------------------------------------ */
+/* Rendering                                                           */
+/* ------------------------------------------------------------------ */
+function rows() { return (S.snap && S.snap.rows) || []; }
+
+function renderList() {
+  const list = $("list");
+  const R = rows();
+  if (!R.length) {
+    list.innerHTML = `<div class="empty">${S.snap ? "No regions in this project." : "Waiting for REABACK..."}</div>`;
+    return;
+  }
+  const keepScroll = list.scrollTop;
+  list.innerHTML = R.map((r, i) => {
+    const off = !!r.off;
+    const idHtml = off ? "OFF" : `${r.id}${r.nid !== r.id ? `<small>&rarr; ${r.nid}</small>` : ""}`;
+    const badge = r.ch > 0 ? `<span class="badge">${r.ch} nested</span>` : "";
+    const name = r.nm ? esc(r.nm) : "(unnamed)";
+    const com = r.cm ? `<div class="rcom">${esc(r.cm)}</div>` : "";
+    const moves = r.d === 0
+      ? `<button data-act="up">&#9650;</button><button data-act="down">&#9660;</button>` : "";
+    return `<div class="row${off ? " off" : ""}${r.d > 0 ? " nested" : ""}${r.ch > 0 ? " mother" : ""}" data-i="${i}" style="--d:${r.d}">
+      <div class="rid">${idHtml}</div>
+      <div><div class="rname">${name}${badge}</div>${com}</div>
+      <div class="rdur">${fmtTime(r.e - r.s)}</div>
+      <div class="redit">${moves}<button data-act="rename">Rename</button><button data-act="toggle">${off ? "Enable" : "Disable"}</button><button data-act="comment">Comment</button></div>
+    </div>`;
+  }).join("");
+  list.scrollTop = keepScroll;
+  S.lastPlayKey = "";
+  renderLive();
+}
+
+function renderTools() {
+  const sn = S.snap;
+  if (!sn) return;
+  const msg = $("pendingMsg");
+  if (sn.overflow) {
+    msg.className = "warn bad";
+    msg.textContent = "Some IDs would reach 10000 or more (a parent numbered 100+ with nested regions, or several nesting levels). Apply IDs will refuse to run.";
+  } else if (sn.pending) {
+    msg.className = "warn";
+    msg.textContent = "Order or numbering changed: press Apply IDs to write it to the project.";
+  } else {
+    msg.className = "warn"; msg.textContent = "";
+  }
+  $("bApply").disabled = !S.online;
+  const sel = $("setSel");
+  const cur = sel.value || sn.sel;
+  sel.innerHTML = `<option value="">- choose a set -</option>` +
+    sn.sets.map((s) => `<option value="${esc(s.id)}">${esc(s.nm)} (${s.n})</option>`).join("");
+  sel.value = sn.sets.some((s) => s.id === cur) ? cur : "";
+  $("applyOnLoad").checked = !!sn.applyOnLoad;
+}
+
+function renderTotals() {
+  const sn = S.snap;
+  const el = $("totals");
+  if (!sn) { el.innerHTML = ""; return; }
+  let total = 0, totalAll = 0, count = 0;
+  for (const r of sn.rows) {
+    if (r.off) continue;
+    const d = r.e - r.s;
+    totalAll += d; count++;
+    if (r.d === 0) total += d;
+  }
+  let label = sn.nested > 0 ? `Total (${sn.tops} top-level regions` : `Total (${sn.tops} regions`;
+  if (sn.disabled > 0) label += `, ${sn.disabled} disabled`;
+  label += ")";
+  el.innerHTML = `<div class="t1"><span>${label}</span><span>${fmtTime(total)}</span></div>` +
+    (sn.nested > 0 ? `<div class="t2"><span>Raw sum (${count} regions, nested included)</span><span>${fmtTime(totalAll)}</span></div>` : "");
+}
+
+// Everything that changes with the transport: position, playing / time-selected rows, button states
+function renderLive() {
+  $("dot").className = "dot" + (S.conn ? " ok" : "");
+  const banner = $("banner");
+  if (!S.conn) { banner.hidden = false; banner.textContent = "Cannot reach REAPER's web interface."; }
+  else if (!S.online) { banner.hidden = false; banner.textContent = "REABACK script is not running in REAPER: region features are unavailable."; }
+  else banner.hidden = true;
+
+  const st = S.tr.state;
+  const active = st !== 0;
+  $("pos").textContent = fmtTime(S.tr.pos);
+  $("pstate").textContent = ({ 0: "Stopped", 1: "Playing", 2: "Paused", 5: "Recording", 6: "Rec paused" }[st] || "") + (S.tr.rep ? " / loop" : "");
+
+  const sn = S.snap;
+  const playLit = st === 1 || st === 5;
+  $("bPlay").classList.toggle("lit", playLit);
+  $("bMetro").classList.toggle("lit", S.metro);
+  $("bCount").classList.toggle("lit", S.count);
+  $("bAutoStop").classList.toggle("lit", S.autoStop);
+  $("bSmooth").classList.toggle("lit", S.smooth);
+  $("bLive").classList.toggle("lit", !!S.tr.rep);
+  $("bLive").disabled = !S.online;
+  $("bPrev").disabled = $("bNext").disabled = !S.online;
+  $("bStop").disabled = !S.online && !(st === 1 || st === 5);
+
+  if (!sn) return;
+  const ts0 = sn.ts[0], ts1 = sn.ts[1];
+  const hasSel = ts1 - ts0 > EPS;
+  const els = $("list").children;
+  const R = sn.rows;
+  let firstPlaying = null;
+  for (let i = 0; i < R.length && i < els.length; i++) {
+    const r = R[i], el = els[i];
+    const playing = !r.off && active && S.tr.pos >= r.s && S.tr.pos < r.e;
+    const insel = !r.off && hasSel && r.s >= ts0 - EPS && r.e <= ts1 + EPS;
+    if (el.classList.contains("playing") !== playing) el.classList.toggle("playing", playing);
+    if (el.classList.contains("insel") !== insel) el.classList.toggle("insel", insel);
+    if (playing && !firstPlaying) firstPlaying = { el, k: r.k };
+  }
+  const key = firstPlaying ? firstPlaying.k : "";
+  if (key !== S.lastPlayKey) {
+    S.lastPlayKey = key;
+    if (firstPlaying && S.follow) firstPlaying.el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Actions                                                             */
+/* ------------------------------------------------------------------ */
+function exportTxt() {
+  const sn = S.snap;
+  if (!sn || !sn.rows.length) { toast("No region to export."); return; }
+  const clean = (s) => String(s || "").replace(/[\t\r\n]/g, " ");
+  const lines = ["ID\tName\tComment\tDuration"];
+  let total = 0, totalAll = 0;
+  for (const r of sn.rows) {
+    const dur = r.e - r.s;
+    if (r.off) {
+      lines.push(`-\t${clean(r.nm)} [disabled]\t${clean(r.cm)}\t${fmtTime(dur)}`);
+    } else {
+      totalAll += dur;
+      if (r.d === 0) total += dur;
+      lines.push(`${r.id}\t${"  ".repeat(r.d)}${clean(r.nm)}\t${clean(r.cm)}\t${fmtTime(dur)}`);
+    }
+  }
+  lines.push(`\tTOTAL top-level regions (${sn.tops})\t\t${fmtTime(total)}`);
+  if (sn.nested > 0) lines.push(`\tRaw sum, nested regions included (${sn.rows.length - sn.disabled})\t\t${fmtTime(totalAll)}`);
+  if (sn.disabled > 0) lines.push(`\t(${sn.disabled} disabled region(s) excluded from totals)\t\t`);
+  const blob = new Blob([lines.join("\n") + "\n"], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "regions.txt";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+function setEdit(on) {
+  S.edit = on;
+  document.body.classList.toggle("edit", on);
+  $("bEdit").classList.toggle("lit", on);
+  $("tools").hidden = !on;
+}
+
+/* ------------------------------------------------------------------ */
+/* Events                                                              */
+/* ------------------------------------------------------------------ */
+// Play/Stop: playing + loop on -> loop off and time-select the parent region; playing + loop off -> stop; stopped -> play
+$("bPlay").onclick = () => {
+  if (S.online) { send("playstop"); return; }
+  const playing = S.tr.state === 1 || S.tr.state === 5;
+  direct(playing ? (S.tr.rep ? CFG.repeatId : CFG.stopPlayingId) : CFG.playId);
+};
+$("bStop").onclick = () => { S.online ? send("stop") : direct(CFG.stopPlayingId); };
+// Live loop: loop off -> loop on + time selection on the nested (child) region at the current position (parent if none);
+// loop on -> loop off + time selection back on the parent region
+$("bLive").onclick = () => send("liveloop");
+$("bPrev").onclick = () => send("prev");
+$("bNext").onclick = () => send("next");
+$("bMetro").onclick = () => direct(CFG.metroId);
+$("bCount").onclick = () => direct(CFG.countId);
+$("bAutoStop").onclick = () => direct(CFG.autoStopId);
+$("bSmooth").onclick = () => direct(CFG.smoothId);
+$("bFollow").onclick = () => { S.follow = !S.follow; $("bFollow").classList.toggle("lit", S.follow); };
+$("bEdit").onclick = () => setEdit(!S.edit);
+
+$("bApply").onclick = () => send("apply");
+$("bReset").onclick = () => send("reset");
+$("bExport").onclick = exportTxt;
+$("bLoad").onclick = () => {
+  const id = $("setSel").value;
+  if (id) send("load_set", id, $("applyOnLoad").checked ? "1" : "0");
+};
+$("bDelSet").onclick = () => {
+  const id = $("setSel").value;
+  const s = S.snap && S.snap.sets.find((x) => x.id === id);
+  if (s && confirm(`Delete set '${s.nm}'?`)) send("delete_set", id);
+};
+$("bSave").onclick = () => {
+  const sn = S.snap;
+  const cur = sn && sn.sets.find((x) => x.id === $("setSel").value);
+  const name = prompt("Set name", cur ? cur.nm : "");
+  if (name === null || !name.trim()) return;
+  const exists = sn && sn.sets.find((x) => x.nm.toLowerCase() === name.trim().toLowerCase());
+  if (exists && !confirm(`A set named '${exists.nm}' already exists. Replace it?`)) return;
+  send("save_set", name.trim());
+};
+
+// Rows: tap = go to / time-select, double-tap = play. In Edit mode the row buttons are used instead.
+let lastTap = { k: "", t: 0 };
+$("list").addEventListener("click", (ev) => {
+  const rowEl = ev.target.closest(".row");
+  if (!rowEl || !S.snap) return;
+  const r = S.snap.rows[+rowEl.dataset.i];
+  if (!r) return;
+
+  const btn = ev.target.closest("button[data-act]");
+  if (btn) {
+    switch (btn.dataset.act) {
+      case "up":      send("move", r.k, "-1"); break;
+      case "down":    send("move", r.k, "1"); break;
+      case "toggle":  send("toggle", r.k); break;
+      case "rename": {
+        const txt = prompt("Region name", r.nm || "");
+        if (txt !== null) send("rename", r.k, txt);
+        break;
+      }
+      case "comment": {
+        const txt = prompt("Comment", r.cm || "");
+        if (txt !== null) send("comment", r.k, txt);
+        break;
+      }
+    }
+    return;
+  }
+  if (S.edit || r.off) return;                  // a disabled region can be neither selected nor played
+
+  const now = Date.now();
+  const dbl = lastTap.k === r.k && now - lastTap.t < 380;
+  lastTap = dbl ? { k: "", t: 0 } : { k: r.k, t: now };
+  send("goto", r.k, dbl ? "1" : "0");
+});
+
+setEdit(false);
+renderTotals();
+poll();
+</script>
+</body>
+</html>

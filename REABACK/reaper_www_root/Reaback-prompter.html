@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reaback-prompter</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; -webkit-user-select: none; user-select: none; }
+  :root { --fs: 7vmin; }
+  #stage { position: fixed; inset: 0; bottom: 0; display: flex; flex-direction: column; padding: 2vmin 4vmin; gap: 2vmin; }
+  #stage.withbar { bottom: 56px; }
+  .lane { text-align: center; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.2; font-weight: 600; }
+  .lane .cur { font-size: var(--fs); }
+  .lane .nxt { font-size: calc(var(--fs) * .55); opacity: .35; margin-top: .4em; }
+  #regions { flex: 0 0 auto; text-align: center; padding-right: 22vmin; padding-left: 22vmin; line-height: 1.2; }
+  #rMother { color: #fff; font-weight: 700; font-size: calc(var(--fs) * .6); }
+  #rChild  { color: #8ec5ff; font-weight: 500; font-size: calc(var(--fs) * .45); }
+  #chords   { color: #ff3b30; flex: 0 0 auto; min-height: 1.2em; }
+  #lyrics   { color: #ffe600; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+  #comments { color: #fff; font-style: italic; font-weight: 400; flex: 0 0 auto; min-height: 1.2em; }
+  #comments .cur { font-size: calc(var(--fs) * .7); }
+  #bar { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; display: flex; gap: 8px; align-items: center; justify-content: center; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: #111; border-top: 1px solid #333; }
+  [hidden] { display: none !important; }
+  button { font: inherit; font-size: 16px; font-weight: 600; min-width: 64px; height: 42px; padding: 0 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: #888; }
+  button.on.l { color: #ffe600; border-color: #ffe600; background: #2a2700; }
+  button.on.c { color: #ff3b30; border-color: #ff3b30; background: #2d0f0d; }
+  button.on.m { color: #fff; border-color: #fff; background: #333; font-style: italic; }
+  button.on.n { color: #8ec5ff; border-color: #8ec5ff; background: #0f2233; }
+  button.plain { color: #ddd; }
+  #status { position: fixed; top: 6px; right: 8px; display: flex; gap: 6px; z-index: 5; pointer-events: none; }
+  .badge { font-size: 13px; font-weight: 700; letter-spacing: .05em; padding: 3px 9px; border-radius: 6px; border: 1px solid #444; color: #666; background: #111; }
+  .badge.play { color: #000; background: #34c759; border-color: #34c759; }
+  .badge.pause { color: #000; background: #ff9f0a; border-color: #ff9f0a; }
+  .badge.rec { color: #fff; background: #d00; border-color: #d00; }
+  .badge.loop { color: #000; background: #5ac8fa; border-color: #5ac8fa; }
+  #banner { position: fixed; left: 0; right: 0; top: 0; padding: 10px; background: #5a1a1a; color: #fff; text-align: center; font-size: 15px; }
+  #banner[hidden] { display: none; }
+</style>
+</head>
+<body>
+<div id="banner" hidden></div>
+<div id="status">
+  <span id="sPlay" class="badge">STOP</span>
+  <span id="sLoop" class="badge">LOOP</span>
+</div>
+<div id="stage" class="withbar">
+  <div id="regions"><div id="rMother"></div><div id="rChild"></div></div>
+  <div class="lane" id="chords"></div>
+  <div class="lane" id="lyrics"></div>
+  <div class="lane" id="comments"></div>
+</div>
+<div id="bar">
+  <button id="tL" class="l">Lyrics</button>
+  <button id="tC" class="c">Chords</button>
+  <button id="tM" class="m">Comment</button>
+  <button id="tN" class="n">Next</button>
+  <button id="fMinus" class="plain">A−</button>
+  <button id="fPlus" class="plain">A+</button>
+  <button id="fFull" class="plain">⛶</button>
+</div>
+
+<script>
+"use strict";
+const SEC = "REABACK_PROMPTER";      // ExtState section written by Reaback-prompter.lua
+const POLL = 120;                   // ms between two polls
+const $ = (id) => document.getElementById(id);
+
+// Settings (kept in this browser only; works without storage)
+const S = { l: true, c: true, m: true, n: false, fs: 7 };
+function load() { try { Object.assign(S, JSON.parse(localStorage.getItem("reaback-prompter") || "{}")); } catch (e) {} }
+function save() { try { localStorage.setItem("reaback-prompter", JSON.stringify(S)); } catch (e) {} }
+load();
+
+let tr = { state: 0, rep: false };
+let data = { l: ["", ""], c: ["", ""], m: ["", ""] };
+let hb = "", hbAt = 0, online = false, conn = false, lastDKey = "";
+
+function render() {
+  document.documentElement.style.setProperty("--fs", S.fs + "vmin");
+  const lanes = [["c", "chords"], ["l", "lyrics"], ["m", "comments"]];
+  for (const [k, id] of lanes) {
+    const el = $(id);
+    el.hidden = !S[k];
+    el.replaceChildren();
+    const cur = document.createElement("div");
+    cur.className = "cur";
+    cur.textContent = (data[k] && data[k][0]) || "";
+    el.appendChild(cur);
+    if (S.n && data[k] && data[k][1]) {
+      const nx = document.createElement("div");
+      nx.className = "nxt";
+      nx.textContent = data[k][1];
+      el.appendChild(nx);
+    }
+  }
+  $("rMother").textContent = (data.r && data.r[0]) || "";
+  $("rChild").textContent = (data.r && data.r[1]) || "";
+  $("tL").classList.toggle("on", S.l);
+  $("tC").classList.toggle("on", S.c);
+  $("tM").classList.toggle("on", S.m);
+  $("tN").classList.toggle("on", S.n);
+
+  const st = conn ? tr.state : 0;
+  const sp = $("sPlay");
+  sp.className = "badge" + (st === 1 ? " play" : st === 5 ? " rec" : (st === 2 || st === 6) ? " pause" : "");
+  sp.textContent = st === 1 ? "PLAY" : st === 5 ? "REC" : (st === 2 || st === 6) ? "PAUSE" : "STOP";
+  $("sLoop").className = "badge" + (conn && tr.rep ? " loop" : "");
+
+  const b = $("banner");
+  if (!conn) { b.hidden = false; b.textContent = "No connection to REAPER's web interface."; }
+  else if (!online) { b.hidden = false; b.textContent = "Reaback-prompter script is not running in REAPER (run Reaback-prompter.lua from the Action list)."; }
+  else b.hidden = true;
+}
+
+async function poll() {
+  try {
+    const res = await fetch(`/_/TRANSPORT;GET/EXTSTATE/${SEC}/hb;GET/EXTSTATE/${SEC}/d`, { cache: "no-store" });
+    const text = await res.text();
+    const ext = {};
+    for (const line of text.split(/\r?\n/)) {
+      const f = line.split("\t");
+      if (f[0] === "TRANSPORT") tr = { state: parseInt(f[1], 10) || 0, rep: (parseInt(f[3], 10) || 0) > 0 };
+      else if (f[0] === "EXTSTATE") ext[f[2]] = f.slice(3).join("\t");
+    }
+    conn = true;
+    const h = ext.hb || "";
+    if (h !== hb) { hb = h; hbAt = Date.now(); }
+    online = h !== "" && Date.now() - hbAt < 3500;
+    const d = ext.d || "";
+    if (d !== lastDKey) {
+      lastDKey = d;
+      try {
+        const dec = (s) => { try { return decodeURIComponent(s).replace(/\r\n?/g, "\n"); } catch (e) { return s; } };
+        const j = JSON.parse(d), nd = { l: ["", ""], c: ["", ""], m: ["", ""], r: ["", ""] };
+        for (const k of ["l", "c", "m", "r"]) if (Array.isArray(j[k])) nd[k] = [dec(j[k][0] || ""), dec(j[k][1] || "")];
+        data = nd;
+      } catch (e) {}
+    }
+    if (!online) data = { l: ["", ""], c: ["", ""], m: ["", ""] };
+  } catch (e) { conn = false; online = false; }
+  render();
+  setTimeout(poll, POLL);
+}
+
+function toggle(k) { S[k] = !S[k]; save(); render(); }
+$("tL").onclick = () => toggle("l");
+$("tC").onclick = () => toggle("c");
+$("tM").onclick = () => toggle("m");
+$("tN").onclick = () => toggle("n");
+$("fMinus").onclick = () => { S.fs = Math.max(2, +(S.fs - 0.5).toFixed(1)); save(); render(); };
+$("fPlus").onclick = () => { S.fs = Math.min(20, +(S.fs + 0.5).toFixed(1)); save(); render(); };
+$("fFull").onclick = () => {
+  const d = document.documentElement;
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (d.requestFullscreen) d.requestFullscreen().catch(() => {});
+};
+// Tap the text to hide / show the buttons
+$("stage").onclick = () => {
+  const bar = $("bar");
+  bar.hidden = !bar.hidden;
+  $("stage").classList.toggle("withbar", !bar.hidden);
+};
+// Keep the screen on when the browser allows it
+async function wake() { try { if (navigator.wakeLock) await navigator.wakeLock.request("screen"); } catch (e) {} }
+document.addEventListener("visibilitychange", () => { if (!document.hidden) wake(); });
+wake();
+
+render();
+poll();
+</script>
+</body>
+</html>

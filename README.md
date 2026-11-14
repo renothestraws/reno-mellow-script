@@ -7,6 +7,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 
 | Script | Description |
 |---|---|
+| **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
 ### ReNo StemSplit
@@ -25,6 +26,22 @@ En cas d'erreur : bouton **Open log** (journaux `install.log` et `last_run.log`)
 
 Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac Apple Silicon, 2 à 6 min sur processeur seul.
 
+### REABACK
+
+- **REABACK** : fenêtre principale (liste des régions réordonnable, renumérotation des IDs, sets de régions,
+  Play/Stop, Previous / Next, Live loop, Metronome, Count-in, Auto stop, Smooth seek, export txt).
+- Actions isolées à associer à des raccourcis clavier ou MIDI : **REABACK_PlayStop**, **_Stop**, **_Previous**,
+  **_Next**, **_LiveLoop**.
+- **Reaback Set up** : raccourcis de configuration et de construction de la session.
+- **Reaback-prompter** : envoie les notes des items des pistes Lyrics (jaune), Chords (rouge) et Comment (blanc italique)
+  vers la page `Reaback-prompter.html` (tablette ou téléphone).
+- Nouvelle session : **File > Project templates > ReaBack**.
+- Contrôle à distance : Preferences > Control/OSC/web > Add > Web browser interface, puis ouvrir
+  `http://<adresse IP de l'ordinateur>:<port>/REABACK.html` (ou `/Reaback-prompter.html`).
+- Icônes : clic droit sur une barre d'outils > Customize toolbar > Choose icon, puis l'icône du même nom.
+
+**Extensions :** ReaImGui (obligatoire, via ReaPack > ReaTeam Extensions), SWS (conseillée), js_ReaScriptAPI (optionnelle).
+
 ## Installation avec ReaPack (recommandé)
 
 1. Installer ReaPack si nécessaire : <https://reapack.com>
@@ -39,7 +56,10 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation manuelle
 
-Copier le dossier d'un script (par ex. `StemSplit`) dans le dossier `Scripts` de REAPER
+**REABACK** : télécharger le dossier `REABACK`, puis charger et lancer `REABACK_Install.lua` depuis la liste d'actions
+(Actions > Show action list > New action > Load ReaScript) : il copie les scripts, les pages web, le template et les icônes.
+
+**ReNo StemSplit** : copier le dossier `StemSplit` dans le dossier `Scripts` de REAPER
 (Options > Show REAPER resource path), puis charger ses actions dans la liste d'actions
 (Actions > Show action list > New action > Load ReaScript).
 

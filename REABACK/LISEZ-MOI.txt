@@ -1,0 +1,34 @@
+ReaBack V1.0 - installation rapide
+=============================
+
+1. Dézippez TOUTE l'archive dans un dossier de votre choix (ne lancez rien depuis le zip).
+2. Dans REAPER : Actions > Show action list > New action > Load ReaScript...
+   Choisissez REABACK_Install.lua (à la racine du dossier dézippé), puis cliquez sur Ouvrir.
+   Le script se lance et fait tout :
+     - copie les scripts dans  <dossier REAPER>/Scripts/REABACK  et les ajoute à l'Action list ;
+     - copie les pages HTML dans  <dossier REAPER>/reaper_www_root ;
+     - copie le project template dans  <dossier REAPER>/ProjectTemplates ;
+     - copie les icônes de barre d'outils dans  <dossier REAPER>/Data/toolbar_icons (et ses sous-dossiers 150 et 200).
+   Un compte-rendu indique aussi si une extension manque (ReaImGui est obligatoire).
+3. Lancez ensuite dans l'Action list :
+     REABACK.lua        -> fenêtre principale (setlist, transport)
+     Reaback Set up.lua -> préparation de la session
+     Reaback-prompter.lua -> envoie les paroles/accords vers la tablette (page Reaback-prompter.html)
+4. Icônes : clic droit sur une barre d'outils > Customize toolbar > sélectionner le bouton > Choose icon...
+   et choisir l'icône du même nom (REABACK, REABACK_Previous, REABACK_Next, REABACK_PlayStop, REABACK_Stop,
+   REABACK_LiveLoop, Reaback_Set_up, Reaback-prompter). Chaque icône contient 3 états : normal, survol, actif.
+   Redémarrer REAPER si les nouvelles icônes n'apparaissent pas dans la liste.
+5. Nouvelle session : File > Project templates > ReaBack.
+6. Contrôle à distance : Preferences > Control/OSC/web > Add > Web browser interface (notez le port), puis
+   sur le téléphone / la tablette :
+     http://<adresse IP de l'ordinateur>:<port>/REABACK.html
+     http://<adresse IP de l'ordinateur>:<port>/Reaback-prompter.html
+
+Extensions à installer avant de commencer :
+  - ReaPack, le gestionnaire de paquets de REAPER : https://reapack.com/
+      (ReaPack: Package manager for REAPER)
+  - ReaImGui (obligatoire) et js_ReaScriptAPI (optionnelle) : à installer via ReaPack
+      (Extensions > ReaPack > Browse packages).
+  - SWS / S&M Extension (conseillée) : https://sws-extension.org/
+
+Pour mettre à jour : remplacez les fichiers de l'archive par les nouveaux et relancez REABACK_Install.lua.
