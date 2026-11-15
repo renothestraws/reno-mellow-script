@@ -119,8 +119,22 @@ def main():
                                "(If this Mac has an Apple Silicon chip, Python is running under Rosetta: "
                                "install the arm64 / universal2 Python 3.12.)")
         print("Job:", json.dumps(job, indent=1))
+        update = bool(job.get("update"))
+        prev_gpu = "cpu"
         if os.path.exists(flag):
+            with open(flag, encoding="utf-8") as fh:
+                for line in fh:
+                    if line.startswith("gpu="):
+                        prev_gpu = line.strip()[4:]
             os.remove(flag)
+        if update and not os.path.isfile(vpy):
+            raise RuntimeError("The engine is not installed yet: use Install instead of Update.")
+
+        def gpu_test(label):
+            st.set(stage="Testing the graphics card (%s)" % label, progress=60)
+            print("\n>> GPU test with", label, flush=True)
+            return subprocess.run([vpy, "-c", GPU_TEST], stdout=log, stderr=subprocess.STDOUT,
+                                  stdin=subprocess.DEVNULL, creationflags=NO_WINDOW).returncode == 0
         if job.get("reinstall") and os.path.isdir(venv):
             st.set(stage="Removing the previous engine", progress=2)
             shutil.rmtree(venv, ignore_errors=True)
@@ -133,7 +147,10 @@ def main():
 
         gpu = job.get("gpu", "cpu")
         torch_pkgs = ["torch", "torchvision"]
-        if gpu == "cuda":
+        if update:
+            gpu = prev_gpu
+            print("Update mode, previous engine:", gpu)
+        elif gpu == "cuda":
             cc, drv, name = nvidia_info()
             print("GPU:", name, "compute capability:", cc, "driver:", drv)
             builds = cuda_builds(cc, drv)
@@ -143,30 +160,38 @@ def main():
             else:
                 run(pip + torch_pkgs + ["--index-url", TORCH_INDEX + builds[0]],
                     "Installing PyTorch with NVIDIA GPU support (%s, large download)" % builds[0], 12)
-        elif sys.platform == "darwin":
+        elif sys.platform == "darwin" and not update:
             # Apple Silicon: the standard PyPI build includes the Metal (MPS) GPU backend
             run(pip + torch_pkgs, "Installing PyTorch (Apple Silicon)", 12)
-        else:
+        elif not update:
             run(pip + torch_pkgs + ["--index-url", TORCH_INDEX + "cpu"], "Installing PyTorch (CPU)", 12)
-        extra = "gpu" if gpu == "cuda" else "cpu"
+        extra = "gpu" if gpu.startswith("cuda") else "cpu"
         # librosa 1.x no longer pulls "audioread", which audio-separator still imports:
         # keep librosa 0.x and install audioread explicitly.
-        run(pip + ["audio-separator[%s]" % extra, "librosa>=0.10,<1.0", "audioread",
-                   "static-ffmpeg", "soundfile", "numpy"],
-            "Installing the separation engine (audio-separator)", 30)
+        run(pip + (["--upgrade"] if update else [])
+            + ["audio-separator[%s]" % extra, "librosa>=0.10,<1.0", "audioread",
+               "static-ffmpeg", "soundfile", "numpy"],
+            ("Updating" if update else "Installing") + " the separation engine (audio-separator)", 30)
 
-        if gpu == "cuda":
+        if update and gpu.startswith("cuda-"):
+            # an upgrade may have pulled a CPU-only PyTorch from PyPI: check, restore the CUDA build if needed
+            build = gpu[5:]
+            if not gpu_test(build):
+                run(pip + ["--force-reinstall", "--no-deps"] + torch_pkgs + ["--index-url", TORCH_INDEX + build],
+                    "Restoring PyTorch with NVIDIA GPU support (%s)" % build, 50)
+                if not gpu_test(build):
+                    print("\nThe GPU could not run PyTorch after the update: CPU version.")
+                    run(pip + ["--force-reinstall", "--no-deps"] + torch_pkgs + ["--index-url", TORCH_INDEX + "cpu"],
+                        "GPU not usable: installing the CPU version of PyTorch", 62)
+                    gpu = "cpu (GPU test failed, see install.log)"
+        elif gpu == "cuda":
             # make sure the GPU really runs PyTorch kernels; otherwise try the next build, then CPU
             ok = False
             for i, b in enumerate(builds):
                 if i > 0:
                     run(pip + ["--force-reinstall", "--no-deps"] + torch_pkgs + ["--index-url", TORCH_INDEX + b],
                         "Trying another PyTorch GPU build (%s)" % b, 40 + i * 6)
-                st.set(stage="Testing the graphics card (%s)" % b, progress=60)
-                print("\n>> GPU test with", b, flush=True)
-                rc = subprocess.run([vpy, "-c", GPU_TEST], stdout=log, stderr=subprocess.STDOUT,
-                                    stdin=subprocess.DEVNULL, creationflags=NO_WINDOW).returncode
-                if rc == 0:
+                if gpu_test(b):
                     ok = True
                     gpu = "cuda-" + b
                     break
@@ -185,7 +210,7 @@ def main():
         with open(flag, "w", encoding="utf-8") as fh:
             fh.write("installed=%s\ngpu=%s\npython=%s\n" % (time.strftime("%Y-%m-%d %H:%M"), gpu,
                                                             sys.version.split()[0]))
-        st.set(state="done", stage="Engine installed", progress=100)
+        st.set(state="done", stage="Engine updated" if update else "Engine installed", progress=100)
         print("\nInstallation complete.")
     except Exception as e:
         traceback.print_exc()

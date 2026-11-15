@@ -5,7 +5,7 @@
 local R = reaper
 local M = {}
 
-M.VERSION = "1.6"
+M.VERSION = "1.7"
 M.EXT = "ReNo_StemSplit"
 
 local SEP = package.config:sub(1, 1)
@@ -378,6 +378,7 @@ local function load_cfg()
   if kit < 4 or kit > 6 then kit = 4 end
   return {
     stems = (g("stems", "6") == "4") and 4 or 6,
+    quality = (g("quality", "std") == "hq") and "hq" or "std",
     drums_only = g("drums_only", "0") == "1",
     kit = kit,
     folder = g("folder", "1") == "1",
@@ -387,6 +388,7 @@ end
 
 local function save_cfg(c)
   R.SetExtState(M.EXT, "stems", tostring(c.stems), true)
+  R.SetExtState(M.EXT, "quality", c.quality, true)
   R.SetExtState(M.EXT, "drums_only", c.drums_only and "1" or "0", true)
   R.SetExtState(M.EXT, "kit", tostring(c.kit), true)
   R.SetExtState(M.EXT, "folder", c.folder and "1" or "0", true)
@@ -520,7 +522,7 @@ function M.run(mode)
     view = "result"
   end
 
-  local function start_install(reinstall)
+  local function start_install(reinstall, update)
     gfx.setfont(1)
     local py, ver = M.find_python()
     if not py then
@@ -530,7 +532,7 @@ function M.run(mode)
       return
     end
     local gpu = "cpu"
-    if M.has_nvidia() then
+    if not update and M.has_nvidia() then
       local r = R.MB("An NVIDIA graphics card was detected.\n\n"
         .. "Install the GPU version? Separation is much faster, but the download is about 3 GB bigger.\n\n"
         .. "Yes = GPU version     No = CPU version", "ReNo StemSplit", 4)
@@ -543,10 +545,11 @@ function M.run(mode)
     local jobf = join(M.work, "install_job.json")
     write_file(jobf, to_json({
       base = M.base, engine = M.engine, gpu = gpu, reinstall = reinstall and true or false,
+      update = update and true or false,
       status = status, log = M.log_inst,
     }))
     M.launch(windowless(py), M.installer, jobf)
-    task = { kind = "install", status = status, t0 = now(), launch_t = now(), last_poll = 0,
+    task = { kind = "install", update = update, status = status, t0 = now(), launch_t = now(), last_poll = 0,
              stage = "Starting the installer (Python " .. ver .. ")", pct = 0, log = M.log_inst }
     view = "busy"
   end
@@ -571,6 +574,7 @@ function M.run(mode)
       mode = mode, input = task.input, out_dir = task.out_dir, base_name = task.base_name,
       base = M.base, models_dir = M.models_dir, work_dir = M.work, status = status,
       log = M.log_run, stems = cfg.stems, drums_only = cfg.drums_only, kit = cfg.kit,
+      quality = cfg.quality,
     }))
     M.launch(M.venv_py, M.engine, jobf)
     task.status = status
@@ -628,9 +632,15 @@ function M.run(mode)
 
   local function on_done(st)
     if task.kind == "install" then
+      local was_update = task.update
       task = nil
       if M.installed() then
-        if mode == "install" then
+        if was_update then
+          msg = "The engine is up to date.\n\nThe separation library and the models have been updated. "
+            .. "Everything works offline again."
+          msg_err = false
+          view = "result"
+        elseif mode == "install" then
           msg = "The engine is installed.\n\nYou can now use \"ReNo StemSplit - Stems\" and \"ReNo StemSplit - Drums\". "
             .. "They work offline."
           msg_err = false
@@ -756,10 +766,12 @@ function M.run(mode)
     if f then info = f:read("a") f:close() end
     local y = paragraph("The engine is installed and ready.", 20, 62, W - 40, C.ok)
     y = paragraph(info, 20, y + 8, W - 40, C.dim)
-    paragraph("Reinstall it to repair a broken installation or to switch between CPU and GPU versions.",
+    paragraph("Update: newer separation library and models, keeps your setup (needs internet). "
+      .. "Reinstall: repairs a broken installation or switches between CPU and GPU versions.",
       20, y + 8, W - 40)
-    if button("Reinstall", 20, H - 50, 120, 30, true) then start_install(true) end
-    if button("Open data folder", 150, H - 50, 150, 30) then M.open_path(M.base) end
+    if button("Update engine", 20, H - 50, 130, 30, true) then start_install(false, true) end
+    if button("Reinstall", 160, H - 50, 100, 30) then start_install(true) end
+    if button("Open data folder", 270, H - 50, 130, 30) then M.open_path(M.base) end
     if button("Close", W - 120, H - 50, 100, 30) then gfx.quit() end
   end
 
@@ -834,6 +846,11 @@ function M.run(mode)
       cfg.stems = (s == 1) and 6 or 4
       text(cfg.stems == 6 and "Vocals, Drums, Bass, Guitar, Piano, Other"
         or "Vocals, Drums, Bass, Other", 150, y + 32, C.dim)
+      y = y + 66
+      local qsel = segmented("Quality", y, { "Standard", "Vocals HQ" }, cfg.quality == "hq" and 2 or 1)
+      cfg.quality = (qsel == 2) and "hq" or "std"
+      text(cfg.quality == "hq" and "Vocals with RoFormer (best quality), about twice as slow."
+        or "Demucs for every stem (fastest).", 150, y + 32, C.dim)
       y = y + 66
     end
     cfg.folder = checkbox("Put the stems in a folder track", 150, y, cfg.folder)

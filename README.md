@@ -13,6 +13,8 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 
 ### ReNo StemSplit
 
+Option **Quality** : *Standard* (Demucs pour tout, le plus rapide) ou *Vocals HQ* (voix séparée par BS-RoFormer, de meilleure qualité, puis le reste par Demucs ; environ deux fois plus lent).
+
 Les stems arrivent sur de nouvelles pistes sous la piste d'origine (dossier optionnel), alignés et colorés ;
 l'item d'origine peut être muté. Les WAV sont enregistrés dans le dossier `Stems` du dossier média du projet.
 
@@ -22,7 +24,7 @@ l'item d'origine peut être muté. Les WAV sont enregistrés dans le dossier `St
 
 Au premier lancement, le bouton **Install engine** installe tout dans `Data/ReNo_StemSplit` (environ 1,5 Go,
 4,5 Go avec la version GPU NVIDIA, détectée et testée automatiquement ; Apple Silicon utilisé automatiquement ; les Mac Intel ne sont pas pris en charge).
-Ensuite, tout fonctionne hors ligne. Supprimer `Data/ReNo_StemSplit` désinstalle le moteur.
+Ensuite, tout fonctionne hors ligne. Pour profiter des nouveaux modèles et corrections de la bibliothèque : action **Install** > **Update engine** (Internet nécessaire). Supprimer `Data/ReNo_StemSplit` désinstalle le moteur.
 En cas d'erreur : bouton **Open log** (journaux `install.log` et `last_run.log`).
 
 Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac Apple Silicon, 2 à 6 min sur processeur seul.

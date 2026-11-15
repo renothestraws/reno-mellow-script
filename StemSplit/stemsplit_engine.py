@@ -46,6 +46,13 @@ DEFAULT_MODELS = {
     "stems6": "htdemucs_6s.yaml",                       # vocals, drums, bass, guitar, piano, other
     "stems4": "htdemucs.yaml",                          # vocals, drums, bass, other
     "drumsep": "MDX23C-DrumSep-aufr33-jarredou.ckpt",   # kick, snare, toms, hh, ride, crash
+    "vocals_hq": "model_bs_roformer_ep_317_sdr_12.9755.ckpt",  # BS-RoFormer: vocals / instrumental
+}
+
+# keywords used to find a replacement when a default model name is not offered by audio-separator
+MODEL_SEARCH = {
+    "drumsep": (["drumsep"], ["mdx23c"]),
+    "vocals_hq": (["roformer"], ["bs_roformer", "vocal"]),
 }
 
 STEM_NAMES = {
@@ -191,16 +198,46 @@ def mix_files(paths, dest):
 def run_stems(job, st, models):
     model = models["stems6"] if int(job.get("stems", 6)) == 6 else models["stems4"]
     work = os.path.join(job["work_dir"], "out_stems")
+    work_hq = os.path.join(job["work_dir"], "out_vocals")
     shutil.rmtree(work, ignore_errors=True)
+    shutil.rmtree(work_hq, ignore_errors=True)
+    src = job["input"]
+    hq_vocals = None
 
-    st.set(stage="Loading model", progress=8)
+    if job.get("quality") == "hq":
+        # pass 1: RoFormer -> best vocals + instrumental; pass 2: Demucs on the instrumental
+        st.set(stage="Loading RoFormer model (vocals HQ)", progress=5)
+        sep = make_separator(job["models_dir"], work_hq)
+        sep.load_model(model_filename=models["vocals_hq"])
+        st.set(stage="Extracting the vocals (RoFormer, high quality)", progress=10)
+        outs = resolve_outputs(sep.separate(src), work_hq)
+        voc = [p for p in outs if stem_of(p).lower().startswith("vocal")]
+        inst = [p for p in outs if not stem_of(p).lower().startswith("vocal")]
+        if not voc or not inst:
+            raise RuntimeError("The RoFormer model did not produce vocals and instrumental stems.")
+        hq_vocals, src = voc[0], inst[0]
+
+    st.set(stage="Loading model", progress=45 if hq_vocals else 8)
     sep = make_separator(job["models_dir"], work)
     sep.load_model(model_filename=model)
 
-    st.set(stage="Separating stems (this can take a few minutes)", progress=20)
-    outs = resolve_outputs(sep.separate(job["input"]), work)
+    st.set(stage="Separating stems (this can take a few minutes)", progress=55 if hq_vocals else 20)
+    outs = resolve_outputs(sep.separate(src), work)
     if not outs:
         raise RuntimeError("The model produced no output files.")
+
+    if hq_vocals:
+        # Demucs' "vocals" of the instrumental is only residue: fold it into Other, use RoFormer's vocals
+        residue = [p for p in outs if stem_of(p).lower() == "vocals"]
+        other = [p for p in outs if stem_of(p).lower() == "other"]
+        outs = [p for p in outs if stem_of(p).lower() not in ("vocals", "other")]
+        if other:
+            merged = os.path.join(work, "merged_(Other)_.wav")
+            mix_files(other + residue, merged)
+            outs.append(merged)
+        renamed = os.path.join(work, "hq_(Vocals)_.wav")
+        shutil.move(hq_vocals, renamed)
+        outs.append(renamed)
 
     st.set(stage="Saving stems", progress=95)
     results = []
@@ -211,6 +248,7 @@ def run_stems(job, st, models):
         shutil.move(p, dest)
         results.append((disp, dest))
     shutil.rmtree(work, ignore_errors=True)
+    shutil.rmtree(work_hq, ignore_errors=True)
     results.sort(key=lambda r: STEM_ORDER.index(r[0]) if r[0] in STEM_ORDER else 99)
     return results
 
@@ -288,7 +326,8 @@ def run_drums(job, st, models):
 # ---------------------------------------------------------------------------
 # prefetch (installer): download + check every model, resolve the drum model name
 # ---------------------------------------------------------------------------
-def find_drumsep_candidates(sep):
+def find_candidates(sep, key):
+    must, prefer = MODEL_SEARCH.get(key, ([key], []))
     found = []
 
     def walk(o):
@@ -301,7 +340,7 @@ def find_drumsep_candidates(sep):
                 walk(v)
         elif isinstance(o, str):
             low = o.lower()
-            if ("drumsep" in low and not low.startswith("config")
+            if (all(m in low for m in must) and not low.startswith("config")
                     and low.endswith((".ckpt", ".th", ".onnx", ".pth", ".yaml"))):
                 found.append(o)
 
@@ -313,7 +352,7 @@ def find_drumsep_candidates(sep):
             except Exception as e:
                 print(getter, "failed:", e)
     found = list(dict.fromkeys(found))
-    found.sort(key=lambda s: (0 if "mdx23c" in s.lower() else 1, s))
+    found.sort(key=lambda s: (-sum(p in s.lower() for p in prefer), s))
     return found
 
 
@@ -329,18 +368,19 @@ def prefetch(base, status_path, owner_pid=None):
     setup_ffmpeg()
 
     cfg = load_models_cfg(base)
-    steps = [("stems6", "6-stem model"), ("stems4", "4-stem model"), ("drumsep", "drum kit model")]
+    steps = [("stems6", "6-stem model"), ("stems4", "4-stem model"), ("drumsep", "drum kit model"),
+             ("vocals_hq", "high quality vocals model")]
     for i, (key, label) in enumerate(steps):
-        st.set(stage="Downloading %s (%d/%d)" % (label, i + 1, len(steps)), progress=74 + i * 8)
+        st.set(stage="Downloading %s (%d/%d)" % (label, i + 1, len(steps)), progress=74 + i * 6)
         sep = make_separator(models_dir, tmp)
         try:
             sep.load_model(model_filename=cfg[key])
         except Exception as e:
-            if key != "drumsep":
+            if key not in MODEL_SEARCH:
                 raise
-            print("Drum model %s failed: %s" % (cfg[key], e))
+            print("Model %s failed: %s" % (cfg[key], e))
             ok = False
-            for cand in find_drumsep_candidates(sep):
+            for cand in find_candidates(sep, key):
                 if cand == cfg[key]:
                     continue
                 try:
@@ -352,8 +392,7 @@ def prefetch(base, status_path, owner_pid=None):
                 except Exception as e2:
                     print("  failed:", e2)
             if not ok:
-                raise RuntimeError("No drum kit (DrumSep) model is available in this version "
-                                   "of audio-separator.")
+                raise RuntimeError("No %s is available in this version of audio-separator." % label)
         print("OK:", key, "=", cfg[key])
 
     with open(os.path.join(base, "models.cfg"), "w", encoding="utf-8") as fh:
