@@ -5,7 +5,7 @@
 local R = reaper
 local M = {}
 
-M.VERSION = "1.7"
+M.VERSION = "1.8"
 M.EXT = "ReNo_StemSplit"
 
 local SEP = package.config:sub(1, 1)
@@ -153,7 +153,8 @@ local PY_TEST = [[ -c "import sys;print('PYOK',sys.version_info[0],sys.version_i
 
 function M.find_python()
   local c = {}
-  local versions = { "3.12", "3.11", "3.13", "3.10" }
+  -- 3.10-3.13: supported. 3.14: only tried (trial) when nothing else is installed.
+  local versions = { "3.12", "3.11", "3.13", "3.10", "3.14" }
   if M.IS_WIN then
     local la = os.getenv("LOCALAPPDATA")
     for _, v in ipairs(versions) do
@@ -183,7 +184,7 @@ function M.find_python()
     c[#c + 1] = "/usr/bin/python3"
     c[#c + 1] = "python3"
   end
-  local other
+  local other, trial
   for _, cmd in ipairs(c) do
     local out = R.ExecProcess(M.arch_prefix() .. cmd .. PY_TEST, 10000)
     if out then
@@ -191,11 +192,14 @@ function M.find_python()
       maj, min = tonumber(maj), tonumber(min)
       if maj == 3 and min and min >= 10 and min <= 13 then
         return exe, maj .. "." .. min
+      elseif maj == 3 and min == 14 and not trial then
+        trial = exe
       elseif maj then
         other = maj .. "." .. min
       end
     end
   end
+  if trial then return trial, "3.14", true end
   return nil, other
 end
 
@@ -524,7 +528,7 @@ function M.run(mode)
 
   local function start_install(reinstall, update)
     gfx.setfont(1)
-    local py, ver = M.find_python()
+    local py, ver, trial = M.find_python()
     if not py then
       old_py = ver
       has_pym = M.has_pymanager()
@@ -549,8 +553,9 @@ function M.run(mode)
       status = status, log = M.log_inst,
     }))
     M.launch(windowless(py), M.installer, jobf)
-    task = { kind = "install", update = update, status = status, t0 = now(), launch_t = now(), last_poll = 0,
-             stage = "Starting the installer (Python " .. ver .. ")", pct = 0, log = M.log_inst }
+    task = { kind = "install", update = update, trial = trial, status = status, t0 = now(), launch_t = now(),
+             last_poll = 0, pct = 0, log = M.log_inst,
+             stage = "Starting the installer (Python " .. ver .. (trial and ", trial" or "") .. ")" }
     view = "busy"
   end
 
@@ -691,7 +696,13 @@ function M.run(mode)
     if st.state == "done" then
       on_done(st)
     elseif st.state == "error" then
-      fail(st.error or "Unknown error.", task.log)
+      local m = st.error or "Unknown error."
+      if task.kind == "install" and task.trial then
+        m = m .. "\n\nOnly Python 3.14 was found, and it is probably still too new for the AI libraries. "
+          .. "Install Python 3.12 (Windows: py install 3.12 - Mac: brew install python@3.12), "
+          .. "then click Install engine again."
+      end
+      fail(m, task.log)
     end
   end
 
@@ -745,7 +756,7 @@ function M.run(mode)
     paragraph("The separation engine (Python + AI models) is not installed yet.\n\n"
       .. "It is installed once: about 1.5 GB to download (around 4.5 GB with NVIDIA GPU support). "
       .. "Internet is needed only for this step; afterwards everything runs offline on this computer.\n\n"
-      .. "Requirement: Python 3.10 to 3.13 (3.12 recommended).", 20, 62, W - 40)
+      .. "Requirement: Python 3.10 to 3.13 (3.12 recommended; 3.14 is tried if it is the only one).", 20, 62, W - 40)
     if button("Install engine", 20, H - 50, 150, 30, true) then start_install(false) end
     if button("Close", W - 120, H - 50, 100, 30) then gfx.quit() end
   end

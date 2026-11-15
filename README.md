@@ -18,7 +18,7 @@ Option **Quality** : *Standard* (Demucs pour tout, le plus rapide) ou *Vocals HQ
 Les stems arrivent sur de nouvelles pistes sous la piste d'origine (dossier optionnel), alignés et colorés ;
 l'item d'origine peut être muté. Les WAV sont enregistrés dans le dossier `Stems` du dossier média du projet.
 
-**Moteur (installation unique) :** nécessite **Python 3.10 à 3.13** (3.12 conseillé).
+**Moteur (installation unique) :** nécessite **Python 3.10 à 3.13** (3.12 conseillé ; si seule la 3.14 est installée, le script l'essaie quand même).
 - Windows : `py install 3.12` (Python install manager) ou `winget install Python.Python.3.12`
 - macOS : installateur python.org ou `brew install python@3.12`
 
