@@ -32,6 +32,16 @@ if os.name == "nt":
 
     subprocess.Popen = _NoWindowPopen
 
+# macOS (python.org builds): Python does not see the system certificates until
+# "Install Certificates.command" is run, so downloads (ffmpeg, models) fail with
+# CERTIFICATE_VERIFY_FAILED. Point OpenSSL / requests to certifi's bundle instead.
+try:
+    import certifi
+    os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+    os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
+except Exception:
+    pass
+
 DEFAULT_MODELS = {
     "stems6": "htdemucs_6s.yaml",                       # vocals, drums, bass, guitar, piano, other
     "stems4": "htdemucs.yaml",                          # vocals, drums, bass, other

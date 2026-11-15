@@ -5,7 +5,7 @@
 local R = reaper
 local M = {}
 
-M.VERSION = "1.5"
+M.VERSION = "1.6"
 M.EXT = "ReNo_StemSplit"
 
 local SEP = package.config:sub(1, 1)
@@ -104,7 +104,7 @@ function M.read_status(path)
 end
 
 function M.launch(py, script, arg)
-  R.ExecProcess(q(py) .. " " .. q(script) .. " " .. q(arg), -1)
+  R.ExecProcess(M.arch_prefix() .. q(py) .. " " .. q(script) .. " " .. q(arg), -1)
 end
 
 function M.kill(pid)
@@ -133,6 +133,22 @@ end
 ---------------------------------------------------------------------------
 -- Python discovery (for the one-time install)
 ---------------------------------------------------------------------------
+-- macOS: Apple Silicon (true) or Intel (false). Works even when REAPER runs under Rosetta.
+function M.mac_arm()
+  if not M.IS_MAC then return false end
+  if M._arm == nil then
+    local out = R.ExecProcess("/usr/sbin/sysctl -n hw.optional.arm64", 5000) or ""
+    M._arm = out:match("\n%s*1") ~= nil
+  end
+  return M._arm
+end
+
+-- On Apple Silicon, force native arm64 Python even if REAPER itself runs under Rosetta
+-- (an x86_64 Python cannot install PyTorch).
+function M.arch_prefix()
+  return M.mac_arm() and "/usr/bin/arch -arm64 " or ""
+end
+
 local PY_TEST = [[ -c "import sys;print('PYOK',sys.version_info[0],sys.version_info[1],sys.executable)"]]
 
 function M.find_python()
@@ -155,6 +171,8 @@ function M.find_python()
     c[#c + 1] = "python3"
   else
     for _, v in ipairs(versions) do
+      c[#c + 1] = "/opt/homebrew/opt/python@" .. v .. "/bin/python" .. v
+      c[#c + 1] = "/usr/local/opt/python@" .. v .. "/bin/python" .. v
       c[#c + 1] = "/opt/homebrew/bin/python" .. v
       c[#c + 1] = "/usr/local/bin/python" .. v
       c[#c + 1] = "/Library/Frameworks/Python.framework/Versions/" .. v .. "/bin/python3"
@@ -167,7 +185,7 @@ function M.find_python()
   end
   local other
   for _, cmd in ipairs(c) do
-    local out = R.ExecProcess(cmd .. PY_TEST, 10000)
+    local out = R.ExecProcess(M.arch_prefix() .. cmd .. PY_TEST, 10000)
     if out then
       local maj, min, exe = out:match("PYOK (%d+) (%d+) ([^\r\n]+)")
       maj, min = tonumber(maj), tonumber(min)
@@ -399,6 +417,7 @@ function M.run(mode)
   else
     view = "setup"
   end
+  if M.IS_MAC and not M.mac_arm() then view = "unsupported" end
 
   -- colors
   local C = {
@@ -721,6 +740,15 @@ function M.run(mode)
     if button("Close", W - 120, H - 50, 100, 30) then gfx.quit() end
   end
 
+  local function draw_unsupported()
+    header("Mac Intel")
+    paragraph("Sorry, ReNo StemSplit cannot run on Intel Macs.\n\n"
+      .. "PyTorch, the AI engine used for the separation, is no longer published for Intel Macs, "
+      .. "and the separation library needs a newer version of it.\n\n"
+      .. "ReNo StemSplit works on Apple Silicon Macs (M1, M2, M3, M4...) and on Windows.", 20, 62, W - 40)
+    if button("Close", W - 120, H - 50, 100, 30) then gfx.quit() end
+  end
+
   local function draw_reinstall()
     header("Engine")
     local info = ""
@@ -743,8 +771,9 @@ function M.run(mode)
       s = s .. "\n\nInstall Python 3.12 from python.org and tick \"Add python.exe to PATH\" during setup, "
         .. "or type this in a terminal:\nwinget install Python.Python.3.12\n\nThen click Retry."
     elseif M.IS_MAC then
-      s = s .. "\n\nInstall Python 3.12 with the macOS installer from python.org, "
-        .. "or with Homebrew:\nbrew install python@3.12\n\nThen click Retry."
+      s = s .. "\n\nInstall Python 3.12 (not 3.14, which is too new for the AI libraries) with Homebrew:\n"
+        .. "brew install python@3.12\n"
+        .. "or with the macOS installer of Python 3.12 from python.org.\n\nThen click Retry."
     else
       s = s .. "\n\nInstall python3.12 and python3.12-venv with your package manager, then click Retry."
     end
@@ -895,6 +924,7 @@ function M.run(mode)
     gfx.rect(0, 0, gfx.w, gfx.h, 1)
     if view == "setup" then draw_setup()
     elseif view == "reinstall" then draw_reinstall()
+    elseif view == "unsupported" then draw_unsupported()
     elseif view == "nopython" then draw_nopython()
     elseif view == "options" then draw_options()
     elseif view == "busy" then draw_busy()

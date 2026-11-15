@@ -1,8 +1,8 @@
 -- @description ReNo StemSplit (AI stem separation)
 -- @author ReNo Mellow
--- @version 1.5
+-- @version 1.6
 -- @about Séparation de stems par IA en local, inspirée du Stem Splitter de Logic Pro. Stems : voix, batterie, basse, guitare, piano, autres (6 ou 4 stems). Drums : batterie découpée en kick, snare, toms, cymbales (4, 5 ou 6 pièces). Nécessite Python 3.10 à 3.13 ; le moteur (environ 1,5 Go, 4,5 Go avec GPU NVIDIA) s'installe une seule fois via le bouton Install engine, puis tout fonctionne hors ligne.
--- @changelog Première version : actions Stems, Drums et Install, détection et test automatiques du GPU NVIDIA
+-- @changelog Mac : prise en charge Apple Silicon fiabilisée (Python arm64 forcé même si REAPER tourne sous Rosetta, recherche de Python 3.12 Homebrew élargie, certificats SSL), message clair sur les Mac Intel (non pris en charge par PyTorch)
 -- @provides
 --   [main] ReNo StemSplit - Drums.lua
 --   [main] ReNo StemSplit - Install.lua

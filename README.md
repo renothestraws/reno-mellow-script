@@ -21,7 +21,7 @@ l'item d'origine peut être muté. Les WAV sont enregistrés dans le dossier `St
 - macOS : installateur python.org ou `brew install python@3.12`
 
 Au premier lancement, le bouton **Install engine** installe tout dans `Data/ReNo_StemSplit` (environ 1,5 Go,
-4,5 Go avec la version GPU NVIDIA, détectée et testée automatiquement ; Apple Silicon utilisé automatiquement).
+4,5 Go avec la version GPU NVIDIA, détectée et testée automatiquement ; Apple Silicon utilisé automatiquement ; les Mac Intel ne sont pas pris en charge).
 Ensuite, tout fonctionne hors ligne. Supprimer `Data/ReNo_StemSplit` désinstalle le moteur.
 En cas d'erreur : bouton **Open log** (journaux `install.log` et `last_run.log`).
 

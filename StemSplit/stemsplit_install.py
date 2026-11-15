@@ -111,7 +111,13 @@ def main():
 
     try:
         print("ReNo StemSplit installer")
+        import platform
         print("System Python:", sys.version, base_python())
+        print("Platform:", platform.platform(), platform.machine())
+        if sys.platform == "darwin" and platform.machine() != "arm64":
+            raise RuntimeError("Intel Macs are not supported: PyTorch is no longer published for them. "
+                               "(If this Mac has an Apple Silicon chip, Python is running under Rosetta: "
+                               "install the arm64 / universal2 Python 3.12.)")
         print("Job:", json.dumps(job, indent=1))
         if os.path.exists(flag):
             os.remove(flag)
@@ -137,6 +143,9 @@ def main():
             else:
                 run(pip + torch_pkgs + ["--index-url", TORCH_INDEX + builds[0]],
                     "Installing PyTorch with NVIDIA GPU support (%s, large download)" % builds[0], 12)
+        elif sys.platform == "darwin":
+            # Apple Silicon: the standard PyPI build includes the Metal (MPS) GPU backend
+            run(pip + torch_pkgs, "Installing PyTorch (Apple Silicon)", 12)
         else:
             run(pip + torch_pkgs + ["--index-url", TORCH_INDEX + "cpu"], "Installing PyTorch (CPU)", 12)
         extra = "gpu" if gpu == "cuda" else "cpu"
