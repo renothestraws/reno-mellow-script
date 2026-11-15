@@ -8,7 +8,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 | Script | Description |
 |---|---|
 | **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils |
-| **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
+| **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
 ### ReNo StemSplit

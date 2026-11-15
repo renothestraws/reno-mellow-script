@@ -1,18 +1,19 @@
 -- @description ReNo Mellow - MIDI cleaner
 -- @author ReNo Mellow
--- @version 1.0
--- @about Nettoie les items MIDI sélectionnés : supprime les Program Change, le pitch bend et tous les CC sauf CC4 (foot controller), CC11 (expression) et CC64 (sustain) ; passe tous les événements restants sur le canal MIDI 1 ; règle le timebase de l'item sur "Beats (position, length, rate)".
--- @changelog Première version
+-- @version 1.1
+-- @about Nettoie les items MIDI sélectionnés : supprime les SysEx, les Program Change, le pitch bend et tous les CC sauf CC4 (foot controller), CC11 (expression) et CC64 (sustain) ; passe tous les événements restants sur le canal MIDI 1 ; règle le timebase de l'item sur "Beats (position, length, rate)".
+-- @changelog Suppression des messages SysEx
 
 --[[
   ReNo Mellow - MIDI cleaner
   For every selected MIDI item (all its MIDI takes):
+    - deletes SysEx messages
     - deletes Program Change messages
     - deletes Pitch Bend messages
     - deletes every CC except CC4 (foot controller), CC11 (expression) and CC64 (sustain / hold pedal)
     - moves every remaining channel event (notes, kept CCs, aftertouch) to MIDI channel 1
     - sets the item timebase to "Beats (position, length, rate)"
-  SysEx, text / lyric events and notation stay untouched.
+  Text / lyric events and notation stay untouched.
   One undo step.
 --]]
 
@@ -47,6 +48,8 @@ local function clean_take(take)
         msg = string.char(kind) .. msg:sub(2)
         moved = moved + 1
       end
+    elseif b1 == 0xF0 then
+      keep = false                                  -- SysEx
     elseif b1 == 0xFF and msg:sub(3, 6) == "CCBZ" and prev_deleted_cc then
       keep = false                                  -- curve shape of a deleted CC
     end
