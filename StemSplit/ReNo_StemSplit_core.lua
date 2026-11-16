@@ -5,7 +5,7 @@
 local R = reaper
 local M = {}
 
-M.VERSION = "1.8"
+M.VERSION = "1.9"
 M.EXT = "ReNo_StemSplit"
 
 local SEP = package.config:sub(1, 1)
@@ -149,15 +149,53 @@ function M.arch_prefix()
   return M.mac_arm() and "/usr/bin/arch -arm64 " or ""
 end
 
-local PY_TEST = [[ -c "import sys;print('PYOK',sys.version_info[0],sys.version_info[1],sys.executable)"]]
+-- the interpreter must also be able to create a virtual environment (embedded / tool Pythons often can't)
+local PY_TEST = [[ -c "import sys,venv,ensurepip;print('PYOK',sys.version_info[0],sys.version_info[1],sys.executable)"]]
+
+-- Python folder set in REAPER > Preferences > Plug-ins > ReaScript ("Custom path to Python dll")
+function M.reaper_python_dir()
+  local dir
+  if R.get_config_var_string then
+    for _, k in ipairs({ "pythonlibpath64", "pythonlibpath32" }) do
+      local ok, v = R.get_config_var_string(k)
+      if ok and v and v ~= "" then dir = v break end
+    end
+  end
+  if not dir then
+    local f = io.open(join(R.GetResourcePath(), "reaper.ini"), "r")
+    if f then
+      for line in f:lines() do
+        local v = line:match("^pythonlibpath64=(.+)$") or line:match("^pythonlibpath32=(.+)$")
+        if v and v ~= "" then dir = v:gsub("%s+$", "") break end
+      end
+      f:close()
+    end
+  end
+  return dir
+end
 
 function M.find_python()
   local c = {}
+  -- 1. a python.exe chosen by the user ("Choose Python..." button)
+  local custom = R.GetExtState(M.EXT, "python_path")
+  if custom ~= "" then c[#c + 1] = q(custom) end
+  -- 2. the Python REAPER itself is set to use
+  local rdir = M.reaper_python_dir()
+  if rdir then
+    rdir = rdir:gsub("[/\\]+$", "")
+    if M.IS_WIN then
+      c[#c + 1] = q(join(rdir, "python.exe"))
+    else
+      c[#c + 1] = q(join(rdir, "python3"))
+      c[#c + 1] = q(join(rdir, "..", "bin", "python3"))
+    end
+  end
   -- 3.10-3.13: supported. 3.14: only tried (trial) when nothing else is installed.
   local versions = { "3.12", "3.11", "3.13", "3.10", "3.14" }
   if M.IS_WIN then
     local la = os.getenv("LOCALAPPDATA")
     for _, v in ipairs(versions) do
+      local nodot = v:gsub("%.", "")
       if la then
         -- runtimes installed by the new Python install manager
         c[#c + 1] = q(join(la, "Python", "pythoncore-" .. v .. "-64", "python.exe"))
@@ -190,6 +228,8 @@ function M.find_python()
     if out then
       local maj, min, exe = out:match("PYOK (%d+) (%d+) ([^\r\n]+)")
       maj, min = tonumber(maj), tonumber(min)
+      -- Pythons bundled with other tools (deployment agents...) are not meant to be reused
+      if exe and exe:lower():find("[/\\]wapt[/\\]") then maj = nil end
       if maj == 3 and min and min >= 10 and min <= 13 then
         return exe, maj .. "." .. min
       elseif maj == 3 and min == 14 and not trial then
@@ -751,6 +791,15 @@ function M.run(mode)
     return string.format("%d:%02d", s // 60, s % 60)
   end
 
+  -- lets the user point to a python.exe (portable / custom location, no admin rights...)
+  local function choose_python()
+    local ok, f = R.GetUserFileNameForRead("", "Select python.exe (Python 3.10 to 3.13)", M.IS_WIN and "exe" or "")
+    if ok and f and f ~= "" then
+      R.SetExtState(M.EXT, "python_path", f, true)
+      start_install(false)
+    end
+  end
+
   local function draw_setup()
     header("Engine setup")
     paragraph("The separation engine (Python + AI models) is not installed yet.\n\n"
@@ -758,6 +807,7 @@ function M.run(mode)
       .. "Internet is needed only for this step; afterwards everything runs offline on this computer.\n\n"
       .. "Requirement: Python 3.10 to 3.13 (3.12 recommended; 3.14 is tried if it is the only one).", 20, 62, W - 40)
     if button("Install engine", 20, H - 50, 150, 30, true) then start_install(false) end
+    if button("Choose Python...", 180, H - 50, 150, 30) then choose_python() end
     if button("Close", W - 120, H - 50, 100, 30) then gfx.quit() end
   end
 
@@ -788,11 +838,13 @@ function M.run(mode)
 
   local function draw_nopython()
     header("Python required")
-    local s = "Python 3.10 to 3.13 was not found on this computer."
+    local s = "No usable Python 3.10 to 3.13 was found on this computer "
+      .. "(an embeddable / zip Python cannot be used: it cannot create the engine's environment)."
     if old_py then s = s .. " (Found Python " .. old_py .. ", which is not supported.)" end
     if M.IS_WIN then
-      s = s .. "\n\nInstall Python 3.12 from python.org and tick \"Add python.exe to PATH\" during setup, "
-        .. "or type this in a terminal:\nwinget install Python.Python.3.12\n\nThen click Retry."
+      s = s .. "\n\nInstall Python 3.12 from python.org (\"Install for current user\": no admin rights needed), "
+        .. "or in a terminal:\nwinget install Python.Python.3.12 --scope user\n\n"
+        .. "Then click Retry, or Choose Python... to point to its python.exe."
     elseif M.IS_MAC then
       s = s .. "\n\nInstall Python 3.12 (not 3.14, which is too new for the AI libraries) with Homebrew:\n"
         .. "brew install python@3.12\n"
@@ -820,6 +872,7 @@ function M.run(mode)
       if button("Retry", 200, H - 50, 100, 30) then start_install(false) end
     else
       if button("Retry", 20, H - 50, 120, 30, true) then start_install(false) end
+      if button("Choose Python...", 150, H - 50, 150, 30) then choose_python() end
     end
     if button("Close", W - 120, H - 50, 100, 30) then gfx.quit() end
   end
