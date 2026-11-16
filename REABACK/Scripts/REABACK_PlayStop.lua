@@ -4,6 +4,18 @@
 --   playing + loop off -> same as Stop
 --   not playing        -> play
 
+-- Toolbar toggle state (lit / unlit icon). The command ID is also stored so that the REABACK
+-- window, while open, keeps this icon in sync with the transport.
+local function rb_toggle(key, state)
+  local _, _, sec, cmd = reaper.get_action_context()
+  if not cmd or cmd <= 0 then return end
+  local named = reaper.ReverseNamedCommandLookup(cmd)
+  if named and named ~= "" then reaper.SetExtState("REABACK_toggles", key, sec .. "|" .. named, true) end
+  reaper.SetToggleCommandState(sec, cmd, state)
+  reaper.RefreshToolbar2(sec, cmd)
+end
+
+
 local DISABLED_BASE = 10000      -- same value as in REABACK.lua: IDs >= this are disabled regions
 local EPS = 1e-6
 
@@ -38,7 +50,8 @@ local function contains(a, b)
   return false
 end
 
-if (reaper.GetPlayState() & 1) == 0 then
+local was_stopped = (reaper.GetPlayState() & 1) == 0
+if was_stopped then
   reaper.OnPlayButton()
 elseif reaper.GetSetRepeat(-1) == 1 then
   reaper.GetSetRepeat(0)
@@ -58,3 +71,8 @@ elseif reaper.GetSetRepeat(-1) == 1 then
 else
   stop_action()
 end
+
+-- lit while playing (the transport may need a moment to start: the REABACK window corrects it if open)
+local playing_now = (reaper.GetPlayState() & 1) == 1
+if was_stopped then playing_now = true end
+rb_toggle("PlayStop", playing_now and 1 or 0)

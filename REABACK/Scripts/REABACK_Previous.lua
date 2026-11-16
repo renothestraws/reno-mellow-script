@@ -1,6 +1,18 @@
 -- REABACK: Previous region
 -- Standalone action: bind it to a keyboard shortcut or MIDI in REAPER's Action list.
 
+-- Toolbar toggle state (lit / unlit icon). The command ID is also stored so that the REABACK
+-- window, while open, keeps this icon in sync with the transport.
+local function rb_toggle(key, state)
+  local _, _, sec, cmd = reaper.get_action_context()
+  if not cmd or cmd <= 0 then return end
+  local named = reaper.ReverseNamedCommandLookup(cmd)
+  if named and named ~= "" then reaper.SetExtState("REABACK_toggles", key, sec .. "|" .. named, true) end
+  reaper.SetToggleCommandState(sec, cmd, state)
+  reaper.RefreshToolbar2(sec, cmd)
+end
+
+
 local DISABLED_BASE = 10000      -- same value as in REABACK.lua: IDs >= this are disabled regions
 local EPS = 1e-6
 
@@ -46,3 +58,5 @@ else
   local cmd = reaper.NamedCommandLookup("_SWS_SELPREVMORR")
   if cmd ~= 0 then reaper.Main_OnCommand(cmd, 0) end
 end
+
+rb_toggle("Previous", 0)   -- momentary action: never lit

@@ -412,4 +412,15 @@ local function loop()
   if open then reaper.defer(loop) end
 end
 
+-- toolbar icon lit while the window is open
+local _, _, tg_sec, tg_cmd = reaper.get_action_context()
+local function set_toggle(v)
+  if tg_cmd and tg_cmd > 0 then
+    reaper.SetToggleCommandState(tg_sec, tg_cmd, v)
+    reaper.RefreshToolbar2(tg_sec, tg_cmd)
+  end
+end
+set_toggle(1)
+reaper.atexit(function() set_toggle(0) end)
+
 reaper.defer(loop)

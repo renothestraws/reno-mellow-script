@@ -1,8 +1,8 @@
 -- @description REABACK (backing tracks on stage: setlist of regions, transport, remote control)
 -- @author ReNo Mellow
--- @version 1.1
+-- @version 1.2
 -- @about Setlist de scène pour lancer les backing tracks : une chanson = une région mère. Liste des régions réordonnable par glisser-déposer avec renumérotation des IDs (régions filles = ID mère x 100 + n), sets de régions, gros bouton Play/Stop, Previous / Next, Live loop, Metronome, Count-in, Auto stop, Smooth seek, export txt. Contrôle à distance depuis un téléphone (REABACK.html) et prompteur de paroles / accords pour tablette (Reaback-prompter.html) via l'interface web de REAPER. Fournit aussi le project template ReaBack et les icônes de barre d'outils. Nécessite l'extension ReaImGui (ReaPack > ReaTeam Extensions) ; SWS conseillée, js_ReaScriptAPI optionnelle.
--- @changelog Reaback Set up : bouton « 5. Normalize » (action native 42460) dans Session Built, après Media explorer
+-- @changelog Icônes de barre d'outils allumées / éteintes selon l'état : fenêtres REABACK, Set up et prompter allumées tant qu'elles sont ouvertes ; Play/Stop allumé pendant la lecture, Live loop allumé quand la boucle est active (mis à jour en continu tant que la fenêtre REABACK est ouverte) ; Stop, Previous et Next restent éteints (actions ponctuelles)
 -- @provides
 --   [main] Scripts/REABACK_PlayStop.lua
 --   [main] Scripts/REABACK_Stop.lua
@@ -1376,7 +1376,48 @@ local function bridge_poll()
   lastBuild = 0                                              -- republish the snapshot right away
 end
 
-reaper.atexit(function() reaper.SetExtState(BRIDGE, "hb", "", false) end)
+------------------------------------------------------------------------
+-- Toolbar toggle states: this window lit while open; the standalone scripts
+-- (Play/Stop, Live loop...) kept in sync with the transport while it is open
+------------------------------------------------------------------------
+local _, _, tg_sec, tg_cmd = reaper.get_action_context()
+local function set_toggle(sec, cmd, v)
+  if cmd and cmd > 0 and reaper.GetToggleCommandStateEx(sec, cmd) ~= v then
+    reaper.SetToggleCommandState(sec, cmd, v)
+    reaper.RefreshToolbar2(sec, cmd)
+  end
+end
+
+local TOGGLE_KEYS = { "PlayStop", "LiveLoop", "Stop", "Next", "Previous" }
+local toggle_cmds, toggle_t = {}, 0
+local function sync_toggles()
+  local now = reaper.time_precise()
+  if now - toggle_t < 0.2 then return end
+  toggle_t = now
+  local playing = (reaper.GetPlayState() & 1) == 1
+  local looping = reaper.GetSetRepeat(-1) == 1
+  for _, key in ipairs(TOGGLE_KEYS) do
+    local reg = reaper.GetExtState("REABACK_toggles", key)
+    if reg ~= "" then
+      local c = toggle_cmds[key]
+      if not c or c.reg ~= reg then
+        local sec, named = reg:match("^(%-?%d+)|(.+)$")
+        c = { reg = reg, sec = tonumber(sec) or 0, cmd = named and reaper.NamedCommandLookup("_" .. named) or 0 }
+        toggle_cmds[key] = c
+      end
+      local v = 0
+      if key == "PlayStop" then v = playing and 1 or 0
+      elseif key == "LiveLoop" then v = looping and 1 or 0 end
+      set_toggle(c.sec, c.cmd, v)
+    end
+  end
+end
+
+set_toggle(tg_sec, tg_cmd, 1)
+reaper.atexit(function()
+  reaper.SetExtState(BRIDGE, "hb", "", false)
+  set_toggle(tg_sec, tg_cmd, 0)
+end)
 
 ------------------------------------------------------------------------
 -- Boucle principale
@@ -1386,6 +1427,7 @@ load_sets()
 load_comments()
 
 local function loop()
+  sync_toggles()
   sync(false)
   if dirty then rebuild() end
   bridge_poll()
