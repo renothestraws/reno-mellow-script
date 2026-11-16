@@ -49,6 +49,7 @@ local ACTIONS = {
   open_proj   = { names = { "file: open project..." }, ids = { 40025 } },
   save_as     = { names = { "file: save project as..." }, ids = { 40022 } },
   media_expl  = { names = { "media explorer: show/hide media explorer", "view: show/hide media explorer" }, ids = { 50124 } },
+  normalize   = { ids = { 42460 }, trust = true },          -- native action 42460 (normalize)
   tempo_mark  = { names = { "markers: insert tempo/time signature change marker...", "insert tempo/time signature change marker..." },
                   pats = { { "insert", "tempo", "time signature", "marker" }, { "insert", "tempo", "marker" } } },
   ts_items    = { names = { "time selection: set time selection to items" }, ids = { 40290 } },
@@ -376,17 +377,18 @@ local function draw()
   spec_btn("2. Open project", "open_proj")
   spec_btn("3. Save project as...", "save_as")
   spec_btn("4. Media explorer (open / close)", "media_expl")
-  btn("5. Insert tempo change marker", "Tempo/time signature marker at the edit cursor", tempo_marker)
-  spec_btn("6. Time selection to selected items", "ts_items")
-  btn("7. Region from time selection", "Creates a region over the time selection", region_from_selection)
-  btn("8. Lyrics item + notes, selection shifted", "Empty item on the track containing 'Lyrics', opens its notes, moves the time selection right", function() note_item("lyrics") end)
-  btn("9. Chords item + notes, selection shifted", "Same on the track containing 'Chords'", function() note_item("chords") end)
-  btn("10. Comment item + notes, selection shifted", "Same on the track containing 'Comment'", function() note_item("comment") end)
-  btn("11. MIDI item + MIDI editor (docked, synced)", "Empty MIDI item over the time selection on the selected track", midi_item)
-  btn("12. Timecode track: clear, insert, source props", "Track containing 'Timecode': cleared, no master send, timecode generator over the whole project", timecode_track)
-  btn("13. Lock items of the region", "Widest region under the edit cursor", function() lock_items(true) end)
-  btn("14. Unlock items of the region", "Widest region under the edit cursor", function() lock_items(false) end)
-  spec_btn("15. Windows set (screenset) manager", "windowsets")
+  spec_btn("5. Normalize", "normalize")
+  btn("6. Insert tempo change marker", "Tempo/time signature marker at the edit cursor", tempo_marker)
+  spec_btn("7. Time selection to selected items", "ts_items")
+  btn("8. Region from time selection", "Creates a region over the time selection", region_from_selection)
+  btn("9. Lyrics item + notes, selection shifted", "Empty item on the track containing 'Lyrics', opens its notes, moves the time selection right", function() note_item("lyrics") end)
+  btn("10. Chords item + notes, selection shifted", "Same on the track containing 'Chords'", function() note_item("chords") end)
+  btn("11. Comment item + notes, selection shifted", "Same on the track containing 'Comment'", function() note_item("comment") end)
+  btn("12. MIDI item + MIDI editor (docked, synced)", "Empty MIDI item over the time selection on the selected track", midi_item)
+  btn("13. Timecode track: clear, insert, source props", "Track containing 'Timecode': cleared, no master send, timecode generator over the whole project", timecode_track)
+  btn("14. Lock items of the region", "Widest region under the edit cursor", function() lock_items(true) end)
+  btn("15. Unlock items of the region", "Widest region under the edit cursor", function() lock_items(false) end)
+  spec_btn("16. Windows set (screenset) manager", "windowsets")
 
   ImGui.Spacing(ctx)
   ImGui.Separator(ctx)
