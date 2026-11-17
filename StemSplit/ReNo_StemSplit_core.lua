@@ -5,7 +5,7 @@
 local R = reaper
 local M = {}
 
-M.VERSION = "1.9"
+M.VERSION = "1.10"
 M.EXT = "ReNo_StemSplit"
 
 local SEP = package.config:sub(1, 1)
@@ -444,7 +444,7 @@ end
 ---------------------------------------------------------------------------
 function M.run(mode)
   local TITLES = { stems = "Stems", drums = "Drums", install = "Engine" }
-  local W, H = 520, 350
+  local W, H = 560, 470
   local cfg = load_cfg()
   local view                    -- setup / reinstall / nopython / options / busy / result
   local msg, msg_err, msg_log = "", false, nil
@@ -800,12 +800,47 @@ function M.run(mode)
     end
   end
 
+  -- command to install Python 3.12 on this OS (typed in a terminal / command prompt)
+  local function python_cmd()
+    if M.IS_WIN then
+      return "winget install Python.Python.3.12 --scope user",
+        "Windows: open the Command Prompt (Windows key, type cmd, Enter) and type:"
+    elseif M.IS_MAC then
+      return "brew install python@3.12",
+        "macOS: open Terminal (Applications > Utilities) and type (needs Homebrew, brew.sh),\n"
+        .. "or use the Python 3.12 macOS installer from python.org:"
+    else
+      return "sudo apt install python3.12 python3.12-venv",
+        "Linux: open a terminal and type (Debian / Ubuntu; Fedora: sudo dnf install python3.12):"
+    end
+  end
+
+  local copied_t = 0
+  local function draw_python_help(y)
+    local cmd, intro = python_cmd()
+    y = paragraph("1. Install Python 3.12 if it is not installed yet.\n" .. intro, 20, y, W - 40)
+    col(C.panel)
+    gfx.rect(20, y + 2, W - 150, 28, 1)
+    text(cmd, 30, y + 8, C.accent)
+    if R.CF_SetClipboard then
+      local lbl = (now() - copied_t < 1.5) and "Copied" or "Copy"
+      if button(lbl, W - 120, y + 2, 100, 28) then
+        R.CF_SetClipboard(cmd)
+        copied_t = now()
+      end
+    end
+    y = y + 40
+    return paragraph("2. Close and reopen REAPER if you just installed Python, then click Install engine "
+      .. "(or Choose Python... to point to a python.exe / python3 yourself).", 20, y, W - 40)
+  end
+
   local function draw_setup()
     header("Engine setup")
-    paragraph("The separation engine (Python + AI models) is not installed yet.\n\n"
-      .. "It is installed once: about 1.5 GB to download (around 4.5 GB with NVIDIA GPU support). "
-      .. "Internet is needed only for this step; afterwards everything runs offline on this computer.\n\n"
-      .. "Requirement: Python 3.10 to 3.13 (3.12 recommended; 3.14 is tried if it is the only one).", 20, 62, W - 40)
+    local y = paragraph("The separation engine (Python + AI models) is not installed yet. It is installed once: "
+      .. "about 1.5 GB to download (around 4.5 GB with NVIDIA GPU support). Internet is needed only for "
+      .. "this step; afterwards everything runs offline.\n"
+      .. "Requirement: Python 3.10 to 3.13 (3.12 recommended).", 20, 62, W - 40)
+    draw_python_help(y + 12)
     if button("Install engine", 20, H - 50, 150, 30, true) then start_install(false) end
     if button("Choose Python...", 180, H - 50, 150, 30) then choose_python() end
     if button("Close", W - 120, H - 50, 100, 30) then gfx.quit() end
