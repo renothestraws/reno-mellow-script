@@ -1,0 +1,135 @@
+-- @description ReNo Mellow - Swiss Army Knife
+-- @author ReNo Mellow
+-- @version 1.0
+-- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
+-- @changelog Première version : deux versions séparées, Arrange (section Main) et MIDI Editor (section MIDI Editor), chacune avec sa toolbox (Tools / Setup), 24 outils, actions main / alt / alt2, Next / Previous / Select tool 01-24 ; 64 icônes de barre d'outils (3 états).
+-- @provides
+--   [main] ReNo Mellow - Swiss Army Knife (alt).lua
+--   [main] ReNo Mellow - Swiss Army Knife (alt2).lua
+--   [main] ReNo Mellow - Swiss Army Knife - Next tool.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Previous tool.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 01.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 02.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 03.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 04.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 05.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 06.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 07.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 08.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 09.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 10.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 11.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 12.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 13.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 14.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 15.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 16.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 17.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 18.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 19.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 20.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 21.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 22.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 23.lua
+--   [main] ReNo Mellow - Swiss Army Knife - Select tool 24.lua
+--   [main] ReNo Mellow - Swiss Army Knife.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt).lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt2).lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Next tool.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Previous tool.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 01.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 02.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 03.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 04.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 05.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 06.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 07.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 08.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 09.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 10.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 11.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 12.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 13.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 14.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 15.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 16.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 17.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 18.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 19.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 20.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 21.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 22.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 23.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 24.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Toolbox.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI.lua
+--   SAK_lib.lua
+--   SAK_toolbox.lua
+--   [data] Data/toolbar_icons/toolbar_sak_adhesive_tape.png > toolbar_icons/toolbar_sak_adhesive_tape.png
+--   [data] Data/toolbar_icons/toolbar_sak_align.png > toolbar_icons/toolbar_sak_align.png
+--   [data] Data/toolbar_icons/toolbar_sak_bounce.png > toolbar_icons/toolbar_sak_bounce.png
+--   [data] Data/toolbar_icons/toolbar_sak_broom.png > toolbar_icons/toolbar_sak_broom.png
+--   [data] Data/toolbar_icons/toolbar_sak_clamp.png > toolbar_icons/toolbar_sak_clamp.png
+--   [data] Data/toolbar_icons/toolbar_sak_color.png > toolbar_icons/toolbar_sak_color.png
+--   [data] Data/toolbar_icons/toolbar_sak_crane.png > toolbar_icons/toolbar_sak_crane.png
+--   [data] Data/toolbar_icons/toolbar_sak_crossfade.png > toolbar_icons/toolbar_sak_crossfade.png
+--   [data] Data/toolbar_icons/toolbar_sak_delete.png > toolbar_icons/toolbar_sak_delete.png
+--   [data] Data/toolbar_icons/toolbar_sak_drill.png > toolbar_icons/toolbar_sak_drill.png
+--   [data] Data/toolbar_icons/toolbar_sak_duplicate.png > toolbar_icons/toolbar_sak_duplicate.png
+--   [data] Data/toolbar_icons/toolbar_sak_dynamic_split.png > toolbar_icons/toolbar_sak_dynamic_split.png
+--   [data] Data/toolbar_icons/toolbar_sak_eraser.png > toolbar_icons/toolbar_sak_eraser.png
+--   [data] Data/toolbar_icons/toolbar_sak_explode_takes.png > toolbar_icons/toolbar_sak_explode_takes.png
+--   [data] Data/toolbar_icons/toolbar_sak_fade_in.png > toolbar_icons/toolbar_sak_fade_in.png
+--   [data] Data/toolbar_icons/toolbar_sak_fade_out.png > toolbar_icons/toolbar_sak_fade_out.png
+--   [data] Data/toolbar_icons/toolbar_sak_fill_gaps.png > toolbar_icons/toolbar_sak_fill_gaps.png
+--   [data] Data/toolbar_icons/toolbar_sak_gain.png > toolbar_icons/toolbar_sak_gain.png
+--   [data] Data/toolbar_icons/toolbar_sak_glue.png > toolbar_icons/toolbar_sak_glue.png
+--   [data] Data/toolbar_icons/toolbar_sak_glue_bottle.png > toolbar_icons/toolbar_sak_glue_bottle.png
+--   [data] Data/toolbar_icons/toolbar_sak_group.png > toolbar_icons/toolbar_sak_group.png
+--   [data] Data/toolbar_icons/toolbar_sak_hammer.png > toolbar_icons/toolbar_sak_hammer.png
+--   [data] Data/toolbar_icons/toolbar_sak_heal.png > toolbar_icons/toolbar_sak_heal.png
+--   [data] Data/toolbar_icons/toolbar_sak_knife.png > toolbar_icons/toolbar_sak_knife.png
+--   [data] Data/toolbar_icons/toolbar_sak_lock.png > toolbar_icons/toolbar_sak_lock.png
+--   [data] Data/toolbar_icons/toolbar_sak_loop.png > toolbar_icons/toolbar_sak_loop.png
+--   [data] Data/toolbar_icons/toolbar_sak_magnifier.png > toolbar_icons/toolbar_sak_magnifier.png
+--   [data] Data/toolbar_icons/toolbar_sak_marker.png > toolbar_icons/toolbar_sak_marker.png
+--   [data] Data/toolbar_icons/toolbar_sak_melodyne.png > toolbar_icons/toolbar_sak_melodyne.png
+--   [data] Data/toolbar_icons/toolbar_sak_mute.png > toolbar_icons/toolbar_sak_mute.png
+--   [data] Data/toolbar_icons/toolbar_sak_normalize.png > toolbar_icons/toolbar_sak_normalize.png
+--   [data] Data/toolbar_icons/toolbar_sak_nudge.png > toolbar_icons/toolbar_sak_nudge.png
+--   [data] Data/toolbar_icons/toolbar_sak_paint_roller.png > toolbar_icons/toolbar_sak_paint_roller.png
+--   [data] Data/toolbar_icons/toolbar_sak_paintbrush.png > toolbar_icons/toolbar_sak_paintbrush.png
+--   [data] Data/toolbar_icons/toolbar_sak_pencil.png > toolbar_icons/toolbar_sak_pencil.png
+--   [data] Data/toolbar_icons/toolbar_sak_phase.png > toolbar_icons/toolbar_sak_phase.png
+--   [data] Data/toolbar_icons/toolbar_sak_pitch.png > toolbar_icons/toolbar_sak_pitch.png
+--   [data] Data/toolbar_icons/toolbar_sak_playrate.png > toolbar_icons/toolbar_sak_playrate.png
+--   [data] Data/toolbar_icons/toolbar_sak_pliers.png > toolbar_icons/toolbar_sak_pliers.png
+--   [data] Data/toolbar_icons/toolbar_sak_preview.png > toolbar_icons/toolbar_sak_preview.png
+--   [data] Data/toolbar_icons/toolbar_sak_quantize.png > toolbar_icons/toolbar_sak_quantize.png
+--   [data] Data/toolbar_icons/toolbar_sak_razor.png > toolbar_icons/toolbar_sak_razor.png
+--   [data] Data/toolbar_icons/toolbar_sak_razor_blade.png > toolbar_icons/toolbar_sak_razor_blade.png
+--   [data] Data/toolbar_icons/toolbar_sak_rename.png > toolbar_icons/toolbar_sak_rename.png
+--   [data] Data/toolbar_icons/toolbar_sak_reverse.png > toolbar_icons/toolbar_sak_reverse.png
+--   [data] Data/toolbar_icons/toolbar_sak_ruler.png > toolbar_icons/toolbar_sak_ruler.png
+--   [data] Data/toolbar_icons/toolbar_sak_saw.png > toolbar_icons/toolbar_sak_saw.png
+--   [data] Data/toolbar_icons/toolbar_sak_scissors.png > toolbar_icons/toolbar_sak_scissors.png
+--   [data] Data/toolbar_icons/toolbar_sak_screwdriver.png > toolbar_icons/toolbar_sak_screwdriver.png
+--   [data] Data/toolbar_icons/toolbar_sak_slip.png > toolbar_icons/toolbar_sak_slip.png
+--   [data] Data/toolbar_icons/toolbar_sak_snap.png > toolbar_icons/toolbar_sak_snap.png
+--   [data] Data/toolbar_icons/toolbar_sak_snap_stretch.png > toolbar_icons/toolbar_sak_snap_stretch.png
+--   [data] Data/toolbar_icons/toolbar_sak_spirit_level.png > toolbar_icons/toolbar_sak_spirit_level.png
+--   [data] Data/toolbar_icons/toolbar_sak_split.png > toolbar_icons/toolbar_sak_split.png
+--   [data] Data/toolbar_icons/toolbar_sak_split_grid.png > toolbar_icons/toolbar_sak_split_grid.png
+--   [data] Data/toolbar_icons/toolbar_sak_split_xfade.png > toolbar_icons/toolbar_sak_split_xfade.png
+--   [data] Data/toolbar_icons/toolbar_sak_stapler.png > toolbar_icons/toolbar_sak_stapler.png
+--   [data] Data/toolbar_icons/toolbar_sak_stretch_marker.png > toolbar_icons/toolbar_sak_stretch_marker.png
+--   [data] Data/toolbar_icons/toolbar_sak_strip_silence.png > toolbar_icons/toolbar_sak_strip_silence.png
+--   [data] Data/toolbar_icons/toolbar_sak_tape_measure.png > toolbar_icons/toolbar_sak_tape_measure.png
+--   [data] Data/toolbar_icons/toolbar_sak_toolbox.png > toolbar_icons/toolbar_sak_toolbox.png
+--   [data] Data/toolbar_icons/toolbar_sak_trim.png > toolbar_icons/toolbar_sak_trim.png
+--   [data] Data/toolbar_icons/toolbar_sak_warp_grid.png > toolbar_icons/toolbar_sak_warp_grid.png
+--   [data] Data/toolbar_icons/toolbar_sak_wrench.png > toolbar_icons/toolbar_sak_wrench.png
+local SAK_dir = ({reaper.get_action_context()})[2]:match("^(.*[/\\])")
+SAK_ROOT = SAK_dir
+SAK_TB_CTX = "main"
+dofile(SAK_dir .. "SAK_toolbox.lua")
