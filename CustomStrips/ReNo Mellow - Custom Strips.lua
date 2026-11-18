@@ -1,14 +1,14 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.5
+-- @version 1.6
 -- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Dossiers dans l'onglet Strips (liste à gauche, glisser-déposer) ; 164 strips de base rangés en 15 dossiers, créés au premier lancement et bouton Load default strips
+-- @changelog Export / import des strips (fichiers .rnstrips) : tout ou un dossier ; import en ajout (dossiers fusionnés par nom) ou en remplacement
 
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.5"
+local VERSION = "1.6"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -1238,6 +1238,157 @@ local COLUMNS = {
   { "Envelopes", 110 }, { "Item name", 110 }, { "Normalize", 130 }, { "Group", 130 }, { "", 100 },
 }
 
+
+--------------------------------------------------------------------------------
+-- Export / import (.rnstrips files)
+--------------------------------------------------------------------------------
+local EXPORT_DIR = DATA_DIR .. "/Exports"
+local EXPORT_EXT = "rnstrips"
+local EXPORT_FILTER = "Custom strips (*.rnstrips)\0*.rnstrips\0All files (*.*)\0*.*\0\0"
+local import_data, import_name, open_import = nil, "", false
+
+local function safe_filename(n)
+  n = (n or "strips"):gsub('[\\/:%*%?"<>|]', "_")
+  return n
+end
+
+-- scope: nil = everything, folder id, or FOLDER_NONE
+local function export_strips(scope, scope_name)
+  local out = { format = "ReNo Mellow Custom Strips", version = 1, folders = {}, strips = {} }
+  for _, f in ipairs(folders) do
+    if scope == nil or scope == f.id then out.folders[#out.folders + 1] = copy(f) end
+  end
+  for _, st in ipairs(strips) do
+    local fid = st.folder
+    local known = fid and folder_by_id(fid)
+    local in_scope = scope == nil or (scope == FOLDER_NONE and not known) or (known and fid == scope)
+    if in_scope then
+      local c = copy(st)
+      if not known then c.folder = nil end
+      out.strips[#out.strips + 1] = c
+    end
+  end
+  if #out.strips == 0 then set_status("Nothing to export: this folder is empty.", "warn") return end
+
+  reaper.RecursiveCreateDirectory(EXPORT_DIR, 0)
+  local default = safe_filename(scope_name or "All strips") .. "." .. EXPORT_EXT
+  local path
+  if reaper.JS_Dialog_BrowseForSaveFile then
+    local rv, fn = reaper.JS_Dialog_BrowseForSaveFile("Export strips", native(EXPORT_DIR), default, EXPORT_FILTER)
+    if rv ~= 1 or not fn or fn == "" then return end
+    path = norm_path(fn)
+  else
+    local ok, nm = reaper.GetUserInputs("Export strips", 1, "File name (saved in Data/ReNo_CustomStrips/Exports):,extrawidth=150",
+      (default:gsub("%." .. EXPORT_EXT .. "$", "")))
+    if not ok or trim(nm) == "" then return end
+    path = EXPORT_DIR .. "/" .. safe_filename(trim(nm))
+  end
+  if not path:lower():match("%." .. EXPORT_EXT .. "$") then path = path .. "." .. EXPORT_EXT end
+
+  local f = io.open(path, "w")
+  if not f then set_status("Could not write " .. path, "err") return end
+  f:write("-- ReNo Mellow - Custom Strips export\nreturn ", ser(out), "\n")
+  f:close()
+  set_status(string.format("Exported %d strip%s to %s", #out.strips, #out.strips > 1 and "s" or "", path), "ok")
+end
+
+local function pick_import_file()
+  reaper.RecursiveCreateDirectory(EXPORT_DIR, 0)
+  local path = file_browse("Import strips", EXPORT_DIR, EXPORT_EXT, EXPORT_FILTER)
+  if not path then return end
+  local f = io.open(path, "r")
+  if not f then set_status("Could not read " .. path, "err") return end
+  local txt = f:read("a"); f:close()
+  local fn = load(txt, "import", "t", {})
+  local ok, d = false, nil
+  if fn then ok, d = pcall(fn) end
+  if not ok or type(d) ~= "table" or type(d.strips) ~= "table" then
+    set_status("This file is not a Custom Strips export.", "err") return
+  end
+  d.folders = type(d.folders) == "table" and d.folders or {}
+  import_data, import_name, open_import = d, basename(path), true
+end
+
+-- mode "add": folders matched by name, strips already there (same name + folder) skipped
+-- mode "replace": all current strips and folders replaced
+local function do_import(mode)
+  local d = import_data
+  if not d then return 0 end
+  if mode == "replace" then
+    for i = #strips, 1, -1 do strips[i] = nil end
+    for i = #folders, 1, -1 do folders[i] = nil end
+  end
+  local map = {}
+  for _, f in ipairs(d.folders) do
+    if f.id and f.name then
+      local found
+      for _, g in ipairs(folders) do if g.name == f.name then found = g.id break end end
+      if not found then
+        found = "f" .. reaper.genGuid(""):gsub("[{}%-]", ""):sub(1, 12)
+        folders[#folders + 1] = { id = found, name = f.name }
+      end
+      map[f.id] = found
+    end
+  end
+  local have = {}
+  for _, st in ipairs(strips) do have[(st.folder or "") .. "\0" .. (st.name or "")] = true end
+  local added = 0
+  for _, st in ipairs(d.strips) do
+    if type(st) == "table" then
+      local c = copy(st)
+      c.folder = c.folder and map[c.folder] or nil
+      local key = (c.folder or "") .. "\0" .. (c.name or "")
+      if not have[key] then
+        strips[#strips + 1] = c; have[key] = true; added = added + 1
+      end
+    end
+  end
+  mark()
+  return added
+end
+
+local function draw_import_modal()
+  if open_import then ImGui.OpenPopup(ctx, "Import strips"); open_import = false end
+  if ImGui.BeginPopupModal(ctx, "Import strips", nil, ImGui.WindowFlags_AlwaysAutoResize) then
+    local d = import_data or { strips = {}, folders = {} }
+    ImGui.Text(ctx, string.format("%s : %d strip%s, %d folder%s", import_name, #d.strips, #d.strips > 1 and "s" or "",
+      #d.folders, #d.folders > 1 and "s" or ""))
+    ImGui.Spacing(ctx)
+    if ImGui.Button(ctx, "Add to my strips", 200) then
+      local n = do_import("add")
+      set_status(n .. " strip" .. (n > 1 and "s" or "") .. " imported (strips already there were skipped).", "ok")
+      import_data = nil; ImGui.CloseCurrentPopup(ctx)
+    end
+    ImGui.TextDisabled(ctx, "Folders with the same name are merged.")
+    ImGui.Spacing(ctx)
+    if ImGui.Button(ctx, "Replace all my strips", 200) then
+      local n = do_import("replace")
+      set_status("All strips replaced by " .. n .. " imported strip" .. (n > 1 and "s" or "") .. ".", "ok")
+      select_folder(FOLDER_ALL)
+      import_data = nil; ImGui.CloseCurrentPopup(ctx)
+    end
+    ImGui.TextColored(ctx, 0xFFB040FF, "Deletes your current strips and folders.")
+    ImGui.Spacing(ctx)
+    if ImGui.Button(ctx, "Cancel", 200) then import_data = nil; ImGui.CloseCurrentPopup(ctx) end
+    ImGui.EndPopup(ctx)
+  end
+end
+
+local function draw_export_import_buttons()
+  if ImGui.Button(ctx, "Export...") then ImGui.OpenPopup(ctx, "export_menu") end
+  if ImGui.BeginPopup(ctx, "export_menu") then
+    ImGui.TextDisabled(ctx, "Export to a .rnstrips file:")
+    if ImGui.MenuItem(ctx, "All strips") then export_strips(nil, "All strips") end
+    for _, f in ipairs(folders) do
+      if ImGui.MenuItem(ctx, "Folder: " .. (f.name or "?") .. "##" .. f.id) then export_strips(f.id, f.name) end
+    end
+    if ImGui.MenuItem(ctx, "Strips without folder") then export_strips(FOLDER_NONE, "No folder") end
+    ImGui.EndPopup(ctx)
+  end
+  ImGui.SameLine(ctx)
+  if ImGui.Button(ctx, "Import...") then pick_import_file() end
+end
+
 local function draw_setup_tab()
   if ImGui.Button(ctx, "+ Add strip") then new_strip(); scroll_row = #strips; goto_setup = "scroll" end
   ImGui.SameLine(ctx)
@@ -1248,6 +1399,8 @@ local function draw_setup_tab()
   if ImGui.IsItemHovered(ctx) then
     ImGui.SetTooltip(ctx, "Adds the missing default strips (drums, bass, guitars, keys, vocals...)\nin their folders. Existing strips are not changed.")
   end
+  ImGui.SameLine(ctx)
+  draw_export_import_buttons()
   ImGui.SameLine(ctx)
   ImGui.TextDisabled(ctx, "Only the strip name is required. An empty cell is ignored when the strip is applied.")
 
@@ -1324,6 +1477,7 @@ end
 
 local function draw_modals()
   draw_folder_modals()
+  draw_import_modal()
   if open_rename then ImGui.OpenPopup(ctx, "Rename strip"); open_rename = false end
   if ImGui.BeginPopupModal(ctx, "Rename strip", nil, ImGui.WindowFlags_AlwaysAutoResize) then
     if ImGui.IsWindowAppearing(ctx) then ImGui.SetKeyboardFocusHere(ctx) end
