@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Swiss Army Knife
 -- @author ReNo Mellow
--- @version 1.8
+-- @version 1.9
 -- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Scripts Select tool 01-24 retirés (Arrange et MIDI) : le choix de l'outil se fait dans la Toolbox ou avec la bulle Display (molette), ou avec Next / Previous tool.
+-- @changelog Display MIDI : correction d'un plantage de REAPER (fermer l'éditeur MIDI, enregistrer un window set puis rouvrir l'éditeur) ; sans éditeur MIDI la fenêtre est maintenant entièrement libérée puis recréée à sa place.
 -- @provides
 --   [main] ReNo Mellow - Swiss Army Knife (alt).lua
 --   [main] ReNo Mellow - Swiss Army Knife (alt2).lua

@@ -132,6 +132,24 @@ local function draw_menu()
   end
 end
 
+local editor_since = nil
+
+-- (re)creates the ImGui context with its fonts and icon
+local function create_context()
+  ctx = ImGui.CreateContext((CTX == "midi") and "ReNo Mellow - SAK MIDI Display" or "ReNo Mellow - SAK Display")
+  fonts = {}
+  for sz = FONT_MIN, FONT_MAX do
+    fonts[sz] = ImGui.CreateFont("sans-serif", sz)
+    ImGui.Attach(ctx, fonts[sz])
+  end
+  icon = nil
+  local path = reaper.GetResourcePath() .. "/Data/toolbar_icons/toolbar_sak_swiss_army_knife.png"
+  if reaper.file_exists(path) then
+    local ok, img = pcall(ImGui.CreateImage, path)
+    if ok and img then icon = img; ImGui.Attach(ctx, icon) end
+  end
+end
+
 local function loop()
   reaper.SetExtState(S, HB, tostring(reaper.time_precise()), false)
   if reaper.GetExtState(S, QUIT) == "1" then
@@ -140,12 +158,22 @@ local function loop()
   end
   if close_request then return end
 
-  -- MIDI version: hidden while no MIDI editor is open (the script keeps running and
-  -- the bubble comes back, at the same place, as soon as a MIDI editor opens)
-  if CTX == "midi" and not reaper.MIDIEditor_GetActive() then
-    ImGui.GetFrameCount(ctx) -- keeps the ImGui context alive while nothing is drawn
-    reaper.defer(loop)
-    return
+  -- MIDI version: while no MIDI editor is open, the ImGui context is dropped
+  -- entirely (no hidden window left behind, which made REAPER crash when a
+  -- window set was saved). It is created again, at the same saved place, once a
+  -- MIDI editor has been open for a short moment.
+  if CTX == "midi" then
+    if not reaper.MIDIEditor_GetActive() then
+      ctx = nil          -- unused this cycle: ReaImGui frees it
+      editor_since = nil
+      reaper.defer(loop)
+      return
+    end
+    if not ctx then
+      editor_since = editor_since or reaper.time_precise()
+      if reaper.time_precise() - editor_since < 0.4 then reaper.defer(loop) return end
+      create_context()
+    end
   end
 
   local sz = text_size()
@@ -221,15 +249,6 @@ reaper.atexit(function()
 end)
 
 reaper.defer(function()
-  ctx = ImGui.CreateContext((CTX == "midi") and "ReNo Mellow - SAK MIDI Display" or "ReNo Mellow - SAK Display")
-  for s = FONT_MIN, FONT_MAX do
-    fonts[s] = ImGui.CreateFont("sans-serif", s)
-    ImGui.Attach(ctx, fonts[s])
-  end
-  local path = reaper.GetResourcePath() .. "/Data/toolbar_icons/toolbar_sak_swiss_army_knife.png"
-  if reaper.file_exists(path) then
-    local ok, img = pcall(ImGui.CreateImage, path)
-    if ok and img then icon = img; ImGui.Attach(ctx, icon) end
-  end
+  if CTX ~= "midi" then create_context() end -- the MIDI version waits for a MIDI editor
   loop()
 end)
