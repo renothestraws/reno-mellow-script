@@ -1,8 +1,8 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.12
+-- @version 1.13
 -- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Normalisation : réglage par défaut -15 dBFS Peak, tous les items ensemble
+-- @changelog Strips de base : normalisation activée (-15 dBFS Peak, tous les items ensemble)
 -- @provides
 --   [data] Data/toolbar_icons/ReNo_CustomStrips.png > toolbar_icons/ReNo_CustomStrips.png
 --   [data] Data/toolbar_icons/150/ReNo_CustomStrips.png > toolbar_icons/150/ReNo_CustomStrips.png
@@ -73,7 +73,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.12"
+local VERSION = "1.13"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -793,7 +793,8 @@ local function load_default_strips()
       if not have[nm] then
         local icon = tag ~= "" and ("cs_tags_" .. tag .. ".png") or nil
         if icon and not reaper.file_exists(ICON_DIR .. "/" .. icon) then icon = nil end
-        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, icon = icon, folder = fid }
+        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, icon = icon, folder = fid,
+                                normalize = { type = 2, target = -15.0, mode = "together" } }
         added = added + 1
       end
     end
