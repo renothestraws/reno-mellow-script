@@ -86,6 +86,7 @@ local function companions_for(c)
     { key = "cmd_next", file = base .. " - Next tool.lua" },
     { key = "cmd_prev", file = base .. " - Previous tool.lua" },
     { key = "cmd_toolbox", file = base .. " - Toolbox.lua" },
+    { key = "cmd_display", file = base .. " - Display.lua" },
   }
   for i = 1, N do
     list[#list + 1] = { key = "selcmd_" .. i, file = string.format("%s - Select tool %02d.lua", base, i) }
