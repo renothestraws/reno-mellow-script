@@ -1,8 +1,8 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.11
+-- @version 1.12
 -- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog 61 icônes de piste par tag (cs_tags_XXX.png) installées dans Data/track_icons ; les strips de base les utilisent
+-- @changelog Normalisation : réglage par défaut -15 dBFS Peak, tous les items ensemble
 -- @provides
 --   [data] Data/toolbar_icons/ReNo_CustomStrips.png > toolbar_icons/ReNo_CustomStrips.png
 --   [data] Data/toolbar_icons/150/ReNo_CustomStrips.png > toolbar_icons/150/ReNo_CustomStrips.png
@@ -73,7 +73,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.11"
+local VERSION = "1.12"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -505,7 +505,7 @@ local function normalize_track_items(tr, nz, warn)
     local item = reaper.GetTrackMediaItem(tr, i)
     local take = reaper.GetActiveTake(item)
     if take and not reaper.TakeIsMIDI(take) then
-      local g, len = take_norm_gain(item, take, nz.type or 0, nz.target or -18)
+      local g, len = take_norm_gain(item, take, nz.type or 2, nz.target or -15)
       if g then list[#list + 1] = { take = take, g = g, len = len } end
     end
   end
@@ -518,10 +518,10 @@ local function normalize_track_items(tr, nz, warn)
 
   if nz.mode == "together" and #list > 1 then
     local common
-    if (nz.type or 0) >= 2 then -- peak / true peak: loudest item reaches the target
+    if (nz.type or 2) >= 2 then -- peak / true peak: loudest item reaches the target
       for _, it in ipairs(list) do if not common or it.g < common then common = it.g end end
     else -- LUFS / RMS: length-weighted energy of all items
-      local target = nz.target or -18
+      local target = nz.target or -15
       local e, tl = 0, 0
       for _, it in ipairs(list) do
         local lvl = target - 20 * math.log(it.g, 10)
@@ -718,7 +718,7 @@ end
 
 local function sum_norm(nz)
   if not nz then return "" end
-  return string.format("%.1f %s, %s", nz.target or -18, norm_label(nz.type or 0),
+  return string.format("%.1f %s, %s", nz.target or -15, norm_label(nz.type or 2),
     nz.mode == "together" and "together" or "each")
 end
 
@@ -1261,20 +1261,20 @@ local function draw_row(i, s)
     local en = s.normalize ~= nil
     local rvb, nv = ImGui.Checkbox(ctx, "Normalize items", en)
     if rvb then
-      s.normalize = nv and { type = 0, target = -18.0, mode = "each" } or nil
+      s.normalize = nv and { type = 2, target = -15.0, mode = "together" } or nil -- default: -15 dBFS peak, together
       mark()
     end
     if s.normalize then
       local nz = s.normalize
       ImGui.SetNextItemWidth(ctx, 140)
-      if ImGui.BeginCombo(ctx, "Type", norm_label(nz.type or 0)) then
+      if ImGui.BeginCombo(ctx, "Type", norm_label(nz.type or 2)) then
         for _, t in ipairs(NORM_TYPES) do
           if ImGui.Selectable(ctx, t.label, nz.type == t.v) then nz.type = t.v; mark() end
         end
         ImGui.EndCombo(ctx)
       end
       ImGui.SetNextItemWidth(ctx, 140)
-      local rvt, tv = ImGui.InputDouble(ctx, "Target (dB / LUFS)", nz.target or -18, 0.5, 1.0, "%.1f")
+      local rvt, tv = ImGui.InputDouble(ctx, "Target (dB / LUFS)", nz.target or -15, 0.5, 1.0, "%.1f")
       if rvt then nz.target = tv; mark() end
       if ImGui.RadioButton(ctx, "Each item to the target", nz.mode ~= "together") then nz.mode = "each"; mark() end
       if ImGui.RadioButton(ctx, "All items together (common gain, keeps balance)", nz.mode == "together") then
