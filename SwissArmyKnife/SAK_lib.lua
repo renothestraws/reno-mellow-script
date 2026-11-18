@@ -13,9 +13,34 @@ local function gets(k) return reaper.GetExtState(S, k) end
 local function sets(k, v) reaper.SetExtState(S, k, tostring(v), true) end
 SAK.gets, SAK.sets = gets, sets
 
+---------------------------------------------------------------- context
+-- "main" = arrange view (Main section), "midi" = MIDI editor (section 32060)
+-- Each context has its own 24 tools and its own current tool.
+SAK.CONTEXTS = {
+  main = { prefix = "",    section = 0,     arm = "",            label = "Arrange" },
+  midi = { prefix = "me_", section = 32060, arm = "MIDI Editor", label = "MIDI Editor" },
+}
+SAK.context = "main"
+local P = ""
+
+function SAK.set_context(c)
+  if not SAK.CONTEXTS[c] then c = "main" end
+  SAK.context = c
+  P = SAK.CONTEXTS[c].prefix
+  SAK.section = SAK.CONTEXTS[c].section
+  SAK.arm_section = SAK.CONTEXTS[c].arm
+end
+SAK.set_context("main")
+
+-- context-dependent keys
+local function cgets(k) return gets(P .. k) end
+local function csets(k, v) sets(P .. k, v) end
+SAK.cgets, SAK.csets = cgets, csets
+
 -- Default tools : { name, main, alt, alt2 }
 SAK.DEFAULTS = {
-  { "Split", "40012", "40061", "40932" },
+  main = { { "Split", "40012", "40061", "40932" } },  -- edit cursor / time selection / grid
+  midi = { { "Split", "40046", "40052", "40641" } },  -- edit cursor / mouse cursor / grid
 }
 
 ---------------------------------------------------------------- settings
@@ -38,16 +63,16 @@ SAK.trim = trim
 
 function SAK.get_tool(i)
   return {
-    name = gets("name_" .. i),
-    main = gets("main_" .. i),
-    alt  = gets("alt_" .. i),
-    alt2 = gets("alt2_" .. i),
+    name = cgets("name_" .. i),
+    main = cgets("main_" .. i),
+    alt  = cgets("alt_" .. i),
+    alt2 = cgets("alt2_" .. i),
   }
 end
 
 function SAK.set_tool(i, t)
-  sets("name_" .. i, (t.name or ""):gsub("[\t\r\n]", " "))
-  for _, k in ipairs(SAK.KEYS) do sets(k .. "_" .. i, trim(t[k])) end
+  csets("name_" .. i, ((t.name or ""):gsub("[\t\r\n]", " ")))
+  for _, k in ipairs(SAK.KEYS) do csets(k .. "_" .. i, trim(t[k])) end
 end
 
 function SAK.is_empty(i, t)
@@ -63,16 +88,16 @@ end
 
 function SAK.load_defaults()
   for i = 1, SAK.NSLOTS do
-    local d = SAK.DEFAULTS[i] or {}
+    local d = SAK.DEFAULTS[SAK.context][i] or {}
     SAK.set_tool(i, { name = d[1] or "", main = d[2] or "", alt = d[3] or "", alt2 = d[4] or "" })
   end
-  sets("current", 1)
+  csets("current", 1)
 end
 
 function SAK.ensure_init()
-  if gets("initialized") == "1" then return end
+  if cgets("initialized") == "1" then return end
   SAK.load_defaults()
-  sets("initialized", "1")
+  csets("initialized", "1")
 end
 
 ---------------------------------------------------------------- action IDs
@@ -105,9 +130,9 @@ function SAK.action_name(id)
   if cmd == 0 then return nil end
   local t
   if reaper.CF_GetCommandText then
-    t = reaper.CF_GetCommandText(0, cmd)
+    t = reaper.CF_GetCommandText(SAK.section, cmd)
   else
-    t = reaper.kbd_getTextFromCmd(cmd, reaper.SectionFromUniqueID(0))
+    t = reaper.kbd_getTextFromCmd(cmd, reaper.SectionFromUniqueID(SAK.section))
   end
   if not t or t == "" then return nil end
   return t
@@ -115,7 +140,7 @@ end
 
 ---------------------------------------------------------------- current tool
 function SAK.get_current()
-  local c = tonumber(gets("current")) or 1
+  local c = tonumber(cgets("current")) or 1
   if c < 1 or c > SAK.NSLOTS then c = 1 end
   return c
 end
@@ -123,19 +148,19 @@ end
 function SAK.sync_toggles()
   local cur = SAK.get_current()
   for i = 1, SAK.NSLOTS do
-    local id = gets("selcmd_" .. i)
+    local id = cgets("selcmd_" .. i)
     if id ~= "" then
       local cmd = reaper.NamedCommandLookup(id)
       if cmd and cmd ~= 0 then
-        reaper.SetToggleCommandState(0, cmd, i == cur and 1 or 0)
-        reaper.RefreshToolbar2(0, cmd)
+        reaper.SetToggleCommandState(SAK.section, cmd, i == cur and 1 or 0)
+        reaper.RefreshToolbar2(SAK.section, cmd)
       end
     end
   end
 end
 
 function SAK.set_current(i)
-  sets("current", i)
+  csets("current", i)
   SAK.sync_toggles()
 end
 
@@ -144,7 +169,7 @@ function SAK.register_self(key)
   local _, _, _, cmd = reaper.get_action_context()
   if cmd and cmd > 0 then
     local id = SAK.id_from_cmd(cmd)
-    if gets(key) ~= id then sets(key, id) end
+    if cgets(key) ~= id then csets(key, id) end
   end
 end
 
@@ -190,9 +215,19 @@ function SAK.run(which)
     return
   end
 
-  reaper.Undo_BeginBlock()
-  reaper.Main_OnCommand(cmd, 0)
-  reaper.Undo_EndBlock("SAK: " .. label, -1)
+  if SAK.context == "midi" then
+    if not reaper.MIDIEditor_GetActive() then
+      SAK.tooltip("SAK: open a MIDI editor first")
+      return
+    end
+    reaper.Undo_BeginBlock()
+    reaper.MIDIEditor_LastFocused_OnCommand(cmd, false)
+    reaper.Undo_EndBlock("SAK MIDI: " .. label, -1)
+  else
+    reaper.Undo_BeginBlock()
+    reaper.Main_OnCommand(cmd, 0)
+    reaper.Undo_EndBlock("SAK: " .. label, -1)
+  end
 
   if SAK.setting("tt_use", true) then SAK.tooltip("SAK: " .. label) end
 end

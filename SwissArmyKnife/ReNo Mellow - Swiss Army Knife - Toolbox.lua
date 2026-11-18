@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Swiss Army Knife
 -- @author ReNo Mellow
 -- @version 1.0
--- @about Un même raccourci, plusieurs outils : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Première version : toolbox (Tools / Setup), 24 outils, actions main / alt / alt2, Next / Previous / Select tool 01-24.
+-- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
+-- @changelog Première version : deux versions séparées, Arrange (section Main) et MIDI Editor (section MIDI Editor), chacune avec sa toolbox (Tools / Setup), 24 outils, actions main / alt / alt2, Next / Previous / Select tool 01-24 ; 64 icônes de barre d'outils (3 états).
 -- @provides
 --   [main] ReNo Mellow - Swiss Army Knife (alt).lua
 --   [main] ReNo Mellow - Swiss Army Knife (alt2).lua
@@ -33,509 +33,103 @@
 --   [main] ReNo Mellow - Swiss Army Knife - Select tool 23.lua
 --   [main] ReNo Mellow - Swiss Army Knife - Select tool 24.lua
 --   [main] ReNo Mellow - Swiss Army Knife.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt).lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt2).lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Next tool.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Previous tool.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 01.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 02.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 03.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 04.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 05.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 06.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 07.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 08.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 09.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 10.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 11.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 12.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 13.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 14.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 15.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 16.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 17.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 18.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 19.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 20.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 21.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 22.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 23.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 24.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Toolbox.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI.lua
 --   SAK_lib.lua
-local dir = ({reaper.get_action_context()})[2]:match("^(.*[/\\])")
-dofile(dir .. "SAK_lib.lua")
-
-if not reaper.ImGui_GetBuiltinPath then
-  reaper.MB("This script needs ReaImGui.\nInstall it with ReaPack (ReaTeam Extensions), then restart REAPER.",
-    "Swiss Army Knife", 0)
-  return
-end
-package.path = reaper.ImGui_GetBuiltinPath() .. "/?.lua"
-local ImGui = require "imgui" "0.9"
-
--- toolbar toggle on while open, re-launch closes the window
-if reaper.set_action_options then reaper.set_action_options(1 | 4) end
-local _, _, self_sec, self_cmd = reaper.get_action_context()
-local function set_self_toggle(on)
-  if self_cmd and self_cmd > 0 then
-    reaper.SetToggleCommandState(self_sec, self_cmd, on and 1 or 0)
-    reaper.RefreshToolbar2(self_sec, self_cmd)
-  end
-end
-set_self_toggle(true)
-
-SAK.ensure_init()
-
-local N = SAK.NSLOTS
-local ctx -- created after the start-up work (see bottom of file)
-
--- Modal dialogs (MB, file dialogs) must not run inside an ImGui frame:
--- they are queued and run after ImGui.End.
-local post = nil
-local function later(fn) post = fn end
-
----------------------------------------------------------------- colours (RRGGBBAA)
-local COL_TOOL     = 0x3C4148FF
-local COL_SELECTED = 0x2F7D4FFF
-local COL_ARM = { main = 0xB03A2EFF, alt = 0xC2671FFF, alt2 = 0x8E44ADFF }
-local COL_RED      = 0xE05555FF
-local COL_GREY     = 0x9A9A9AFF
-local COL_BORDER   = 0x7CF0A6FF
-
-local function lighten(c, a)
-  local r = math.min(255, ((c >> 24) & 255) + a)
-  local g = math.min(255, ((c >> 16) & 255) + a)
-  local b = math.min(255, ((c >> 8) & 255) + a)
-  return (r << 24) | (g << 16) | (b << 8) | (c & 255)
-end
-
----------------------------------------------------------------- state
-local tools = {}
-local function reload_tools()
-  for i = 1, N do tools[i] = SAK.get_tool(i) end
-end
-reload_tools()
-
-local sel_slot = SAK.get_current()
-local edit = {}
-local function load_edit(i)
-  local t = tools[i]
-  edit = { slot = i, name = t.name, main = t.main, alt = t.alt, alt2 = t.alt2 }
-end
-load_edit(sel_slot)
-
-local function save_edit()
-  SAK.set_tool(edit.slot, edit)
-  tools[edit.slot] = SAK.get_tool(edit.slot)
-end
-
-local picking = nil -- { slot = i, key = "main"/"alt"/"alt2" }
-
----------------------------------------------------------------- companion scripts
-local companions = {
-  { key = "cmd_main", file = "ReNo Mellow - Swiss Army Knife.lua" },
-  { key = "cmd_alt",  file = "ReNo Mellow - Swiss Army Knife (alt).lua" },
-  { key = "cmd_alt2", file = "ReNo Mellow - Swiss Army Knife (alt2).lua" },
-  { key = "cmd_next", file = "ReNo Mellow - Swiss Army Knife - Next tool.lua" },
-  { key = "cmd_prev", file = "ReNo Mellow - Swiss Army Knife - Previous tool.lua" },
-}
-for i = 1, N do
-  companions[#companions + 1] = { key = "selcmd_" .. i,
-    file = string.format("ReNo Mellow - Swiss Army Knife - Select tool %02d.lua", i) }
-end
-
-local function count_registered()
-  local n = 0
-  for _, c in ipairs(companions) do
-    local id = SAK.gets(c.key)
-    if id ~= "" and SAK.resolve(id) ~= 0 then n = n + 1 end
-  end
-  return n
-end
-
--- Adds the scripts to the Action List (Main section) if they are not there yet
-local function register_companions(force)
-  local todo = {}
-  for _, c in ipairs(companions) do
-    local path = dir .. c.file
-    local id = SAK.gets(c.key)
-    if reaper.file_exists(path) and (force or id == "" or SAK.resolve(id) == 0) then
-      todo[#todo + 1] = { key = c.key, path = path }
-    end
-  end
-  for k, c in ipairs(todo) do
-    local cmd = reaper.AddRemoveReaScript(true, 0, c.path, k == #todo)
-    if cmd and cmd > 0 then SAK.sets(c.key, SAK.id_from_cmd(cmd)) end
-  end
-end
-local n_registered = 0
-
----------------------------------------------------------------- action picker (Action List)
-local function start_pick(key)
-  if not reaper.PromptForAction then return end
-  picking = { slot = edit.slot, key = key }
-  reaper.PromptForAction(1, SAK.resolve(edit[key]), 0)
-end
-
-local function poll_pick()
-  if not picking then return end
-  local r = reaper.PromptForAction(0, 0, 0)
-  if r > 0 then
-    local id = SAK.id_from_cmd(r)
-    local t = tools[picking.slot]
-    t[picking.key] = id
-    SAK.set_tool(picking.slot, t)
-    tools[picking.slot] = SAK.get_tool(picking.slot)
-    if edit.slot == picking.slot then edit[picking.key] = id end
-    reaper.PromptForAction(-1, 0, 0)
-    picking = nil
-  elseif r < 0 then
-    reaper.PromptForAction(-1, 0, 0)
-    picking = nil
-  end
-end
-
-local function cancel_pick()
-  if picking then reaper.PromptForAction(-1, 0, 0) end
-  picking = nil
-end
-
----------------------------------------------------------------- arm
--- returns slot, key of the armed tool action (or nil), and the armed command
-local function armed_info()
-  local cmd = reaper.GetArmedCommand()
-  if not cmd or cmd == 0 then return nil, nil, 0 end
-  for i = 1, N do
-    for _, k in ipairs(SAK.KEYS) do
-      if tools[i][k] ~= "" and SAK.resolve(tools[i][k]) == cmd then return i, k, cmd end
-    end
-  end
-  return nil, nil, cmd
-end
-
----------------------------------------------------------------- slot operations
-local function swap_slots(a, b)
-  if b < 1 or b > N then return end
-  tools[a], tools[b] = tools[b], tools[a]
-  SAK.set_tool(a, tools[a]); SAK.set_tool(b, tools[b])
-  local cur = SAK.get_current()
-  if cur == a then SAK.set_current(b) elseif cur == b then SAK.set_current(a) end
-  sel_slot = b
-  load_edit(b)
-end
-
-local function duplicate_slot(a)
-  for i = 1, N do
-    if SAK.is_empty(i, tools[i]) then
-      local t = tools[a]
-      SAK.set_tool(i, { name = (t.name ~= "" and t.name or ("Tool " .. a)) .. " copy",
-        main = t.main, alt = t.alt, alt2 = t.alt2 })
-      tools[i] = SAK.get_tool(i)
-      sel_slot = i
-      load_edit(i)
-      return
-    end
-  end
-  reaper.MB("No empty slot left.", "Swiss Army Knife", 0)
-end
-
-local function clear_slot(a)
-  if reaper.MB("Clear slot " .. a .. " (" .. SAK.display_name(a, tools[a]) .. ")?",
-      "Swiss Army Knife", 4) ~= 6 then return end
-  SAK.set_tool(a, { name = "", main = "", alt = "", alt2 = "" })
-  tools[a] = SAK.get_tool(a)
-  load_edit(a)
-end
-
----------------------------------------------------------------- presets
-local function export_preset()
-  local path
-  if reaper.JS_Dialog_BrowseForSaveFile then
-    local rv, p = reaper.JS_Dialog_BrowseForSaveFile("Export Swiss Army Knife preset",
-      reaper.GetResourcePath(), "Swiss Army Knife preset.txt", "Text files (*.txt)\0*.txt\0\0")
-    if rv ~= 1 or p == "" then return end
-    path = p
-    if not path:lower():match("%.txt$") then path = path .. ".txt" end
-  else
-    local d = reaper.GetResourcePath() .. "/Data"
-    reaper.RecursiveCreateDirectory(d, 0)
-    path = d .. "/ReNoMellow_SAK_preset.txt"
-  end
-  local f = io.open(path, "w")
-  if not f then reaper.MB("Could not write:\n" .. path, "Swiss Army Knife", 0) return end
-  f:write("ReNoMellow_SAK_preset\t2\n")
-  for i = 1, N do
-    local t = tools[i]
-    f:write(table.concat({ i, t.name, t.main, t.alt, t.alt2 }, "\t"), "\n")
-  end
-  f:close()
-  reaper.MB("Preset exported to:\n" .. path, "Swiss Army Knife", 0)
-end
-
-local function import_preset()
-  local rv, path = reaper.GetUserFileNameForRead(reaper.GetResourcePath() .. "/", "Import Swiss Army Knife preset", "txt")
-  if not rv then return end
-  local f = io.open(path, "r")
-  if not f then return end
-  local data, ok = {}, false
-  for line in f:lines() do
-    line = line:gsub("\r$", "")
-    if line:match("^ReNoMellow_SAK_preset") then ok = true
-    else
-      local fields = {}
-      for v in (line .. "\t"):gmatch("([^\t]*)\t") do fields[#fields + 1] = v end
-      local i = tonumber(fields[1])
-      if i and i >= 1 and i <= N then
-        data[i] = { name = fields[2] or "", main = fields[3] or "", alt = fields[4] or "", alt2 = fields[5] or "" }
-      end
-    end
-  end
-  f:close()
-  if not ok then reaper.MB("This is not a Swiss Army Knife preset.", "Swiss Army Knife", 0) return end
-  for i = 1, N do SAK.set_tool(i, data[i] or { name = "", main = "", alt = "", alt2 = "" }) end
-  reload_tools()
-  load_edit(sel_slot)
-  SAK.sync_toggles()
-end
-
-local function reset_defaults()
-  if reaper.MB("Replace all tools with the default set?", "Swiss Army Knife", 4) ~= 6 then return end
-  SAK.load_defaults()
-  reload_tools()
-  sel_slot = 1
-  load_edit(1)
-  SAK.sync_toggles()
-end
-
----------------------------------------------------------------- tab 1 : tools
-local function action_desc(id)
-  if id == "" then return "(none)" end
-  return SAK.action_name(id) or ("not found: " .. id)
-end
-
-local function draw_tools()
-  local cur = SAK.get_current()
-  local armed_slot, armed_key, armed_cmd = armed_info()
-
-  local list = {}
-  for i = 1, N do if not SAK.is_empty(i, tools[i]) then list[#list + 1] = i end end
-  if #list == 0 then
-    ImGui.TextDisabled(ctx, "No tool defined. Create your tools in the Setup tab.")
-    return
-  end
-
-  local avail_w = ImGui.GetContentRegionAvail(ctx)
-  local sp = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemSpacing)
-  local min_w = 100
-  local cols = math.max(1, math.floor((avail_w + sp) / (min_w + sp)))
-  local bw = (avail_w - sp * (cols - 1)) / cols
-
-  local shift = ImGui.IsKeyDown(ctx, ImGui.Mod_Shift)
-  local ctrl  = ImGui.IsKeyDown(ctx, ImGui.Mod_Ctrl)
-
-  for k, i in ipairs(list) do
-    local t = tools[i]
-    if (k - 1) % cols ~= 0 then ImGui.SameLine(ctx) end
-
-    local col = (i == cur) and COL_SELECTED or COL_TOOL
-    if armed_slot == i then col = COL_ARM[armed_key] end
-    local border = (i == cur and armed_slot == i)
-
-    ImGui.PushStyleColor(ctx, ImGui.Col_Button, col)
-    ImGui.PushStyleColor(ctx, ImGui.Col_ButtonHovered, lighten(col, 25))
-    ImGui.PushStyleColor(ctx, ImGui.Col_ButtonActive, lighten(col, 45))
-    if border then
-      ImGui.PushStyleVar(ctx, ImGui.StyleVar_FrameBorderSize, 3)
-      ImGui.PushStyleColor(ctx, ImGui.Col_Border, COL_BORDER)
-    end
-
-    if ImGui.Button(ctx, SAK.display_name(i, t) .. "##tool" .. i, bw, 44) then
-      SAK.set_current(i)
-    end
-
-    if border then
-      ImGui.PopStyleColor(ctx)
-      ImGui.PopStyleVar(ctx)
-    end
-    ImGui.PopStyleColor(ctx, 3)
-
-    -- right-click : arm / disarm
-    if ImGui.IsItemClicked(ctx, ImGui.MouseButton_Right) then
-      if armed_slot == i then
-        reaper.ArmCommand(0, "")
-      else
-        local key = ctrl and "alt2" or (shift and "alt" or "main")
-        local cmd = SAK.resolve(t[key])
-        if cmd ~= 0 then reaper.ArmCommand(cmd, "") end
-      end
-    end
-
-    if ImGui.IsItemHovered(ctx) then
-      ImGui.SetTooltip(ctx, string.format(
-        "Slot %d\nMain:  %s\nAlt:   %s\nAlt 2: %s\n\nClick: select tool\nRight-click: arm main  (again: disarm)\nShift+right-click: arm alt\nCtrl+right-click: arm alt 2",
-        i, action_desc(t.main), action_desc(t.alt), action_desc(t.alt2)))
-    end
-  end
-
-  ImGui.Spacing(ctx)
-  ImGui.Separator(ctx)
-  local t = tools[cur]
-  ImGui.Text(ctx, "Current tool: " .. SAK.display_name(cur, t))
-  ImGui.TextColored(ctx, COL_GREY, "Main:  " .. action_desc(t.main))
-  ImGui.TextColored(ctx, COL_GREY, "Alt:   " .. action_desc(t.alt))
-  ImGui.TextColored(ctx, COL_GREY, "Alt 2: " .. action_desc(t.alt2))
-
-  if armed_cmd ~= 0 then
-    ImGui.Spacing(ctx)
-    local what
-    if armed_slot then
-      what = SAK.display_name(armed_slot, tools[armed_slot]) .. " (" .. SAK.LABELS[armed_key] .. ")"
-    else
-      what = SAK.action_name(tostring(armed_cmd)) or tostring(armed_cmd)
-    end
-    ImGui.TextColored(ctx, COL_RED, "ARMED: " .. what)
-    ImGui.SameLine(ctx)
-    if ImGui.SmallButton(ctx, "Disarm") then reaper.ArmCommand(0, "") end
-  end
-end
-
----------------------------------------------------------------- tab 2 : setup
-local function action_row(key)
-  ImGui.PushID(ctx, key)
-  ImGui.Text(ctx, SAK.LABELS[key] .. " action")
-  ImGui.SetNextItemWidth(ctx, -150)
-  local rv, v = ImGui.InputText(ctx, "##id", edit[key])
-  if rv then edit[key] = v; save_edit() end
-  if ImGui.IsItemDeactivatedAfterEdit(ctx) then
-    edit[key] = SAK.normalize_id(edit[key]); save_edit()
-  end
-  if ImGui.IsItemHovered(ctx) then
-    ImGui.SetTooltip(ctx, "Command ID: native (40012), SWS (_SWS_...), script (_RS...) or custom action (_hash)")
-  end
-  ImGui.SameLine(ctx)
-  ImGui.BeginDisabled(ctx, picking ~= nil or not reaper.PromptForAction)
-  if ImGui.Button(ctx, "Pick...") then start_pick(key) end
-  ImGui.EndDisabled(ctx)
-  ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, "Clear") then edit[key] = ""; save_edit() end
-
-  if edit[key] == "" then
-    ImGui.TextDisabled(ctx, "(none)")
-  else
-    local nm = SAK.action_name(edit[key])
-    if nm then ImGui.TextColored(ctx, COL_GREY, nm)
-    else ImGui.TextColored(ctx, COL_RED, "Action not found in the Main section") end
-  end
-  ImGui.Spacing(ctx)
-  ImGui.PopID(ctx)
-end
-
-local function draw_setup()
-  -- slot list
-  if ImGui.BeginChild(ctx, "slots", 190, 0, ImGui.ChildFlags_Border) then
-    local cur = SAK.get_current()
-    for i = 1, N do
-      local t = tools[i]
-      local label = string.format("%02d  %s", i, SAK.is_empty(i, t) and "-" or SAK.display_name(i, t))
-      if i == cur then ImGui.PushStyleColor(ctx, ImGui.Col_Text, 0x7CF0A6FF) end
-      if ImGui.Selectable(ctx, label .. "##slot" .. i, sel_slot == i) then
-        sel_slot = i
-        load_edit(i)
-      end
-      if i == cur then ImGui.PopStyleColor(ctx) end
-    end
-    ImGui.EndChild(ctx)
-  end
-
-  ImGui.SameLine(ctx)
-
-  if ImGui.BeginChild(ctx, "editor", 0, 0, ImGui.ChildFlags_Border) then
-    if edit.slot ~= sel_slot then load_edit(sel_slot) end
-
-    ImGui.Text(ctx, string.format("Slot %02d", edit.slot))
-    ImGui.SameLine(ctx)
-    ImGui.TextDisabled(ctx, "(script \"Select tool " .. string.format("%02d", edit.slot) .. "\")")
-    ImGui.SetNextItemWidth(ctx, -1)
-    local rv, v = ImGui.InputTextWithHint(ctx, "##name", "Tool name", edit.name)
-    if rv then edit.name = v; save_edit() end
-    ImGui.Spacing(ctx)
-
-    for _, k in ipairs(SAK.KEYS) do action_row(k) end
-
-    if picking then
-      ImGui.TextColored(ctx, COL_RED, "Choose an action in the Action List...")
-      ImGui.SameLine(ctx)
-      if ImGui.SmallButton(ctx, "Cancel") then cancel_pick() end
-    elseif not reaper.PromptForAction then
-      ImGui.TextDisabled(ctx, "\"Pick...\" needs a more recent REAPER: type the command ID instead.")
-    end
-
-    ImGui.Separator(ctx)
-    if ImGui.Button(ctx, "Move up") then swap_slots(edit.slot, edit.slot - 1) end
-    ImGui.SameLine(ctx)
-    if ImGui.Button(ctx, "Move down") then swap_slots(edit.slot, edit.slot + 1) end
-    ImGui.SameLine(ctx)
-    if ImGui.Button(ctx, "Duplicate") then local s = edit.slot; later(function() duplicate_slot(s) end) end
-    ImGui.SameLine(ctx)
-    if ImGui.Button(ctx, "Clear slot") then local s = edit.slot; later(function() clear_slot(s) end) end
-
-    ImGui.Spacing(ctx)
-    if ImGui.CollapsingHeader(ctx, "Settings") then
-      local c, b
-      c, b = ImGui.Checkbox(ctx, "Tooltip when the tool changes", SAK.setting("tt_change", true))
-      if c then SAK.set_setting("tt_change", b) end
-      c, b = ImGui.Checkbox(ctx, "Tooltip when a tool action is run", SAK.setting("tt_use", true))
-      if c then SAK.set_setting("tt_use", b) end
-      ImGui.SetNextItemWidth(ctx, 200)
-      local cd, d = ImGui.SliderDouble(ctx, "Tooltip duration", SAK.setting("tt_dur", 1.0), 0.3, 3.0, "%.1f s")
-      if cd then SAK.set_setting("tt_dur", string.format("%.2f", d)) end
-      if not reaper.set_action_options then
-        ImGui.TextColored(ctx, COL_RED, "Tooltips need REAPER 7.03 or newer.")
-      end
-    end
-
-    if ImGui.CollapsingHeader(ctx, "Presets") then
-      if ImGui.Button(ctx, "Export...") then later(export_preset) end
-      ImGui.SameLine(ctx)
-      if ImGui.Button(ctx, "Import...") then later(import_preset) end
-      ImGui.SameLine(ctx)
-      if ImGui.Button(ctx, "Reset to defaults") then later(reset_defaults) end
-    end
-
-    if ImGui.CollapsingHeader(ctx, "Scripts") then
-      ImGui.Text(ctx, string.format("Scripts in the Action List: %d / %d", n_registered, #companions))
-      if ImGui.Button(ctx, "Register scripts again") then
-        later(function()
-          register_companions(true)
-          SAK.sync_toggles()
-          n_registered = count_registered()
-        end)
-      end
-      ImGui.TextDisabled(ctx, "Assign shortcuts in the Action List to:")
-      ImGui.TextDisabled(ctx, "  ReNo Mellow - Swiss Army Knife  /  (alt)  /  (alt2)")
-      ImGui.TextDisabled(ctx, "  ... - Next tool / Previous tool / Select tool 01-24")
-    end
-
-    ImGui.EndChild(ctx)
-  end
-end
-
----------------------------------------------------------------- main loop
-local function loop()
-  poll_pick()
-
-  ImGui.SetNextWindowSize(ctx, 560, 420, ImGui.Cond_FirstUseEver)
-  local visible, open = ImGui.Begin(ctx, "Swiss Army Knife", true)
-  if visible then
-    if ImGui.BeginTabBar(ctx, "tabs") then
-      if ImGui.BeginTabItem(ctx, "Tools") then
-        draw_tools()
-        ImGui.EndTabItem(ctx)
-      end
-      if ImGui.BeginTabItem(ctx, "Setup") then
-        draw_setup()
-        ImGui.EndTabItem(ctx)
-      end
-      ImGui.EndTabBar(ctx)
-    end
-    ImGui.End(ctx)
-  end
-
-  if post then
-    local fn = post
-    post = nil
-    fn()
-  end
-
-  if open then reaper.defer(loop) end
-end
-
-reaper.atexit(function()
-  cancel_pick()
-  if reaper.set_action_options then reaper.set_action_options(8) end
-  set_self_toggle(false)
-end)
-
--- start-up: register the companion scripts first, then create the
--- ImGui context in a later cycle, right before the first frame
-reaper.defer(function()
-  register_companions(false)
-  SAK.sync_toggles()
-  n_registered = count_registered()
-  reaper.defer(function()
-    ctx = ImGui.CreateContext("ReNo Mellow - Swiss Army Knife")
-    loop()
-  end)
-end)
+--   SAK_toolbox.lua
+--   [data] Data/toolbar_icons/toolbar_sak_adhesive_tape.png > toolbar_icons/toolbar_sak_adhesive_tape.png
+--   [data] Data/toolbar_icons/toolbar_sak_align.png > toolbar_icons/toolbar_sak_align.png
+--   [data] Data/toolbar_icons/toolbar_sak_bounce.png > toolbar_icons/toolbar_sak_bounce.png
+--   [data] Data/toolbar_icons/toolbar_sak_broom.png > toolbar_icons/toolbar_sak_broom.png
+--   [data] Data/toolbar_icons/toolbar_sak_clamp.png > toolbar_icons/toolbar_sak_clamp.png
+--   [data] Data/toolbar_icons/toolbar_sak_color.png > toolbar_icons/toolbar_sak_color.png
+--   [data] Data/toolbar_icons/toolbar_sak_crane.png > toolbar_icons/toolbar_sak_crane.png
+--   [data] Data/toolbar_icons/toolbar_sak_crossfade.png > toolbar_icons/toolbar_sak_crossfade.png
+--   [data] Data/toolbar_icons/toolbar_sak_delete.png > toolbar_icons/toolbar_sak_delete.png
+--   [data] Data/toolbar_icons/toolbar_sak_drill.png > toolbar_icons/toolbar_sak_drill.png
+--   [data] Data/toolbar_icons/toolbar_sak_duplicate.png > toolbar_icons/toolbar_sak_duplicate.png
+--   [data] Data/toolbar_icons/toolbar_sak_dynamic_split.png > toolbar_icons/toolbar_sak_dynamic_split.png
+--   [data] Data/toolbar_icons/toolbar_sak_eraser.png > toolbar_icons/toolbar_sak_eraser.png
+--   [data] Data/toolbar_icons/toolbar_sak_explode_takes.png > toolbar_icons/toolbar_sak_explode_takes.png
+--   [data] Data/toolbar_icons/toolbar_sak_fade_in.png > toolbar_icons/toolbar_sak_fade_in.png
+--   [data] Data/toolbar_icons/toolbar_sak_fade_out.png > toolbar_icons/toolbar_sak_fade_out.png
+--   [data] Data/toolbar_icons/toolbar_sak_fill_gaps.png > toolbar_icons/toolbar_sak_fill_gaps.png
+--   [data] Data/toolbar_icons/toolbar_sak_gain.png > toolbar_icons/toolbar_sak_gain.png
+--   [data] Data/toolbar_icons/toolbar_sak_glue.png > toolbar_icons/toolbar_sak_glue.png
+--   [data] Data/toolbar_icons/toolbar_sak_glue_bottle.png > toolbar_icons/toolbar_sak_glue_bottle.png
+--   [data] Data/toolbar_icons/toolbar_sak_group.png > toolbar_icons/toolbar_sak_group.png
+--   [data] Data/toolbar_icons/toolbar_sak_hammer.png > toolbar_icons/toolbar_sak_hammer.png
+--   [data] Data/toolbar_icons/toolbar_sak_heal.png > toolbar_icons/toolbar_sak_heal.png
+--   [data] Data/toolbar_icons/toolbar_sak_knife.png > toolbar_icons/toolbar_sak_knife.png
+--   [data] Data/toolbar_icons/toolbar_sak_lock.png > toolbar_icons/toolbar_sak_lock.png
+--   [data] Data/toolbar_icons/toolbar_sak_loop.png > toolbar_icons/toolbar_sak_loop.png
+--   [data] Data/toolbar_icons/toolbar_sak_magnifier.png > toolbar_icons/toolbar_sak_magnifier.png
+--   [data] Data/toolbar_icons/toolbar_sak_marker.png > toolbar_icons/toolbar_sak_marker.png
+--   [data] Data/toolbar_icons/toolbar_sak_melodyne.png > toolbar_icons/toolbar_sak_melodyne.png
+--   [data] Data/toolbar_icons/toolbar_sak_mute.png > toolbar_icons/toolbar_sak_mute.png
+--   [data] Data/toolbar_icons/toolbar_sak_normalize.png > toolbar_icons/toolbar_sak_normalize.png
+--   [data] Data/toolbar_icons/toolbar_sak_nudge.png > toolbar_icons/toolbar_sak_nudge.png
+--   [data] Data/toolbar_icons/toolbar_sak_paint_roller.png > toolbar_icons/toolbar_sak_paint_roller.png
+--   [data] Data/toolbar_icons/toolbar_sak_paintbrush.png > toolbar_icons/toolbar_sak_paintbrush.png
+--   [data] Data/toolbar_icons/toolbar_sak_pencil.png > toolbar_icons/toolbar_sak_pencil.png
+--   [data] Data/toolbar_icons/toolbar_sak_phase.png > toolbar_icons/toolbar_sak_phase.png
+--   [data] Data/toolbar_icons/toolbar_sak_pitch.png > toolbar_icons/toolbar_sak_pitch.png
+--   [data] Data/toolbar_icons/toolbar_sak_playrate.png > toolbar_icons/toolbar_sak_playrate.png
+--   [data] Data/toolbar_icons/toolbar_sak_pliers.png > toolbar_icons/toolbar_sak_pliers.png
+--   [data] Data/toolbar_icons/toolbar_sak_preview.png > toolbar_icons/toolbar_sak_preview.png
+--   [data] Data/toolbar_icons/toolbar_sak_quantize.png > toolbar_icons/toolbar_sak_quantize.png
+--   [data] Data/toolbar_icons/toolbar_sak_razor.png > toolbar_icons/toolbar_sak_razor.png
+--   [data] Data/toolbar_icons/toolbar_sak_razor_blade.png > toolbar_icons/toolbar_sak_razor_blade.png
+--   [data] Data/toolbar_icons/toolbar_sak_rename.png > toolbar_icons/toolbar_sak_rename.png
+--   [data] Data/toolbar_icons/toolbar_sak_reverse.png > toolbar_icons/toolbar_sak_reverse.png
+--   [data] Data/toolbar_icons/toolbar_sak_ruler.png > toolbar_icons/toolbar_sak_ruler.png
+--   [data] Data/toolbar_icons/toolbar_sak_saw.png > toolbar_icons/toolbar_sak_saw.png
+--   [data] Data/toolbar_icons/toolbar_sak_scissors.png > toolbar_icons/toolbar_sak_scissors.png
+--   [data] Data/toolbar_icons/toolbar_sak_screwdriver.png > toolbar_icons/toolbar_sak_screwdriver.png
+--   [data] Data/toolbar_icons/toolbar_sak_slip.png > toolbar_icons/toolbar_sak_slip.png
+--   [data] Data/toolbar_icons/toolbar_sak_snap.png > toolbar_icons/toolbar_sak_snap.png
+--   [data] Data/toolbar_icons/toolbar_sak_snap_stretch.png > toolbar_icons/toolbar_sak_snap_stretch.png
+--   [data] Data/toolbar_icons/toolbar_sak_spirit_level.png > toolbar_icons/toolbar_sak_spirit_level.png
+--   [data] Data/toolbar_icons/toolbar_sak_split.png > toolbar_icons/toolbar_sak_split.png
+--   [data] Data/toolbar_icons/toolbar_sak_split_grid.png > toolbar_icons/toolbar_sak_split_grid.png
+--   [data] Data/toolbar_icons/toolbar_sak_split_xfade.png > toolbar_icons/toolbar_sak_split_xfade.png
+--   [data] Data/toolbar_icons/toolbar_sak_stapler.png > toolbar_icons/toolbar_sak_stapler.png
+--   [data] Data/toolbar_icons/toolbar_sak_stretch_marker.png > toolbar_icons/toolbar_sak_stretch_marker.png
+--   [data] Data/toolbar_icons/toolbar_sak_strip_silence.png > toolbar_icons/toolbar_sak_strip_silence.png
+--   [data] Data/toolbar_icons/toolbar_sak_tape_measure.png > toolbar_icons/toolbar_sak_tape_measure.png
+--   [data] Data/toolbar_icons/toolbar_sak_toolbox.png > toolbar_icons/toolbar_sak_toolbox.png
+--   [data] Data/toolbar_icons/toolbar_sak_trim.png > toolbar_icons/toolbar_sak_trim.png
+--   [data] Data/toolbar_icons/toolbar_sak_warp_grid.png > toolbar_icons/toolbar_sak_warp_grid.png
+--   [data] Data/toolbar_icons/toolbar_sak_wrench.png > toolbar_icons/toolbar_sak_wrench.png
+local SAK_dir = ({reaper.get_action_context()})[2]:match("^(.*[/\\])")
+SAK_ROOT = SAK_dir
+SAK_TB_CTX = "main"
+dofile(SAK_dir .. "SAK_toolbox.lua")
