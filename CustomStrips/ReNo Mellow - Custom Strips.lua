@@ -1,14 +1,14 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.2
--- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Nouvelle colonne Metering : type de mètre de piste par strip (peaks, RMS, LUFS-M, LUFS-S, désactivé)
+-- @version 1.3
+-- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
+-- @changelog Record input : ajout de Record output stereo / mono / MIDI ; nouvelle colonne Pan mode
 
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.2"
+local VERSION = "1.3"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -224,6 +224,33 @@ local function rec_input_options()
   for ch = 1, 16 do o[#o + 1] = { label = "MIDI: All inputs, channel " .. ch, value = MIDI_ALL + ch } end
   o[#o + 1] = { label = "MIDI: Virtual keyboard, all channels", value = MIDI_VKB }
   return o
+end
+
+-- record output modes (I_RECMODE)
+local REC_OUTS = {
+  { label = "Record output: stereo", value = 1 },
+  { label = "Record output: mono",   value = 5 },
+  { label = "Record output: MIDI",   value = 4 },
+}
+local OUTPUT_RECMODES = { [1] = true, [3] = true, [4] = true, [5] = true, [6] = true, [10] = true, [11] = true }
+
+local function rec_out_label(v)
+  for _, o in ipairs(REC_OUTS) do if o.value == v then return o.label end end
+  return ""
+end
+
+-- pan modes (I_PANMODE)
+local PAN_MODES = {
+  { label = "Project default",          v = -1 },
+  { label = "Stereo balance / mono pan", v = 3 },
+  { label = "Stereo pan",               v = 5 },
+  { label = "Dual pan",                 v = 6 },
+  { label = "Balance (classic 3.x)",    v = 0 },
+}
+local function pan_mode_label(v)
+  if v == nil then return "" end
+  for _, t in ipairs(PAN_MODES) do if t.v == v then return t.label end end
+  return "Mode " .. v
 end
 
 local function rec_input_label(v, opts)
@@ -480,7 +507,16 @@ local function apply_strip(s)
       if s.layout.mcp then reaper.GetSetMediaTrackInfo_String(tr, "P_MCP_LAYOUT", s.layout.mcp, true) end
     end
     -- 7 : record input
-    if s.recinput then reaper.SetMediaTrackInfo_Value(tr, "I_RECINPUT", s.recinput) end
+    if s.recout then
+      reaper.SetMediaTrackInfo_Value(tr, "I_RECMODE", s.recout)
+    elseif s.recinput then
+      reaper.SetMediaTrackInfo_Value(tr, "I_RECINPUT", s.recinput)
+      -- back to recording the input if the track was recording its output
+      local m = math.floor(reaper.GetMediaTrackInfo_Value(tr, "I_RECMODE"))
+      if OUTPUT_RECMODES[m] then reaper.SetMediaTrackInfo_Value(tr, "I_RECMODE", 0) end
+    end
+    -- 7a : pan mode
+    if s.panmode then reaper.SetMediaTrackInfo_Value(tr, "I_PANMODE", s.panmode) end
     -- 7b : metering type (other meter bits kept)
     if s.meter and s.meter.mode then
       local cur = math.floor(reaper.GetMediaTrackInfo_Value(tr, "I_VUMODE"))
@@ -617,7 +653,8 @@ local function describe(s)
   add("Colour", s.color and string.format("#%06X", s.color))
   add("Icon", s.icon and basename(s.icon))
   add("Layout", sum_layout(s.layout))
-  add("Record input", s.recinput and rec_input_label(s.recinput, REC_OPTS))
+  add("Record input", s.recout and rec_out_label(s.recout) or (s.recinput and rec_input_label(s.recinput, REC_OPTS)))
+  add("Pan mode", pan_mode_label(s.panmode))
   add("Metering", sum_meter(s.meter))
   add("FX chain", s.fxchain and basename(s.fxchain))
   add("Envelopes", sum_envs(s.envelopes))
@@ -869,11 +906,31 @@ local function draw_row(i, s)
   -- 7 record input
   ImGui.TableNextColumn(ctx)
   ImGui.SetNextItemWidth(ctx, -FLT_MIN)
-  local prev = s.recinput and rec_input_label(s.recinput, REC_OPTS) or "-"
+  local prev = (s.recout and rec_out_label(s.recout)) or (s.recinput and rec_input_label(s.recinput, REC_OPTS)) or "-"
   if ImGui.BeginCombo(ctx, "##rec", prev, ImGui.ComboFlags_HeightLarge) then
-    if ImGui.Selectable(ctx, "(ignore)", s.recinput == nil) then s.recinput = nil; mark() end
+    if ImGui.Selectable(ctx, "(ignore)", s.recinput == nil and s.recout == nil) then
+      s.recinput, s.recout = nil, nil; mark()
+    end
+    ImGui.SeparatorText(ctx, "Record output")
+    for _, o in ipairs(REC_OUTS) do
+      if ImGui.Selectable(ctx, o.label, s.recout == o.value) then s.recout, s.recinput = o.value, nil; mark() end
+    end
+    ImGui.SeparatorText(ctx, "Input")
     for _, o in ipairs(REC_OPTS) do
-      if ImGui.Selectable(ctx, o.label, s.recinput == o.value) then s.recinput = o.value; mark() end
+      if ImGui.Selectable(ctx, o.label, s.recout == nil and s.recinput == o.value) then
+        s.recinput, s.recout = o.value, nil; mark()
+      end
+    end
+    ImGui.EndCombo(ctx)
+  end
+
+  -- 7a pan mode
+  ImGui.TableNextColumn(ctx)
+  ImGui.SetNextItemWidth(ctx, -FLT_MIN)
+  if ImGui.BeginCombo(ctx, "##pan", s.panmode ~= nil and pan_mode_label(s.panmode) or "-") then
+    if ImGui.Selectable(ctx, "(ignore)", s.panmode == nil) then s.panmode = nil; mark() end
+    for _, t in ipairs(PAN_MODES) do
+      if ImGui.Selectable(ctx, t.label, s.panmode == t.v) then s.panmode = t.v; mark() end
     end
     ImGui.EndCombo(ctx)
   end
@@ -1012,7 +1069,7 @@ end
 
 local COLUMNS = {
   { "#", 24 }, { "Strip name *", 130 }, { "Track name", 110 }, { "Tag", 44 }, { "Colour", 52 },
-  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Metering", 120 }, { "FX chain", 130 },
+  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Pan mode", 130 }, { "Metering", 120 }, { "FX chain", 130 },
   { "Envelopes", 110 }, { "Item name", 110 }, { "Normalize", 130 }, { "Group", 130 }, { "", 100 },
 }
 
