@@ -1,18 +1,79 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.10
+-- @version 1.11
 -- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Icône de barre d'outils style TCP (ReNo_CustomStrips.png, 3 états, 100 / 150 / 200 %)
+-- @changelog 61 icônes de piste par tag (cs_tags_XXX.png) installées dans Data/track_icons ; les strips de base les utilisent
 -- @provides
 --   [data] Data/toolbar_icons/ReNo_CustomStrips.png > toolbar_icons/ReNo_CustomStrips.png
 --   [data] Data/toolbar_icons/150/ReNo_CustomStrips.png > toolbar_icons/150/ReNo_CustomStrips.png
 --   [data] Data/toolbar_icons/200/ReNo_CustomStrips.png > toolbar_icons/200/ReNo_CustomStrips.png
+--   [data] Data/track_icons/cs_tags_ACG.png > track_icons/cs_tags_ACG.png
+--   [data] Data/track_icons/cs_tags_AMB.png > track_icons/cs_tags_AMB.png
+--   [data] Data/track_icons/cs_tags_AUX.png > track_icons/cs_tags_AUX.png
+--   [data] Data/track_icons/cs_tags_BGV.png > track_icons/cs_tags_BGV.png
+--   [data] Data/track_icons/cs_tags_BOX.png > track_icons/cs_tags_BOX.png
+--   [data] Data/track_icons/cs_tags_BRA.png > track_icons/cs_tags_BRA.png
+--   [data] Data/track_icons/cs_tags_BSS.png > track_icons/cs_tags_BSS.png
+--   [data] Data/track_icons/cs_tags_BUS.png > track_icons/cs_tags_BUS.png
+--   [data] Data/track_icons/cs_tags_CHD.png > track_icons/cs_tags_CHD.png
+--   [data] Data/track_icons/cs_tags_CHO.png > track_icons/cs_tags_CHO.png
+--   [data] Data/track_icons/cs_tags_CLK.png > track_icons/cs_tags_CLK.png
+--   [data] Data/track_icons/cs_tags_CUE.png > track_icons/cs_tags_CUE.png
+--   [data] Data/track_icons/cs_tags_CYM.png > track_icons/cs_tags_CYM.png
+--   [data] Data/track_icons/cs_tags_DCA.png > track_icons/cs_tags_DCA.png
+--   [data] Data/track_icons/cs_tags_DIA.png > track_icons/cs_tags_DIA.png
+--   [data] Data/track_icons/cs_tags_DMX.png > track_icons/cs_tags_DMX.png
+--   [data] Data/track_icons/cs_tags_DRM.png > track_icons/cs_tags_DRM.png
+--   [data] Data/track_icons/cs_tags_FOK.png > track_icons/cs_tags_FOK.png
+--   [data] Data/track_icons/cs_tags_GLJ.png > track_icons/cs_tags_GLJ.png
+--   [data] Data/track_icons/cs_tags_GNG.png > track_icons/cs_tags_GNG.png
+--   [data] Data/track_icons/cs_tags_GON.png > track_icons/cs_tags_GON.png
+--   [data] Data/track_icons/cs_tags_GRP.png > track_icons/cs_tags_GRP.png
+--   [data] Data/track_icons/cs_tags_GTR.png > track_icons/cs_tags_GTR.png
+--   [data] Data/track_icons/cs_tags_HAR.png > track_icons/cs_tags_HAR.png
+--   [data] Data/track_icons/cs_tags_HH.png > track_icons/cs_tags_HH.png
+--   [data] Data/track_icons/cs_tags_IMG.png > track_icons/cs_tags_IMG.png
+--   [data] Data/track_icons/cs_tags_KEY.png > track_icons/cs_tags_KEY.png
+--   [data] Data/track_icons/cs_tags_KIK.png > track_icons/cs_tags_KIK.png
+--   [data] Data/track_icons/cs_tags_LDV.png > track_icons/cs_tags_LDV.png
+--   [data] Data/track_icons/cs_tags_LIS.png > track_icons/cs_tags_LIS.png
+--   [data] Data/track_icons/cs_tags_LYR.png > track_icons/cs_tags_LYR.png
+--   [data] Data/track_icons/cs_tags_MC.png > track_icons/cs_tags_MC.png
+--   [data] Data/track_icons/cs_tags_MID.png > track_icons/cs_tags_MID.png
+--   [data] Data/track_icons/cs_tags_MLR.png > track_icons/cs_tags_MLR.png
+--   [data] Data/track_icons/cs_tags_MSC.png > track_icons/cs_tags_MSC.png
+--   [data] Data/track_icons/cs_tags_MTX.png > track_icons/cs_tags_MTX.png
+--   [data] Data/track_icons/cs_tags_NY.png > track_icons/cs_tags_NY.png
+--   [data] Data/track_icons/cs_tags_OCT.png > track_icons/cs_tags_OCT.png
+--   [data] Data/track_icons/cs_tags_OHS.png > track_icons/cs_tags_OHS.png
+--   [data] Data/track_icons/cs_tags_ORC.png > track_icons/cs_tags_ORC.png
+--   [data] Data/track_icons/cs_tags_PAD.png > track_icons/cs_tags_PAD.png
+--   [data] Data/track_icons/cs_tags_PAR.png > track_icons/cs_tags_PAR.png
+--   [data] Data/track_icons/cs_tags_PLB.png > track_icons/cs_tags_PLB.png
+--   [data] Data/track_icons/cs_tags_PRC.png > track_icons/cs_tags_PRC.png
+--   [data] Data/track_icons/cs_tags_PRD.png > track_icons/cs_tags_PRD.png
+--   [data] Data/track_icons/cs_tags_ROO.png > track_icons/cs_tags_ROO.png
+--   [data] Data/track_icons/cs_tags_ROT.png > track_icons/cs_tags_ROT.png
+--   [data] Data/track_icons/cs_tags_SCR.png > track_icons/cs_tags_SCR.png
+--   [data] Data/track_icons/cs_tags_SFX.png > track_icons/cs_tags_SFX.png
+--   [data] Data/track_icons/cs_tags_SNR.png > track_icons/cs_tags_SNR.png
+--   [data] Data/track_icons/cs_tags_SNS.png > track_icons/cs_tags_SNS.png
+--   [data] Data/track_icons/cs_tags_STR.png > track_icons/cs_tags_STR.png
+--   [data] Data/track_icons/cs_tags_SUB.png > track_icons/cs_tags_SUB.png
+--   [data] Data/track_icons/cs_tags_TLK.png > track_icons/cs_tags_TLK.png
+--   [data] Data/track_icons/cs_tags_TMC.png > track_icons/cs_tags_TMC.png
+--   [data] Data/track_icons/cs_tags_TOM.png > track_icons/cs_tags_TOM.png
+--   [data] Data/track_icons/cs_tags_UHS.png > track_icons/cs_tags_UHS.png
+--   [data] Data/track_icons/cs_tags_VCA.png > track_icons/cs_tags_VCA.png
+--   [data] Data/track_icons/cs_tags_VID.png > track_icons/cs_tags_VID.png
+--   [data] Data/track_icons/cs_tags_VOC.png > track_icons/cs_tags_VOC.png
+--   [data] Data/track_icons/cs_tags_WOO.png > track_icons/cs_tags_WOO.png
 
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.10"
+local VERSION = "1.11"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -730,7 +791,9 @@ local function load_default_strips()
     for _, e in ipairs(names) do
       local nm, tag = e[1], e[2]
       if not have[nm] then
-        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, folder = fid }
+        local icon = tag ~= "" and ("cs_tags_" .. tag .. ".png") or nil
+        if icon and not reaper.file_exists(ICON_DIR .. "/" .. icon) then icon = nil end
+        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, icon = icon, folder = fid }
         added = added + 1
       end
     end
