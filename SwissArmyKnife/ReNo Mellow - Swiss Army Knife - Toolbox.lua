@@ -1,11 +1,12 @@
 -- @description ReNo Mellow - Swiss Army Knife
 -- @author ReNo Mellow
--- @version 1.3
+-- @version 1.4
 -- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Toolbox : tailles réglables par l'utilisateur (texte de la fenêtre, texte des outils, hauteur et largeur des boutons) dans Setup > Settings, bouton Default sizes ; tailles par défaut plus compactes.
+-- @changelog Nouveaux scripts Display (Arrange et MIDI) : petite bulle à placer ou docker où l'on veut, qui affiche l'outil actif (molette = outil précédent / suivant, double-clic = ouvrir la Toolbox, clic droit = options).
 -- @provides
 --   [main] ReNo Mellow - Swiss Army Knife (alt).lua
 --   [main] ReNo Mellow - Swiss Army Knife (alt2).lua
+--   [main] ReNo Mellow - Swiss Army Knife - Display.lua
 --   [main] ReNo Mellow - Swiss Army Knife - Next tool.lua
 --   [main] ReNo Mellow - Swiss Army Knife - Previous tool.lua
 --   [main] ReNo Mellow - Swiss Army Knife - Select tool 01.lua
@@ -35,6 +36,7 @@
 --   [main] ReNo Mellow - Swiss Army Knife.lua
 --   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt).lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt).lua
 --   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt2).lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt2).lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Display.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Display.lua
 --   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Next tool.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Next tool.lua
 --   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Previous tool.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Previous tool.lua
 --   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 01.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 01.lua
@@ -65,6 +67,7 @@
 --   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI.lua
 --   SAK_lib.lua
 --   SAK_toolbox.lua
+--   SAK_display.lua
 --   [data] Data/toolbar_icons/toolbar_sak_adhesive_tape.png > toolbar_icons/toolbar_sak_adhesive_tape.png
 --   [data] Data/toolbar_icons/toolbar_sak_align.png > toolbar_icons/toolbar_sak_align.png
 --   [data] Data/toolbar_icons/toolbar_sak_bounce.png > toolbar_icons/toolbar_sak_bounce.png
