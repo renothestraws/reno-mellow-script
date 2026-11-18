@@ -84,7 +84,8 @@ build("ReNo Mellow - Custom Strips", "ReNo_Mellow_Custom_Strips", header(main, "
 # --- Swiss Army Knife (versions Arrange + MIDI Editor) ------------
 d = os.path.join(ROOT, "SwissArmyKnife")
 main = os.path.join(d, "ReNo Mellow - Swiss Army Knife - Toolbox.lua")
-files = walk(d, BASE + "/SwissArmyKnife")
+files = [f for f in walk(d, BASE + "/SwissArmyKnife") if "/SwissArmyKnife/Data/" not in f[1]]
+files += walk(os.path.join(d, "Data"), "Data")          # icône du couteau suisse (bulle Display)
 build("ReNo Mellow - Swiss Army Knife", "ReNo_Mellow_SwissArmyKnife", header(main, "version"),
       header(main, "changelog"), files,
       no_reg=[BASE + "/SwissArmyKnife/SAK_lib.lua", BASE + "/SwissArmyKnife/SAK_toolbox.lua", BASE + "/SwissArmyKnife/SAK_display.lua", BASE + "/SwissArmyKnife/SAK_startup.lua",

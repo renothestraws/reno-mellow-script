@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Swiss Army Knife
 -- @author ReNo Mellow
--- @version 1.5
+-- @version 1.6
 -- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Display : fenêtre non dockable, qui se rouvre au même endroit au redémarrage de REAPER si elle était ouverte (bloc ajouté à Scripts/__startup.lua) ; icônes de barre d'outils retirées (remplacées par Display).
+-- @changelog Display : la bulle affiche à nouveau l'icône du couteau suisse (seule icône conservée : Data/toolbar_icons/toolbar_sak_swiss_army_knife.png).
 -- @provides
 --   [main] ReNo Mellow - Swiss Army Knife (alt).lua
 --   [main] ReNo Mellow - Swiss Army Knife (alt2).lua
@@ -69,6 +69,7 @@
 --   SAK_toolbox.lua
 --   SAK_display.lua
 --   SAK_startup.lua
+--   [data] Data/toolbar_icons/toolbar_sak_swiss_army_knife.png > toolbar_icons/toolbar_sak_swiss_army_knife.png
 local SAK_dir = ({reaper.get_action_context()})[2]:match("^(.*[/\\])")
 SAK_ROOT = SAK_dir
 SAK_TB_CTX = "main"
