@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Swiss Army Knife
 -- @author ReNo Mellow
--- @version 1.2
+-- @version 1.3
 -- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Toolbox : police plus grande, boutons d'outils plus grands avec taille au choix (Small / Medium / Large), option pour fermer la fenêtre après le choix d'un outil (réglages séparés pour Arrange et MIDI).
+-- @changelog Toolbox : tailles réglables par l'utilisateur (texte de la fenêtre, texte des outils, hauteur et largeur des boutons) dans Setup > Settings, bouton Default sizes ; tailles par défaut plus compactes.
 -- @provides
 --   [main] ReNo Mellow - Swiss Army Knife (alt).lua
 --   [main] ReNo Mellow - Swiss Army Knife (alt2).lua
