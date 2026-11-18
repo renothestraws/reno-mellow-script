@@ -286,6 +286,22 @@ local function reset_defaults()
   SAK.sync_toggles()
 end
 
+---------------------------------------------------------------- sizes, fonts, auto-close
+-- Per toolbox (Arrange / MIDI) settings
+local function tb_setting(k, default) return SAK.setting(k .. "_" .. TB_CTX, default) end
+local function tb_set(k, v) SAK.set_setting(k .. "_" .. TB_CTX, v) end
+
+-- tool button sizes: font size, button height, minimum button width
+local SIZES = {
+  { label = "Small",  font = 15, h = 44, w = 110 },
+  { label = "Medium", font = 19, h = 58, w = 140 },
+  { label = "Large",  font = 25, h = 76, w = 180 },
+}
+local font_ui, font_tool = nil, {}
+local close_request = false
+
+local function tool_size() return SIZES[math.floor(tb_setting("size", 2))] or SIZES[2] end
+
 ---------------------------------------------------------------- tab 1 : tools
 local function action_desc(id)
   if id == "" then return "(none)" end
@@ -305,13 +321,15 @@ local function draw_tools()
 
   local avail_w = ImGui.GetContentRegionAvail(ctx)
   local sp = ImGui.GetStyleVar(ctx, ImGui.StyleVar_ItemSpacing)
-  local min_w = 100
+  local size = tool_size()
+  local min_w = size.w
   local cols = math.max(1, math.floor((avail_w + sp) / (min_w + sp)))
   local bw = (avail_w - sp * (cols - 1)) / cols
 
   local shift = ImGui.IsKeyDown(ctx, ImGui.Mod_Shift)
   local ctrl  = ImGui.IsKeyDown(ctx, ImGui.Mod_Ctrl)
 
+  ImGui.PushFont(ctx, font_tool[math.floor(tb_setting("size", 2))] or font_tool[2])
   for k, i in ipairs(list) do
     local t = tools[i]
     if (k - 1) % cols ~= 0 then ImGui.SameLine(ctx) end
@@ -328,8 +346,9 @@ local function draw_tools()
       ImGui.PushStyleColor(ctx, ImGui.Col_Border, COL_BORDER)
     end
 
-    if ImGui.Button(ctx, SAK.display_name(i, t) .. "##tool" .. i, bw, 44) then
+    if ImGui.Button(ctx, SAK.display_name(i, t) .. "##tool" .. i, bw, size.h) then
       SAK.set_current(i)
+      if tb_setting("autoclose", false) then close_request = true end
     end
 
     if border then
@@ -355,6 +374,8 @@ local function draw_tools()
         i, action_desc(t.main), action_desc(t.alt), action_desc(t.alt2)))
     end
   end
+
+  ImGui.PopFont(ctx)
 
   ImGui.Spacing(ctx)
   ImGui.Separator(ctx)
@@ -471,6 +492,16 @@ local function draw_setup()
       if not reaper.set_action_options then
         ImGui.TextColored(ctx, COL_RED, "Tooltips need REAPER 7.03 or newer.")
       end
+      ImGui.Spacing(ctx)
+      ImGui.AlignTextToFramePadding(ctx)
+      ImGui.Text(ctx, "Tool buttons:")
+      local cur_size = math.floor(tb_setting("size", 2))
+      for n, sz in ipairs(SIZES) do
+        ImGui.SameLine(ctx)
+        if ImGui.RadioButton(ctx, sz.label, cur_size == n) then tb_set("size", n) end
+      end
+      c, b = ImGui.Checkbox(ctx, "Close the window after choosing a tool (Tools tab)", tb_setting("autoclose", false))
+      if c then tb_set("autoclose", b) end
     end
 
     if ImGui.CollapsingHeader(ctx, "Presets") then
@@ -504,7 +535,8 @@ end
 local function loop()
   poll_pick()
 
-  ImGui.SetNextWindowSize(ctx, 560, 420, ImGui.Cond_FirstUseEver)
+  ImGui.PushFont(ctx, font_ui)
+  ImGui.SetNextWindowSize(ctx, 760, 480, ImGui.Cond_FirstUseEver)
   local visible, open = ImGui.Begin(ctx, TB_CTX == "midi" and "Swiss Army Knife MIDI" or "Swiss Army Knife", true)
   if visible then
     if ImGui.BeginTabBar(ctx, "tabs") then
@@ -520,6 +552,9 @@ local function loop()
     end
     ImGui.End(ctx)
   end
+  ImGui.PopFont(ctx)
+
+  if close_request then open = false end
 
   if post then
     local fn = post
@@ -544,6 +579,12 @@ reaper.defer(function()
   n_registered, n_total = count_registered()
   reaper.defer(function()
     ctx = ImGui.CreateContext(TB_CTX == "midi" and "ReNo Mellow - Swiss Army Knife MIDI" or "ReNo Mellow - Swiss Army Knife")
+    font_ui = ImGui.CreateFont("sans-serif", 16)
+    ImGui.Attach(ctx, font_ui)
+    for n, sz in ipairs(SIZES) do
+      font_tool[n] = ImGui.CreateFont("sans-serif", sz.font)
+      ImGui.Attach(ctx, font_tool[n])
+    end
     loop()
   end)
 end)
