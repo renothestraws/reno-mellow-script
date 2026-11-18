@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Swiss Army Knife
 -- @author ReNo Mellow
--- @version 1.0
+-- @version 1.1
 -- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Première version : deux versions séparées, Arrange (section Main) et MIDI Editor (section MIDI Editor), chacune avec sa toolbox (Tools / Setup), 24 outils, actions main / alt / alt2, Next / Previous / Select tool 01-24 ; 68 icônes de barre d'outils 90 × 30 (3 états).
+-- @changelog 11 icônes pour l'éditeur MIDI (toolbar_sak_midi_* : split, pen, pedal, crop, move to cursor, quantize, duplicate, duplicate / split time selection, mute, glue), 79 icônes au total.
 -- @provides
 --   [main] ReNo Mellow - Swiss Army Knife (alt).lua
 --   [main] ReNo Mellow - Swiss Army Knife (alt2).lua
@@ -94,6 +94,17 @@
 --   [data] Data/toolbar_icons/toolbar_sak_magnifier.png > toolbar_icons/toolbar_sak_magnifier.png
 --   [data] Data/toolbar_icons/toolbar_sak_marker.png > toolbar_icons/toolbar_sak_marker.png
 --   [data] Data/toolbar_icons/toolbar_sak_melodyne.png > toolbar_icons/toolbar_sak_melodyne.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_crop.png > toolbar_icons/toolbar_sak_midi_crop.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_duplicate.png > toolbar_icons/toolbar_sak_midi_duplicate.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_duplicate_time_selection.png > toolbar_icons/toolbar_sak_midi_duplicate_time_selection.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_glue.png > toolbar_icons/toolbar_sak_midi_glue.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_move_to_cursor.png > toolbar_icons/toolbar_sak_midi_move_to_cursor.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_mute.png > toolbar_icons/toolbar_sak_midi_mute.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_pedal.png > toolbar_icons/toolbar_sak_midi_pedal.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_pen.png > toolbar_icons/toolbar_sak_midi_pen.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_quantize.png > toolbar_icons/toolbar_sak_midi_quantize.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_split.png > toolbar_icons/toolbar_sak_midi_split.png
+--   [data] Data/toolbar_icons/toolbar_sak_midi_split_time_selection.png > toolbar_icons/toolbar_sak_midi_split_time_selection.png
 --   [data] Data/toolbar_icons/toolbar_sak_mute.png > toolbar_icons/toolbar_sak_mute.png
 --   [data] Data/toolbar_icons/toolbar_sak_normalize.png > toolbar_icons/toolbar_sak_normalize.png
 --   [data] Data/toolbar_icons/toolbar_sak_nudge.png > toolbar_icons/toolbar_sak_nudge.png
