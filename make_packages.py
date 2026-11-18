@@ -79,7 +79,8 @@ build("ReNo Mellow - MIDI cleaner", "ReNo_Mellow_MIDI_cleaner", header(main, "ve
 # --- Custom Strips --------------------------------------------------------------
 main = os.path.join(ROOT, "CustomStrips", "ReNo Mellow - Custom Strips.lua")
 build("ReNo Mellow - Custom Strips", "ReNo_Mellow_Custom_Strips", header(main, "version"),
-      header(main, "changelog"), [(main, BASE + "/CustomStrips/ReNo Mellow - Custom Strips.lua")])
+      header(main, "changelog"), [(main, BASE + "/CustomStrips/ReNo Mellow - Custom Strips.lua")]
+      + walk(os.path.join(ROOT, "CustomStrips", "Data"), "Data"))          # icône de barre d'outils
 
 # --- Swiss Army Knife (versions Arrange + MIDI Editor) ------------
 d = os.path.join(ROOT, "SwissArmyKnife")
