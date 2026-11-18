@@ -133,17 +133,26 @@ local function draw_menu()
 end
 
 local function loop()
+  reaper.SetExtState(S, HB, tostring(reaper.time_precise()), false)
+  if reaper.GetExtState(S, QUIT) == "1" then
+    reaper.DeleteExtState(S, QUIT, false)
+    return -- closed by a new launch of the script
+  end
+  if close_request then return end
+
+  -- MIDI version: hidden while no MIDI editor is open (the script keeps running and
+  -- the bubble comes back, at the same place, as soon as a MIDI editor opens)
+  if CTX == "midi" and not reaper.MIDIEditor_GetActive() then
+    ImGui.GetFrameCount(ctx) -- keeps the ImGui context alive while nothing is drawn
+    reaper.defer(loop)
+    return
+  end
+
   local sz = text_size()
   ImGui.PushFont(ctx, fonts[sz])
   ImGui.PushStyleColor(ctx, ImGui.Col_WindowBg, COL_BG)
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowRounding, 8)
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowPadding, 12, 6)
-
-  reaper.SetExtState(S, HB, tostring(reaper.time_precise()), false)
-  if reaper.GetExtState(S, QUIT) == "1" then
-    reaper.DeleteExtState(S, QUIT, false)
-    close_request = true
-  end
 
   -- undock a window that was docked with version 1.4
   if first_frame then ImGui.SetNextWindowDockID(ctx, 0) first_frame = false end

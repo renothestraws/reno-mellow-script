@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Swiss Army Knife
 -- @author ReNo Mellow
--- @version 1.6
+-- @version 1.7
 -- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Display : la bulle affiche à nouveau l'icône du couteau suisse (seule icône conservée : Data/toolbar_icons/toolbar_sak_swiss_army_knife.png).
+-- @changelog Display MIDI : la bulle se cache quand aucun éditeur MIDI n'est ouvert et revient à sa place dès qu'un éditeur MIDI s'ouvre.
 -- @provides
 --   [main] ReNo Mellow - Swiss Army Knife (alt).lua
 --   [main] ReNo Mellow - Swiss Army Knife (alt2).lua
