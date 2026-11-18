@@ -9,7 +9,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 |---|---|
 | **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils |
 | **ReNo Mellow - Custom Strips** | Fenêtre de « custom strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC], couleur, icône, layouts TCP/MCP, entrée d'enregistrement, FX chain ajoutée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée |
-| **ReNo Mellow - Swiss Army Knife** | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et W / Shift+W / Ctrl+W lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, 24 outils, Next / Previous / Select tool 01-24. |
+| **ReNo Mellow - Swiss Army Knife** | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et W / Shift+W / Ctrl+W lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, sa bulle Display qui affiche l'outil actif, 24 outils, Next / Previous tool. |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
@@ -38,7 +38,7 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 - Onglet **Setup** : 24 emplacements, chacun avec un nom et trois actions (main, alt, alt 2), tapées (ID) ou choisies
   dans la liste d'actions (**Pick...**) ; monter, descendre, dupliquer, vider ; infobulles ; export / import de presets.
 - Raccourcis à assigner : **ReNo Mellow - Swiss Army Knife**, **(alt)** et **(alt2)** (par exemple W, Shift+W, Ctrl+W).
-  Scripts **Next tool**, **Previous tool** et **Select tool 01** à **24** (état allumé sur l'outil actif, pour les barres d'outils).
+  Scripts **Next tool** et **Previous tool** pour changer d'outil au clavier.
 - **Display** (et **Display MIDI**) : petite bulle à placer où l'on veut qui affiche le nom de l'outil actif ;
   molette = outil précédent / suivant, double-clic = ouvrir la Toolbox, clic droit = taille du texte, icône, fermer.
   Une bulle ouverte se rouvre au même endroit au démarrage de REAPER (un petit bloc est ajouté à `Scripts/__startup.lua`).
