@@ -15,8 +15,8 @@ end
 package.path = reaper.ImGui_GetBuiltinPath() .. "/?.lua"
 local ImGui = require "imgui" "0.9"
 
--- toolbar toggle on while open, re-launch closes the window
-if reaper.set_action_options then reaper.set_action_options(1 | 4) end
+-- toolbar toggle on while open; launching it again closes it
+if reaper.set_action_options then reaper.set_action_options(1 | 2 | 4) end
 local _, _, self_sec, self_cmd = reaper.get_action_context()
 local function set_self_toggle(on)
   if self_cmd and self_cmd > 0 then
@@ -29,7 +29,48 @@ set_self_toggle(true)
 SAK.set_context(SAK_TB_CTX or "main")
 SAK.ensure_init()
 local CTX = SAK.context
-SAK.register_self("cmd_display")
+if self_sec == SAK.section then SAK.register_self("cmd_display") end
+
+-- Open / close handshake. The running window writes a heartbeat (not saved) every frame.
+-- A launch that finds a fresh heartbeat is a "close" request: it tells the running
+-- window to close and stops. "disp_wanted" (saved) remembers whether the window is open,
+-- so SAK_startup.lua can reopen it when REAPER starts.
+local S = "ReNoMellow_SAK"
+local HB, QUIT = "disp_hb_" .. CTX, "disp_quit_" .. CTX
+local hb = tonumber(reaper.GetExtState(S, HB))
+if hb and reaper.time_precise() - hb < 1.0 then
+  reaper.SetExtState(S, QUIT, "1", false)
+  SAK.csets("disp_wanted", "0")
+  if reaper.set_action_options then reaper.set_action_options(8) end
+  set_self_toggle(false)
+  return
+end
+reaper.DeleteExtState(S, QUIT, false)
+SAK.csets("disp_wanted", "1")
+
+-- Adds (once) a small block to Scripts/__startup.lua that reopens the Display windows
+-- when REAPER starts. The block only runs SAK_startup.lua if it still exists.
+local function ensure_startup_hook()
+  local sp = reaper.GetResourcePath() .. "/Scripts/__startup.lua"
+  local target = dir .. "SAK_startup.lua"
+  local block = "-- >>> ReNo Mellow Swiss Army Knife (reopens the Display windows)\n"
+    .. "do local f = [[" .. target .. "]]; if reaper.file_exists(f) then dofile(f) end end\n"
+    .. "-- <<< ReNo Mellow Swiss Army Knife\n"
+  local cur = ""
+  local fh = io.open(sp, "r")
+  if fh then cur = fh:read("a") or ""; fh:close() end
+  if cur:find(block, 1, true) then return end
+  local a, b = cur:find("%-%- >>> ReNo Mellow Swiss Army Knife.-%-%- <<< ReNo Mellow Swiss Army Knife\n?")
+  if a then
+    cur = cur:sub(1, a - 1) .. block .. cur:sub(b + 1)
+  else
+    if cur ~= "" and not cur:match("\n$") then cur = cur .. "\n" end
+    cur = cur .. block
+  end
+  fh = io.open(sp, "w")
+  if fh then fh:write(cur); fh:close() end
+end
+ensure_startup_hook()
 
 local function opt(k, default) return SAK.setting("disp_" .. k .. "_" .. CTX, default) end
 local function set_opt(k, v) SAK.set_setting("disp_" .. k .. "_" .. CTX, v) end
@@ -43,8 +84,8 @@ local COL_LABEL  = 0x9A9A9AFF
 local ctx
 local fonts = {}
 local icon = nil
-local dock_request = nil -- nil, "dock" or "undock"
 local close_request = false
+local first_frame = true
 
 local function text_size()
   return math.max(FONT_MIN, math.min(FONT_MAX, math.floor(opt("font", 16))))
@@ -85,12 +126,10 @@ local function draw_menu()
     local ci, b = ImGui.Checkbox(ctx, "Show icon", opt("icon", true))
     if ci then set_opt("icon", b) end
     ImGui.Separator(ctx)
-    if ImGui.IsWindowDocked(ctx) then
-      if ImGui.MenuItem(ctx, "Undock") then dock_request = "undock" end
-    else
-      if ImGui.MenuItem(ctx, "Dock in a REAPER docker") then dock_request = "dock" end
+    if ImGui.MenuItem(ctx, "Close") then
+      SAK.csets("disp_wanted", "0")
+      close_request = true
     end
-    if ImGui.MenuItem(ctx, "Close") then close_request = true end
     ImGui.EndPopup(ctx)
   end
 end
@@ -102,13 +141,18 @@ local function loop()
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowRounding, 8)
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowPadding, 12, 6)
 
-  if dock_request == "dock" then ImGui.SetNextWindowDockID(ctx, -1)
-  elseif dock_request == "undock" then ImGui.SetNextWindowDockID(ctx, 0) end
-  dock_request = nil
+  reaper.SetExtState(S, HB, tostring(reaper.time_precise()), false)
+  if reaper.GetExtState(S, QUIT) == "1" then
+    reaper.DeleteExtState(S, QUIT, false)
+    close_request = true
+  end
+
+  -- undock a window that was docked with version 1.4
+  if first_frame then ImGui.SetNextWindowDockID(ctx, 0) first_frame = false end
 
   local flags = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoScrollbar
     | ImGui.WindowFlags_NoScrollWithMouse | ImGui.WindowFlags_NoCollapse
-    | ImGui.WindowFlags_AlwaysAutoResize
+    | ImGui.WindowFlags_AlwaysAutoResize | ImGui.WindowFlags_NoDocking
   local title = (CTX == "midi") and "SAK MIDI - Active tool" or "SAK - Active tool"
   local visible, open = ImGui.Begin(ctx, title, true, flags)
   if visible then
@@ -142,7 +186,7 @@ local function loop()
       if ImGui.IsMouseDoubleClicked(ctx, ImGui.MouseButton_Left) then open_toolbox() end
       local wheel = ImGui.GetMouseWheel(ctx)
       if wheel and wheel ~= 0 then step(wheel > 0 and -1 or 1) end
-      ImGui.SetTooltip(ctx, "Double-click: open the Toolbox\nMouse wheel: previous / next tool\nRight-click: options")
+      ImGui.SetTooltip(ctx, "Double-click: open the Toolbox\nMouse wheel: previous / next tool\nRight-click: options\nDrag: move")
     end
 
     draw_menu()

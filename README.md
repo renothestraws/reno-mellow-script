@@ -39,8 +39,9 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
   dans la liste d'actions (**Pick...**) ; monter, descendre, dupliquer, vider ; infobulles ; export / import de presets.
 - Raccourcis à assigner : **ReNo Mellow - Swiss Army Knife**, **(alt)** et **(alt2)** (par exemple W, Shift+W, Ctrl+W).
   Scripts **Next tool**, **Previous tool** et **Select tool 01** à **24** (état allumé sur l'outil actif, pour les barres d'outils).
-- **Display** (et **Display MIDI**) : petite bulle à placer où l'on veut (ou à docker, clic droit > Dock) qui affiche
-  le nom de l'outil actif ; molette = outil précédent / suivant, double-clic = ouvrir la Toolbox, clic droit = taille du texte, icône, dock.
+- **Display** (et **Display MIDI**) : petite bulle à placer où l'on veut qui affiche le nom de l'outil actif ;
+  molette = outil précédent / suivant, double-clic = ouvrir la Toolbox, clic droit = taille du texte, icône, fermer.
+  Une bulle ouverte se rouvre au même endroit au démarrage de REAPER (un petit bloc est ajouté à `Scripts/__startup.lua`).
 - **Version éditeur MIDI** : les mêmes scripts suffixés **MIDI**, dans la section MIDI Editor de la liste d'actions,
   avec leur propre toolbox et leurs 24 outils.
 - Icônes : clic droit sur une barre d'outils > Customize toolbar > Choose icon, puis une icône `toolbar_sak_...`.

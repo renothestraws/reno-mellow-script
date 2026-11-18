@@ -6,7 +6,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Fen\u234?tre \u224? 2 onglets : appliquer ses \u171? custom strips \u187? favoris aux pistes s\u233?lectionn\u233?es (nom, tag, couleur, ic\u244?ne, layout, entr\u233?e, FX chain, enveloppes, items, normalisation, groupe) et les configurer. N\u233?cessite ReaImGui.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.1" author="ReNo Mellow" time="2026-11-18T05:03:44Z">
+      <version name="1.1" author="ReNo Mellow" time="2026-11-18T05:11:22Z">
         <changelog><![CDATA[Première publication : fenêtre Strips / Setup, Browse ouvert directement sur track_icons et FXChains]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/CustomStrips/ReNo%20Mellow%20-%20Custom%20Strips.lua</source>
       </version>
@@ -18,7 +18,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Nettoie les items MIDI s\u233?lectionn\u233?s : supprime les SysEx, les Program Change, le pitch bend et tous les CC sauf CC4 (foot controller), CC11 (expression) et CC64 (sustain) ; passe tous les \u233?v\u233?nements restants sur le canal MIDI 1 ; r\u232?gle le timebase de l'item sur "Beats (position, length, rate)".}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.1" author="ReNo Mellow" time="2026-11-18T05:03:44Z">
+      <version name="1.1" author="ReNo Mellow" time="2026-11-18T05:11:22Z">
         <changelog><![CDATA[Suppression des messages SysEx]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/MIDI/ReNo%20Mellow%20-%20MIDI%20cleaner.lua</source>
       </version>
@@ -30,7 +30,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Setlist de sc\u232?ne pour lancer les backing tracks : une chanson = une r\u233?gion m\u232?re. Liste des r\u233?gions r\u233?ordonnable par glisser-d\u233?poser avec renum\u233?rotation des IDs (r\u233?gions filles = ID m\u232?re x 100 + n), sets de r\u233?gions, gros bouton Play/Stop, Previous / Next, Live loop, Metronome, Count-in, Auto stop, Smooth seek, export txt. Contr\u244?le \u224? distance depuis un t\u233?l\u233?phone (REABACK.html) et prompteur de paroles / accords pour tablette (Reaback-prompter.html) via l'interface web de REAPER. Fournit aussi le project template ReaBack et les ic\u244?nes de barre d'outils. N\u233?cessite l'extension ReaImGui (ReaPack > ReaTeam Extensions) ; SWS conseill\u233?e, js_ReaScriptAPI optionnelle.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.2" author="ReNo Mellow" time="2026-11-18T05:03:44Z">
+      <version name="1.2" author="ReNo Mellow" time="2026-11-18T05:11:22Z">
         <changelog><![CDATA[Icônes de barre d'outils allumées / éteintes selon l'état : fenêtres REABACK, Set up et prompter allumées tant qu'elles sont ouvertes ; Play/Stop allumé pendant la lecture, Live loop allumé quand la boucle est active (mis à jour en continu tant que la fenêtre REABACK est ouverte) ; Stop, Previous et Next restent éteints (actions ponctuelles)]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/REABACK/Scripts/REABACK.lua</source>
         <source main="main" file="REABACK_PlayStop.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/REABACK/Scripts/REABACK_PlayStop.lua</source>
@@ -76,7 +76,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 S\u233?paration de stems par IA en local, inspir\u233?e du Stem Splitter de Logic Pro. Stems : voix, batterie, basse, guitare, piano, autres (6 ou 4 stems). Drums : batterie d\u233?coup\u233?e en kick, snare, toms, cymbales (4, 5 ou 6 pi\u232?ces). N\u233?cessite Python 3.10 \u224? 3.13 ; le moteur (environ 1,5 Go, 4,5 Go avec GPU NVIDIA) s'installe une seule fois via le bouton Install engine, puis tout fonctionne hors ligne.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.10" author="ReNo Mellow" time="2026-11-18T05:03:44Z">
+      <version name="1.10" author="ReNo Mellow" time="2026-11-18T05:11:22Z">
         <changelog><![CDATA[Fenêtre d'installation : commande d'installation de Python 3.12 adaptée au système (Windows, macOS, Linux) avec bouton Copy, et rappel de redémarrer REAPER après l'installation de Python]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/ReNo%20StemSplit%20-%20Stems.lua</source>
         <source main="main" file="ReNo StemSplit - Drums.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/ReNo%20StemSplit%20-%20Drums.lua</source>
@@ -93,8 +93,8 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Un m\u234?me raccourci, plusieurs outils, dans l'arrangement et dans l'\u233?diteur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.4" author="ReNo Mellow" time="2026-11-18T05:03:44Z">
-        <changelog><![CDATA[Nouveaux scripts Display (Arrange et MIDI) : petite bulle à placer ou docker où l'on veut, qui affiche l'outil actif (molette = outil précédent / suivant, double-clic = ouvrir la Toolbox, clic droit = options).]]></changelog>
+      <version name="1.5" author="ReNo Mellow" time="2026-11-18T05:11:22Z">
+        <changelog><![CDATA[Display : fenêtre non dockable, qui se rouvre au même endroit au redémarrage de REAPER si elle était ouverte (bloc ajouté à Scripts/__startup.lua).]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/ReNo%20Mellow%20-%20Swiss%20Army%20Knife%20-%20Toolbox.lua</source>
         <source main="main" file="ReNo Mellow - Swiss Army Knife (alt).lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/ReNo%20Mellow%20-%20Swiss%20Army%20Knife%20%28alt%29.lua</source>
         <source main="main" file="ReNo Mellow - Swiss Army Knife (alt2).lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/ReNo%20Mellow%20-%20Swiss%20Army%20Knife%20%28alt2%29.lua</source>
@@ -160,6 +160,7 @@
         <source file="SAK_lib.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/SAK_lib.lua</source>
         <source file="SAK_toolbox.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/SAK_toolbox.lua</source>
         <source file="SAK_display.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/SAK_display.lua</source>
+        <source file="SAK_startup.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/SAK_startup.lua</source>
         <source type="data" file="toolbar_icons/toolbar_sak_adhesive_tape.png">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/Data/toolbar_icons/toolbar_sak_adhesive_tape.png</source>
         <source type="data" file="toolbar_icons/toolbar_sak_align.png">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/Data/toolbar_icons/toolbar_sak_align.png</source>
         <source type="data" file="toolbar_icons/toolbar_sak_bounce.png">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/SwissArmyKnife/Data/toolbar_icons/toolbar_sak_bounce.png</source>

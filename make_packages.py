@@ -88,5 +88,5 @@ files = [f for f in walk(d, BASE + "/SwissArmyKnife") if "/SwissArmyKnife/Data/"
 files += walk(os.path.join(d, "Data"), "Data")
 build("ReNo Mellow - Swiss Army Knife", "ReNo_Mellow_SwissArmyKnife", header(main, "version"),
       header(main, "changelog"), files,
-      no_reg=[BASE + "/SwissArmyKnife/SAK_lib.lua", BASE + "/SwissArmyKnife/SAK_toolbox.lua", BASE + "/SwissArmyKnife/SAK_display.lua",
+      no_reg=[BASE + "/SwissArmyKnife/SAK_lib.lua", BASE + "/SwissArmyKnife/SAK_toolbox.lua", BASE + "/SwissArmyKnife/SAK_display.lua", BASE + "/SwissArmyKnife/SAK_startup.lua",
               BASE + "/SwissArmyKnife/MIDI/*"])
