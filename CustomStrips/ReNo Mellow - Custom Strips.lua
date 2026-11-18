@@ -1,8 +1,8 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.13
+-- @version 1.14
 -- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Strips de base : normalisation activée (-15 dBFS Peak, tous les items ensemble)
+-- @changelog Onglet Setup : multisélection des strips (clic sur #, Ctrl, Shift) ; une modification dans une ligne sélectionnée s'applique à toutes
 -- @provides
 --   [data] Data/toolbar_icons/ReNo_CustomStrips.png > toolbar_icons/ReNo_CustomStrips.png
 --   [data] Data/toolbar_icons/150/ReNo_CustomStrips.png > toolbar_icons/150/ReNo_CustomStrips.png
@@ -73,7 +73,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.13"
+local VERSION = "1.14"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -1101,15 +1101,77 @@ local function propagate(i, key, old, new)
   return n
 end
 
+-- multi-selection in the Setup table (set of strip tables, survives reordering)
+local sel_rows, sel_anchor = {}, nil
+
+local function count_selected()
+  local n = 0
+  for _, st in ipairs(strips) do if sel_rows[st] then n = n + 1 end end
+  return n
+end
+
+local function deep_equal(a, b)
+  if a == b then return true end
+  if type(a) ~= "table" or type(b) ~= "table" then return false end
+  for k, v in pairs(a) do if not deep_equal(v, b[k]) then return false end end
+  for k in pairs(b) do if a[k] == nil then return false end end
+  return true
+end
+
+-- copies every changed setting (except the strip name) of row i to the other selected rows
+local function spread_changes(i, before)
+  local s = strips[i]
+  if not sel_rows[s] or count_selected() < 2 then return end
+  local keys = {}
+  for k in pairs(before) do keys[k] = true end
+  for k in pairs(s) do keys[k] = true end
+  for k in pairs(keys) do
+    if k ~= "name" and not deep_equal(before[k], s[k]) then
+      for _, o in ipairs(strips) do
+        if o ~= s and sel_rows[o] then o[k] = copy(s[k]) end
+      end
+    end
+  end
+end
+
+local function row_select_click(i)
+  local s = strips[i]
+  local mods = ImGui.GetKeyMods(ctx)
+  local ctrl = (mods & ImGui.Mod_Ctrl) ~= 0 or (mods & ImGui.Mod_Super) ~= 0
+  local shift = (mods & ImGui.Mod_Shift) ~= 0
+  if shift and sel_anchor then
+    local a
+    for j, st in ipairs(strips) do if st == sel_anchor then a = j end end
+    if a then
+      if not ctrl then sel_rows = {} end
+      for j = math.min(a, i), math.max(a, i) do sel_rows[strips[j]] = true end
+      return
+    end
+  end
+  if ctrl then
+    sel_rows[s] = not sel_rows[s] or nil
+  elseif sel_rows[s] and count_selected() == 1 then
+    sel_rows = {}
+  else
+    sel_rows = { [s] = true }
+  end
+  sel_anchor = s
+end
+
 local function draw_row(i, s)
   ImGui.TableNextRow(ctx)
-  if scroll_row == i then
+  if sel_rows[s] then
+    ImGui.TableSetBgColor(ctx, ImGui.TableBgTarget_RowBg1, 0x4A7FC0A0)
+  elseif scroll_row == i then
     ImGui.TableSetBgColor(ctx, ImGui.TableBgTarget_RowBg1, 0x3A6EA580)
   end
 
-  -- #
+  -- # (click = select, Ctrl+click = add / remove, Shift+click = range)
   ImGui.TableNextColumn(ctx)
-  ImGui.Text(ctx, tostring(i))
+  if ImGui.Selectable(ctx, tostring(i) .. "##sel", sel_rows[s] == true) then row_select_click(i) end
+  if ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal) then
+    ImGui.SetTooltip(ctx, "Click: select this strip\nCtrl+click: add / remove\nShift+click: select a range\nA change in a selected row goes to all selected rows (except the strip name).")
+  end
   if scroll_row == i and goto_setup == "scroll" then ImGui.SetScrollHereY(ctx, 0.5); goto_setup = false end
 
   -- 1 strip name (required)
@@ -1542,7 +1604,14 @@ local function draw_setup_tab()
   ImGui.SameLine(ctx)
   draw_export_import_buttons()
   ImGui.SameLine(ctx)
-  ImGui.TextDisabled(ctx, "Only the strip name is required. An empty cell is ignored when the strip is applied.")
+  local nsel = count_selected()
+  if nsel > 1 then
+    ImGui.TextColored(ctx, 0x7FB2F0FF, nsel .. " strips selected: a change in one of them goes to all (except the name).")
+    ImGui.SameLine(ctx)
+    if ImGui.SmallButton(ctx, "Clear selection") then sel_rows = {} end
+  else
+    ImGui.TextDisabled(ctx, "Click # to select, Ctrl / Shift for several. An empty cell is ignored. Only the name is required.")
+  end
 
   local flags = ImGui.TableFlags_Borders | ImGui.TableFlags_RowBg | ImGui.TableFlags_ScrollX |
                 ImGui.TableFlags_ScrollY | ImGui.TableFlags_Resizable | ImGui.TableFlags_SizingFixedFit
@@ -1555,7 +1624,9 @@ local function draw_setup_tab()
     ImGui.TableHeadersRow(ctx)
     for i, s in ipairs(strips) do
       ImGui.PushID(ctx, i)
+      local before = sel_rows[s] and copy(s) or nil
       draw_row(i, s)
+      if before then spread_changes(i, before) end
       ImGui.PopID(ctx)
     end
     ImGui.EndTable(ctx)
