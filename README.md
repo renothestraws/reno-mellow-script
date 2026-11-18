@@ -56,6 +56,7 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 - Normalisation par strip : LUFS-I, RMS, Peak ou True peak, chaque item à la cible ou tous ensemble (gain commun).
 - **Strips de base** : 164 strips (batterie, percussions, basse, guitares, claviers, cordes, vents, cuivres, chœur, voix, divers…) rangés en 15 dossiers, créés au premier lancement ; le bouton **Load default strips** (onglet Setup) rajoute ceux qui manquent sans toucher aux autres.
 - Les strips sont enregistrés dans `Data/ReNo_CustomStrips/strips.lua`.
+- **Export / Import** (onglet Setup) : sauver tous les strips ou un seul dossier dans un fichier `.rnstrips` (par défaut dans `Data/ReNo_CustomStrips/Exports`), puis le recharger en ajout (dossiers de même nom fusionnés, doublons ignorés) ou en remplacement.
 
 **Extensions :** ReaImGui (obligatoire), js_ReaScriptAPI (optionnelle, filtre des fenêtres de choix de fichiers).
 
