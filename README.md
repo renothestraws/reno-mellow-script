@@ -59,6 +59,8 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 - Les strips sont enregistrés dans `Data/ReNo_CustomStrips/strips.lua`.
 - **Export / Import** (onglet Setup) : sauver tous les strips ou un seul dossier dans un fichier `.rnstrips` (par défaut dans `Data/ReNo_CustomStrips/Exports`), puis le recharger en ajout (dossiers de même nom fusionnés, doublons ignorés) ou en remplacement. **Clear all strips** efface tous les strips (et, au choix, les dossiers) après confirmation.
 
+**Icônes de piste :** 61 icônes `cs_tags_XXX.png` (le tag en blanc, 128 × 128), une par tag des strips de base, installées dans `Data/track_icons` ; les strips de base créés par Load default strips les utilisent.
+
 **Icône de barre d'outils :** `ReNo_CustomStrips.png` (style TCP, 3 états), installée avec le script dans `Data/toolbar_icons` (+ 150 / 200 %).
 
 **Extensions :** ReaImGui (obligatoire), js_ReaScriptAPI (optionnelle, filtre des fenêtres de choix de fichiers).
