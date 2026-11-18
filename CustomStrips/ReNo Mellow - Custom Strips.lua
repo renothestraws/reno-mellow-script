@@ -1,14 +1,14 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.7
+-- @version 1.9
 -- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Strips de base : chaque strip a maintenant son tag (KIK, SNR, TOM, CYM, BSS, GTR, KEY, VOC...)
+-- @changelog Bouton Clear all strips ; la couleur et l'icône du premier strip d'un tag se transmettent aux strips du même tag (même dossier) qui n'en ont pas
 
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.7"
+local VERSION = "1.9"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -1008,6 +1008,31 @@ local function layout_combo(s, sec)
   end
 end
 
+-- tag inheritance: the first strip of a tag in a folder passes its colour / icon
+-- to the next strips with the same tag in that folder, when they are empty
+-- (or still hold the value they had inherited)
+local function is_tag_leader(i)
+  local s = strips[i]
+  if not s or not s.tag then return false end
+  for j = 1, i - 1 do
+    local o = strips[j]
+    if o.tag == s.tag and o.folder == s.folder then return false end
+  end
+  return true
+end
+
+local function propagate(i, key, old, new)
+  if not is_tag_leader(i) then return 0 end
+  local s, n = strips[i], 0
+  for j = i + 1, #strips do
+    local o = strips[j]
+    if o.tag == s.tag and o.folder == s.folder and (o[key] == nil or (old ~= nil and o[key] == old)) then
+      o[key] = new; n = n + 1
+    end
+  end
+  return n
+end
+
 local function draw_row(i, s)
   ImGui.TableNextRow(ctx)
   if scroll_row == i then
@@ -1037,12 +1062,20 @@ local function draw_row(i, s)
 
   -- 4 colour
   ImGui.TableNextColumn(ctx)
+  local function set_color(v)
+    local old = s.color
+    s.color = v; mark()
+    propagate(i, "color", old, v)
+  end
   if s.color then
     local rvc, c = ImGui.ColorEdit3(ctx, "##col", s.color, ImGui.ColorEditFlags_NoInputs)
-    if rvc then s.color = c; mark() end
-    if clear_btn("col") then s.color = nil; mark() end
+    if rvc then set_color(c) end
+    if clear_btn("col") then set_color(nil) end
   else
-    if ImGui.Button(ctx, "Set##col") then s.color = 0x7F7F7F; mark() end
+    if ImGui.Button(ctx, "Set##col") then set_color(0x7F7F7F) end
+  end
+  if is_tag_leader(i) and ImGui.IsItemHovered(ctx) then
+    ImGui.SetTooltip(ctx, "First [" .. s.tag .. "] strip of this folder:\nits colour and icon go to the other [" .. s.tag .. "] strips that have none.")
   end
 
   -- 5 icon
@@ -1052,12 +1085,18 @@ local function draw_row(i, s)
       "Images (*.png;*.jpg;*.ico;*.bmp)\0*.png;*.jpg;*.jpeg;*.ico;*.bmp\0All files (*.*)\0*.*\0\0")
     if f then
       if f:lower():sub(1, #ICON_DIR + 1) == (ICON_DIR .. "/"):lower() then f = f:sub(#ICON_DIR + 2) end
+      local old = s.icon
       s.icon = f; mark()
+      propagate(i, "icon", old, f)
     end
   end
   if s.icon then
     if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, s.icon) end
-    if clear_btn("icon") then s.icon = nil; mark() end
+    if clear_btn("icon") then
+      local old = s.icon
+      s.icon = nil; mark()
+      propagate(i, "icon", old, nil)
+    end
   end
 
   -- 6 layout
@@ -1375,6 +1414,33 @@ local function draw_import_modal()
   end
 end
 
+local open_clear, clear_folders = false, true
+
+local function draw_clear_modal()
+  if open_clear then ImGui.OpenPopup(ctx, "Clear all strips"); open_clear = false end
+  if ImGui.BeginPopupModal(ctx, "Clear all strips", nil, ImGui.WindowFlags_AlwaysAutoResize) then
+    ImGui.Text(ctx, "Delete all " .. #strips .. " strips?")
+    local rv, v = ImGui.Checkbox(ctx, "Also delete the folders", clear_folders)
+    if rv then clear_folders = v end
+    ImGui.TextDisabled(ctx, "Tip: Export... first to keep a copy. Load default strips brings the default set back.")
+    ImGui.Spacing(ctx)
+    if ImGui.Button(ctx, "Clear", 100) then
+      for i = #strips, 1, -1 do strips[i] = nil end
+      if clear_folders then
+        for i = #folders, 1, -1 do folders[i] = nil end
+        select_folder(FOLDER_ALL)
+      end
+      scroll_row = nil
+      mark()
+      set_status(clear_folders and "All strips and folders deleted." or "All strips deleted (folders kept).", "ok")
+      ImGui.CloseCurrentPopup(ctx)
+    end
+    ImGui.SameLine(ctx)
+    if ImGui.Button(ctx, "Cancel", 100) then ImGui.CloseCurrentPopup(ctx) end
+    ImGui.EndPopup(ctx)
+  end
+end
+
 local function draw_export_import_buttons()
   if ImGui.Button(ctx, "Export...") then ImGui.OpenPopup(ctx, "export_menu") end
   if ImGui.BeginPopup(ctx, "export_menu") then
@@ -1388,6 +1454,11 @@ local function draw_export_import_buttons()
   end
   ImGui.SameLine(ctx)
   if ImGui.Button(ctx, "Import...") then pick_import_file() end
+  ImGui.SameLine(ctx)
+  if ImGui.Button(ctx, "Clear all strips") then
+    if #strips == 0 and #folders == 0 then set_status("There are no strips to clear.", "warn")
+    else open_clear = true end
+  end
 end
 
 local function draw_setup_tab()
@@ -1479,6 +1550,7 @@ end
 local function draw_modals()
   draw_folder_modals()
   draw_import_modal()
+  draw_clear_modal()
   if open_rename then ImGui.OpenPopup(ctx, "Rename strip"); open_rename = false end
   if ImGui.BeginPopupModal(ctx, "Rename strip", nil, ImGui.WindowFlags_AlwaysAutoResize) then
     if ImGui.IsWindowAppearing(ctx) then ImGui.SetKeyboardFocusHere(ctx) end
