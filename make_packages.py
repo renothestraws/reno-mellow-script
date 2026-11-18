@@ -75,3 +75,8 @@ build("REABACK", "REABACK", header(main, "version"), header(main, "changelog"), 
 main = os.path.join(ROOT, "MIDI", "ReNo Mellow - MIDI cleaner.lua")
 build("ReNo Mellow - MIDI cleaner", "ReNo_Mellow_MIDI_cleaner", header(main, "version"),
       header(main, "changelog"), [(main, BASE + "/MIDI/ReNo Mellow - MIDI cleaner.lua")])
+
+# --- Custom Strips --------------------------------------------------------------
+main = os.path.join(ROOT, "CustomStrips", "ReNo Mellow - Custom Strips.lua")
+build("ReNo Mellow - Custom Strips", "ReNo_Mellow_Custom_Strips", header(main, "version"),
+      header(main, "changelog"), [(main, BASE + "/CustomStrips/ReNo Mellow - Custom Strips.lua")])

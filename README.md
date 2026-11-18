@@ -8,6 +8,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 | Script | Description |
 |---|---|
 | **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils |
+| **ReNo Mellow - Custom Strips** | Fenêtre de « custom strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC], couleur, icône, layouts TCP/MCP, entrée d'enregistrement, FX chain ajoutée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
@@ -28,6 +29,15 @@ Ensuite, tout fonctionne hors ligne. Pour profiter des nouveaux modèles et corr
 En cas d'erreur : bouton **Open log** (journaux `install.log` et `last_run.log`).
 
 Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac Apple Silicon, 2 à 6 min sur processeur seul.
+
+### ReNo Mellow - Custom Strips
+
+- Onglet **Strips** : clic = appliquer aux pistes sélectionnées (une seule annulation), glisser = réordonner, clic droit = renommer, dupliquer, supprimer.
+- Onglet **Setup** : une ligne par strip, seul le nom est obligatoire. Plusieurs pistes sélectionnées avec un nom de piste : numérotation automatique (Tom 1, Tom 2...).
+- Normalisation par strip : LUFS-I, RMS, Peak ou True peak, chaque item à la cible ou tous ensemble (gain commun).
+- Les strips sont enregistrés dans `Data/ReNo_CustomStrips/strips.lua`.
+
+**Extensions :** ReaImGui (obligatoire), js_ReaScriptAPI (optionnelle, filtre des fenêtres de choix de fichiers).
 
 ### REABACK
 
@@ -59,7 +69,7 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation en un fichier (REAPER 7.86 et plus)
 
-Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner).
+Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Custom Strips).
 Télécharger le fichier, puis l'ouvrir avec REAPER : les scripts sont installés et ajoutés à la liste d'actions,
 et le paquet peut être désinstallé proprement. Pas de mises à jour automatiques : pour cela, préférer ReaPack.
 
@@ -69,6 +79,8 @@ et le paquet peut être désinstallé proprement. Pas de mises à jour automatiq
 (Actions > Show action list > New action > Load ReaScript) : il copie les scripts, les pages web, le template et les icônes.
 
 **MIDI cleaner** : copier `MIDI/ReNo Mellow - MIDI cleaner.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
+
+**Custom Strips** : copier `CustomStrips/ReNo Mellow - Custom Strips.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
 
 **ReNo StemSplit** : copier le dossier `StemSplit` dans le dossier `Scripts` de REAPER
 (Options > Show REAPER resource path), puis charger ses actions dans la liste d'actions
