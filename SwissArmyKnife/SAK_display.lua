@@ -83,6 +83,7 @@ local COL_LABEL  = 0x9A9A9AFF
 
 local ctx
 local fonts = {}
+local icon = nil
 local close_request = false
 local first_frame = true
 
@@ -157,11 +158,22 @@ local function loop()
     local name = SAK.display_name(cur)
     local h = ImGui.GetTextLineHeight(ctx)
 
-    -- short label
-    ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) + h * 0.2)
-    ImGui.TextColored(ctx, COL_LABEL, (CTX == "midi") and "SAK MIDI" or "SAK")
-    ImGui.SameLine(ctx)
-    ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) - h * 0.2)
+    -- Swiss Army Knife icon (first state of the toolbar icon), or a short label if it is missing
+    if icon then
+      ImGui.Image(ctx, icon, h * 1.4, h * 1.4, 0, 0, 1 / 3, 1)
+      ImGui.SameLine(ctx)
+      if CTX == "midi" then
+        ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) + h * 0.2)
+        ImGui.TextColored(ctx, COL_LABEL, "MIDI")
+        ImGui.SameLine(ctx)
+        ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) - h * 0.2)
+      end
+    else
+      ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) + h * 0.2)
+      ImGui.TextColored(ctx, COL_LABEL, (CTX == "midi") and "SAK MIDI" or "SAK")
+      ImGui.SameLine(ctx)
+      ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) - h * 0.2)
+    end
 
     -- separator
     local x, y = ImGui.GetCursorScreenPos(ctx)
@@ -204,6 +216,11 @@ reaper.defer(function()
   for s = FONT_MIN, FONT_MAX do
     fonts[s] = ImGui.CreateFont("sans-serif", s)
     ImGui.Attach(ctx, fonts[s])
+  end
+  local path = reaper.GetResourcePath() .. "/Data/toolbar_icons/toolbar_sak_swiss_army_knife.png"
+  if reaper.file_exists(path) then
+    local ok, img = pcall(ImGui.CreateImage, path)
+    if ok and img then icon = img; ImGui.Attach(ctx, icon) end
   end
   loop()
 end)
