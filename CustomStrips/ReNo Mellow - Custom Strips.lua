@@ -1,14 +1,14 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.1
--- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Première publication : fenêtre Strips / Setup, Browse ouvert directement sur track_icons et FXChains
+-- @version 1.2
+-- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
+-- @changelog Nouvelle colonne Metering : type de mètre de piste par strip (peaks, RMS, LUFS-M, LUFS-S, désactivé)
 
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.1"
+local VERSION = "1.2"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -36,6 +36,18 @@ local NORM_TYPES = {
   { label = "RMS",       v = 1 },
   { label = "Peak",      v = 2 },
   { label = "True peak", v = 3 },
+}
+
+-- track meter modes (I_VUMODE & 30, or 1 = disabled)
+local METER_MODES = {
+  { label = "Stereo peaks",            v = 0 },
+  { label = "Multichannel peaks",      v = 2 },
+  { label = "Stereo RMS",              v = 4 },
+  { label = "Combined RMS",            v = 8 },
+  { label = "LUFS-M",                  v = 12 },
+  { label = "LUFS-S (readout = max)",  v = 16 },
+  { label = "LUFS-S (readout = current)", v = 20 },
+  { label = "Meter disabled",          v = 1 },
 }
 
 local ENVS = {
@@ -469,6 +481,12 @@ local function apply_strip(s)
     end
     -- 7 : record input
     if s.recinput then reaper.SetMediaTrackInfo_Value(tr, "I_RECINPUT", s.recinput) end
+    -- 7b : metering type (other meter bits kept)
+    if s.meter and s.meter.mode then
+      local cur = math.floor(reaper.GetMediaTrackInfo_Value(tr, "I_VUMODE"))
+      local v = (cur & ~(1 | 30)) | s.meter.mode
+      reaper.SetMediaTrackInfo_Value(tr, "I_VUMODE", v)
+    end
     -- 8 : FX chain (added after existing FX)
     if s.fxchain then add_fxchain(tr, s.fxchain, warn) end
     -- 9 : envelopes (existing ones made visible now, missing ones created below)
@@ -562,6 +580,13 @@ local function sum_layout(l)
   return table.concat(t, ", ")
 end
 
+local function sum_meter(m)
+  if not m or not m.mode then return "" end
+  local lbl = "?"
+  for _, t in ipairs(METER_MODES) do if t.v == m.mode then lbl = t.label end end
+  return lbl
+end
+
 local function sum_envs(e)
   if not e then return "" end
   local t = {}
@@ -593,6 +618,7 @@ local function describe(s)
   add("Icon", s.icon and basename(s.icon))
   add("Layout", sum_layout(s.layout))
   add("Record input", s.recinput and rec_input_label(s.recinput, REC_OPTS))
+  add("Metering", sum_meter(s.meter))
   add("FX chain", s.fxchain and basename(s.fxchain))
   add("Envelopes", sum_envs(s.envelopes))
   add("Item name", s.item_name)
@@ -852,6 +878,20 @@ local function draw_row(i, s)
     ImGui.EndCombo(ctx)
   end
 
+  -- 7b metering
+  ImGui.TableNextColumn(ctx)
+  if cell_popup_button("meter", sum_meter(s.meter)) then
+    ImGui.TextDisabled(ctx, "Track meter type:")
+    if ImGui.RadioButton(ctx, "(ignore)", s.meter == nil) then s.meter = nil; mark() end
+    for _, t in ipairs(METER_MODES) do
+      if ImGui.RadioButton(ctx, t.label, s.meter ~= nil and s.meter.mode == t.v) then
+        s.meter = s.meter or {}
+        s.meter.mode = t.v; mark()
+      end
+    end
+    ImGui.EndPopup(ctx)
+  end
+
   -- 8 FX chain
   ImGui.TableNextColumn(ctx)
   if ImGui.Button(ctx, (s.fxchain and basename(s.fxchain):gsub("%.[Rr][Ff][Xx][Cc]hain$", "") or "Browse...") .. "##fx",
@@ -972,7 +1012,7 @@ end
 
 local COLUMNS = {
   { "#", 24 }, { "Strip name *", 130 }, { "Track name", 110 }, { "Tag", 44 }, { "Colour", 52 },
-  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "FX chain", 130 },
+  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Metering", 120 }, { "FX chain", 130 },
   { "Envelopes", 110 }, { "Item name", 110 }, { "Normalize", 130 }, { "Group", 130 }, { "", 100 },
 }
 
