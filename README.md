@@ -9,6 +9,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 |---|---|
 | **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils |
 | **ReNo Mellow - Custom Strips** | Fenêtre de « custom strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC], couleur, icône, layouts TCP/MCP, entrée d'enregistrement, FX chain ajoutée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée |
+| **ReNo Mellow - Swiss Army Knife** | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et W / Shift+W / Ctrl+W lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, 24 outils, Next / Previous / Select tool 01-24. Fournit 68 icônes de barre d'outils (90 × 30) |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
@@ -29,6 +30,21 @@ Ensuite, tout fonctionne hors ligne. Pour profiter des nouveaux modèles et corr
 En cas d'erreur : bouton **Open log** (journaux `install.log` et `last_run.log`).
 
 Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac Apple Silicon, 2 à 6 min sur processeur seul.
+
+### ReNo Mellow - Swiss Army Knife
+
+- **Toolbox**, onglet **Tools** : clic = choisir l'outil actif (vert). Clic droit = armer son action principale,
+  Shift+clic droit = armer l'action alt, Ctrl+clic droit = armer l'action alt 2 (clic droit à nouveau : désarmer).
+- Onglet **Setup** : 24 emplacements, chacun avec un nom et trois actions (main, alt, alt 2), tapées (ID) ou choisies
+  dans la liste d'actions (**Pick...**) ; monter, descendre, dupliquer, vider ; infobulles ; export / import de presets.
+- Raccourcis à assigner : **ReNo Mellow - Swiss Army Knife**, **(alt)** et **(alt2)** (par exemple W, Shift+W, Ctrl+W).
+  Scripts **Next tool**, **Previous tool** et **Select tool 01** à **24** (état allumé sur l'outil actif, pour les barres d'outils).
+- **Version éditeur MIDI** : les mêmes scripts suffixés **MIDI**, dans la section MIDI Editor de la liste d'actions,
+  avec leur propre toolbox et leurs 24 outils.
+- Icônes : clic droit sur une barre d'outils > Customize toolbar > Choose icon, puis une icône `toolbar_sak_...`.
+- Les outils sont enregistrés pour toutes les sessions (reaper-extstate.ini, section ReNoMellow_SAK).
+
+**Extensions :** ReaImGui (obligatoire), SWS (conseillée). REAPER 7.03 ou plus pour les infobulles.
 
 ### ReNo Mellow - Custom Strips
 
@@ -69,9 +85,13 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation en un fichier (REAPER 7.86 et plus)
 
-Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Custom Strips).
+Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Custom Strips, Swiss Army Knife).
 Télécharger le fichier, puis l'ouvrir avec REAPER : les scripts sont installés et ajoutés à la liste d'actions,
 et le paquet peut être désinstallé proprement. Pas de mises à jour automatiques : pour cela, préférer ReaPack.
+
+Swiss Army Knife en téléchargement direct :
+<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_SwissArmyKnife.ReaperPkg>
+(la version éditeur MIDI est ajoutée à la section MIDI Editor au premier lancement de la Toolbox).
 
 ## Installation manuelle
 
@@ -79,6 +99,10 @@ et le paquet peut être désinstallé proprement. Pas de mises à jour automatiq
 (Actions > Show action list > New action > Load ReaScript) : il copie les scripts, les pages web, le template et les icônes.
 
 **MIDI cleaner** : copier `MIDI/ReNo Mellow - MIDI cleaner.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
+
+**Swiss Army Knife** : copier le dossier `SwissArmyKnife` dans le dossier `Scripts` de REAPER et le contenu de
+`SwissArmyKnife/Data/toolbar_icons` dans `Data/toolbar_icons`, puis charger et lancer
+`ReNo Mellow - Swiss Army Knife - Toolbox.lua` : elle ajoute toutes les autres actions (Main et MIDI Editor).
 
 **Custom Strips** : copier `CustomStrips/ReNo Mellow - Custom Strips.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
 

@@ -2,7 +2,7 @@
 -- @author ReNo Mellow
 -- @version 1.0
 -- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Première version : deux versions séparées, Arrange (section Main) et MIDI Editor (section MIDI Editor), chacune avec sa toolbox (Tools / Setup), 24 outils, actions main / alt / alt2, Next / Previous / Select tool 01-24 ; 64 icônes de barre d'outils (3 états).
+-- @changelog Première version : deux versions séparées, Arrange (section Main) et MIDI Editor (section MIDI Editor), chacune avec sa toolbox (Tools / Setup), 24 outils, actions main / alt / alt2, Next / Previous / Select tool 01-24 ; 68 icônes de barre d'outils 90 × 30 (3 états).
 -- @provides
 --   [main] ReNo Mellow - Swiss Army Knife (alt).lua
 --   [main] ReNo Mellow - Swiss Army Knife (alt2).lua
@@ -33,36 +33,36 @@
 --   [main] ReNo Mellow - Swiss Army Knife - Select tool 23.lua
 --   [main] ReNo Mellow - Swiss Army Knife - Select tool 24.lua
 --   [main] ReNo Mellow - Swiss Army Knife.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt).lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt2).lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Next tool.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Previous tool.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 01.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 02.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 03.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 04.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 05.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 06.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 07.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 08.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 09.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 10.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 11.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 12.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 13.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 14.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 15.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 16.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 17.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 18.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 19.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 20.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 21.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 22.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 23.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 24.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Toolbox.lua
---   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt).lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt).lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt2).lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI (alt2).lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Next tool.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Next tool.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Previous tool.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Previous tool.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 01.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 01.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 02.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 02.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 03.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 03.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 04.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 04.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 05.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 05.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 06.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 06.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 07.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 07.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 08.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 08.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 09.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 09.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 10.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 10.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 11.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 11.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 12.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 12.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 13.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 13.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 14.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 14.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 15.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 15.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 16.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 16.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 17.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 17.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 18.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 18.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 19.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 19.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 20.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 20.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 21.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 21.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 22.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 22.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 23.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 23.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 24.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Select tool 24.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI - Toolbox.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI - Toolbox.lua
+--   [midi_editor] MIDI/ReNo Mellow - Swiss Army Knife MIDI.lua > MIDI/ReNo Mellow - Swiss Army Knife MIDI.lua
 --   SAK_lib.lua
 --   SAK_toolbox.lua
 --   [data] Data/toolbar_icons/toolbar_sak_adhesive_tape.png > toolbar_icons/toolbar_sak_adhesive_tape.png
@@ -124,6 +124,10 @@
 --   [data] Data/toolbar_icons/toolbar_sak_stapler.png > toolbar_icons/toolbar_sak_stapler.png
 --   [data] Data/toolbar_icons/toolbar_sak_stretch_marker.png > toolbar_icons/toolbar_sak_stretch_marker.png
 --   [data] Data/toolbar_icons/toolbar_sak_strip_silence.png > toolbar_icons/toolbar_sak_strip_silence.png
+--   [data] Data/toolbar_icons/toolbar_sak_swiss_army_knife.png > toolbar_icons/toolbar_sak_swiss_army_knife.png
+--   [data] Data/toolbar_icons/toolbar_sak_swiss_army_knife_alt.png > toolbar_icons/toolbar_sak_swiss_army_knife_alt.png
+--   [data] Data/toolbar_icons/toolbar_sak_swiss_army_knife_alt2.png > toolbar_icons/toolbar_sak_swiss_army_knife_alt2.png
+--   [data] Data/toolbar_icons/toolbar_sak_swiss_army_knife_toolbox.png > toolbar_icons/toolbar_sak_swiss_army_knife_toolbox.png
 --   [data] Data/toolbar_icons/toolbar_sak_tape_measure.png > toolbar_icons/toolbar_sak_tape_measure.png
 --   [data] Data/toolbar_icons/toolbar_sak_toolbox.png > toolbar_icons/toolbar_sak_toolbox.png
 --   [data] Data/toolbar_icons/toolbar_sak_trim.png > toolbar_icons/toolbar_sak_trim.png
