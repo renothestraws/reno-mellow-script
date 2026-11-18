@@ -11,6 +11,7 @@ Chaque .lua dont l'en-tête contient "-- @description" devient un paquet :
   -- @description, -- @version, -- @author, -- @about, -- @changelog (une ligne chacun)
   -- @provides suivi de lignes "--   chemin" (chemins relatifs au dossier de la catégorie) :
        "--   [main] Scripts/x.lua"                     = action supplémentaire
+       "--   [midi_editor] MIDI/x.lua > MIDI/x.lua"     = action de l'éditeur MIDI (dans un sous-dossier)
        "--   [webinterface] www/page.html > page.html" = fichier d'un autre type (data, webinterface,
                                                         projecttpl...) ; après ">" : chemin d'installation
 Les fichiers fournis par un paquet portent "@noindex".
@@ -22,6 +23,8 @@ from xml.sax.saxutils import escape, quoteattr
 
 REPO_NAME = "ReNo Mellow Scripts"
 IGNORE = {"images", ".git", ".github"}
+# balises de section d'actions (ReaPack : attribut main="...")
+SECTIONS = {"main", "midi_editor", "midi_inlineeditor", "midi_eventlisteditor", "mediaexplorer"}
 
 
 def rtf(text):
@@ -67,8 +70,9 @@ def lua_header(path):
                         path, target = [z.strip() for z in item.split(" > ", 1)]
                     else:
                         path, target = item, os.path.basename(item)
-                    kind = next((t for t in tags_ if t != "main"), None)
-                    provides.append((path, target, "main" in tags_, kind))
+                    kind = next((t for t in tags_ if t not in SECTIONS), None)
+                    secs = [t for t in tags_ if t in SECTIONS]
+                    provides.append((path, target, " ".join(secs), kind))
     if "noindex" in tags or "description" not in tags:
         return None
     for k in ("version", "author"):
@@ -116,10 +120,10 @@ def main():
             if "changelog" in t:
                 x.append('        <changelog><![CDATA[%s]]></changelog>' % t["changelog"])
             x.append('        <source main="main">%s</source>' % url(rel))
-            for path, target, is_main, kind in provides:
+            for path, target, secs, kind in provides:
                 if not os.path.isfile(os.path.join(root, cat, path)):
                     sys.exit("%s : fichier fourni introuvable : %s" % (fn, path))
-                attrs = (' main="main"' if is_main else '') + (' type=%s' % quoteattr(kind) if kind else '')
+                attrs = (' main=%s' % quoteattr(secs) if secs else '') + (' type=%s' % quoteattr(kind) if kind else '')
                 x.append('        <source%s file=%s>%s</source>' % (attrs, quoteattr(target), url(path)))
             x.append('      </version>')
             x.append('    </reapack>')
