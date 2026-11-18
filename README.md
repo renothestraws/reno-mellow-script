@@ -54,7 +54,7 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 - **Dossiers** (liste à gauche de l'onglet Strips) : « + New folder », glisser un strip sur un dossier pour l'y ranger, clic droit sur un dossier pour le renommer ou le supprimer (ses strips repassent dans « No folder »), glisser les dossiers pour les réordonner.
 - Onglet **Setup** : une ligne par strip, seul le nom est obligatoire. Plusieurs pistes sélectionnées avec un nom de piste : numérotation automatique (Tom 1, Tom 2...).
 - Normalisation par strip : LUFS-I, RMS, Peak ou True peak, chaque item à la cible ou tous ensemble (gain commun).
-- **Strips de base** : 164 strips (batterie, percussions, basse, guitares, claviers, cordes, vents, cuivres, chœur, voix, divers…) rangés en 15 dossiers, créés au premier lancement ; le bouton **Load default strips** (onglet Setup) rajoute ceux qui manquent sans toucher aux autres.
+- **Strips de base** : 164 strips (batterie, percussions, basse, guitares, claviers, cordes, vents, cuivres, chœur, voix, divers…) rangés en 15 dossiers, chacun avec son nom de piste et son tag ([KIK], [SNR], [VOC]…), créés au premier lancement ; le bouton **Load default strips** (onglet Setup) rajoute ceux qui manquent sans toucher aux autres.
 - Les strips sont enregistrés dans `Data/ReNo_CustomStrips/strips.lua`.
 - **Export / Import** (onglet Setup) : sauver tous les strips ou un seul dossier dans un fichier `.rnstrips` (par défaut dans `Data/ReNo_CustomStrips/Exports`), puis le recharger en ajout (dossiers de même nom fusionnés, doublons ignorés) ou en remplacement.
 
