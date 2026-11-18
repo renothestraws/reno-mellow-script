@@ -1,14 +1,14 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.3
+-- @version 1.5
 -- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Record input : ajout de Record output stereo / mono / MIDI ; nouvelle colonne Pan mode
+-- @changelog Dossiers dans l'onglet Strips (liste à gauche, glisser-déposer) ; 164 strips de base rangés en 15 dossiers, créés au premier lancement et bouton Load default strips
 
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.3"
+local VERSION = "1.5"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -30,6 +30,8 @@ local DATA_FILE = DATA_DIR .. "/strips.lua"
 local ICON_DIR  = RES .. "/Data/track_icons"
 local FXC_DIR   = RES .. "/FXChains"
 local DND_TYPE  = "RNCS_STRIP"
+local DND_FOLDER = "RNCS_FOLDER"
+local EXT = "ReNo_CustomStrips"
 
 local NORM_TYPES = {
   { label = "LUFS-I",    v = 0 },
@@ -72,6 +74,25 @@ local GROUP_FLAGS = {
   { "VOLUME_REVERSE",  "Volume reverse",  "PAN_REVERSE",       "Pan reverse" },
   { "WIDTH_REVERSE",   "Width reverse",   "NO_LEAD_WHEN_FOLLOW", "No lead when follow" },
 }
+-- default strips: { folder, { strip names } } (track name = strip name)
+local DEFAULT_STRIPS = {
+  { "Drums", { "Drums", "Kick", "Kick in", "Kick out", "Kick sub", "Kick trig", "Snare", "Snare top", "Snare bottom", "Snare even", "Snare trig", "Piccolo", "Toms", "Tom high", "Tom mid", "Tom low", "Tom trig", "Octobans", "Rototoms", "Gong", "Overheads", "Underheads", "Glyn Johns", "Front of kit", "Sensor mic", "Cymbals", "Hi-hat", "Ride", "Crash", "Splash", "China", "Stack", "Clap cymbal", "FX cymbal", "Ambiance", "Room", "Talkback mic", "New-York", "Parallel buss" } },
+  { "Drum pad", { "Drum pad", "Drum machine", "Drum module", "Drum replacer", "Drum bank", "E-drums", "Groovebox", "Beat box" } },
+  { "Percussion", { "Percussion", "Clap", "Conga", "Bongo", "Djembe", "Cajon", "Frame drum", "Hand pan", "Steel tongue", "Claves", "Shaker", "Cabasas", "Caxixi", "Chimes", "Tambourine", "Bloc", "Guiros", "Maracas", "Vibraslap", "Timbales", "World percussion" } },
+  { "Bass", { "Bass", "Bass DI", "Bass amp", "Bass pedal", "Bass 808", "Sub Bass" } },
+  { "Acoustic guitar", { "Acoustic guitar", "Nylon guitar", "Classic guitar", "Ukulele", "Banjo", "Mandolin", "Lap steel" } },
+  { "Guitar", { "Guitar", "Guitar DI", "Guitar amp", "Guitar pedal" } },
+  { "Keyboard", { "Keyboard", "Synth", "Pad", "Piano", "Electric piano", "Organ", "Low keys", "Leads", "Soundscape" } },
+  { "Sound FX", { "Sound FX", "Foley", "Noise", "Risers", "Woosh", "Sample", "Impact" } },
+  { "Strings", { "Strings", "Violin", "Viola", "Cello", "Double bass", "Harp" } },
+  { "Woodwinds", { "Woodwinds", "Flute", "Piccolo", "Oboe", "Horn", "Clarinet", "Bassoon" } },
+  { "Brass", { "Brass", "Trumpet", "French Horn", "Trombone", "Tuba", "Euphonium", "Sax" } },
+  { "Orchestral percussion", { "Orchestral percussion", "Xylophone", "Glockenspiel", "Tubular Bells", "Celesta", "Vibraphone" } },
+  { "Choir", { "Choir", "Sopranos", "Alto", "Tenors", "Baritone", "Basses" } },
+  { "Vocals", { "Vocals", "Lead vocals", "Background vocals", "Harmonies", "Gang", "Screams", "Dialogue", "Master of ceremonies", "Talkback", "Listenback" } },
+  { "Miscellaneous", { "Miscellaneous", "Playback", "Production", "Click", "Metronome", "Cues", "Timecode", "MIDI", "DMX", "Video", "Image", "Lyrics", "Chords", "Auxiliary", "Busses", "Dca", "Vca", "Group", "Subgroup", "Matrix", "Master" } },
+}
+
 local DEFAULT_GROUP_FLAGS = { VOLUME_LEAD = true, VOLUME_FOLLOW = true, MUTE_LEAD = true,
                               MUTE_FOLLOW = true, SOLO_LEAD = true, SOLO_FOLLOW = true }
 local MAX_GROUPS = reaper.GetSetTrackGroupMembershipEx and 128 or 64
@@ -164,7 +185,7 @@ end
 
 local function load_data()
   local f = io.open(DATA_FILE, "r")
-  if not f then return { strips = {} } end
+  if not f then return { strips = {} }, true end
   local s = f:read("a"); f:close()
   local fn = load(s, "strips", "t", {})
   if fn then
@@ -671,8 +692,15 @@ end
 local ctx = ImGui.CreateContext(SCRIPT_TITLE)
 local STRIP_FONT = ImGui.CreateFont("sans-serif", 17, ImGui.FontFlags_Bold)
 ImGui.Attach(ctx, STRIP_FONT)
-local data = load_data()
+local data, first_run = load_data()
 local strips = data.strips
+data.folders = data.folders or {}
+local folders = data.folders
+local sel_folder = reaper.GetExtState(EXT, "folder")
+if sel_folder == "" then sel_folder = "__all" end
+local open_fnew, fnew_buf = false, ""
+local open_frename, frename_id, frename_buf = false, nil, ""
+local open_fdelete, fdelete_id = false, nil
 local dirty, last_save = false, 0
 local status, status_col = "", 0xBBBBBBFF
 local LAYOUTS = { tcp = list_layouts("tcp"), mcp = list_layouts("mcp") }
@@ -681,6 +709,32 @@ local open_rename, rename_idx, rename_buf = false, nil, ""
 local open_delete, delete_idx = false, nil
 local goto_setup, scroll_row = false, nil
 local pending -- structural change (move / duplicate) run after drawing the list
+
+-- adds the default strips that are missing (folders matched by name)
+local function load_default_strips()
+  local added = 0
+  for _, blk in ipairs(DEFAULT_STRIPS) do
+    local fname, names = blk[1], blk[2]
+    local fid
+    for _, f in ipairs(folders) do if f.name == fname then fid = f.id break end end
+    if not fid then
+      fid = "f" .. reaper.genGuid(""):gsub("[{}%-]", ""):sub(1, 12)
+      folders[#folders + 1] = { id = fid, name = fname }
+    end
+    local have = {}
+    for _, s in ipairs(strips) do if s.folder == fid and s.name then have[s.name] = true end end
+    for _, nm in ipairs(names) do
+      if not have[nm] then
+        strips[#strips + 1] = { name = nm, track_name = nm, folder = fid }
+        added = added + 1
+      end
+    end
+  end
+  dirty = true
+  return added
+end
+
+if first_run and #strips == 0 then load_default_strips() end
 
 local function set_status(msg, kind)
   status = msg or ""
@@ -691,7 +745,8 @@ local function mark() dirty = true end
 
 local function new_strip()
   local n = #strips + 1
-  strips[#strips + 1] = { name = "New strip " .. n }
+  local f = (sel_folder ~= "__all" and sel_folder ~= "__none") and sel_folder or nil
+  strips[#strips + 1] = { name = "New strip " .. n, folder = f }
   mark()
 end
 
@@ -734,23 +789,112 @@ local function strip_menu_items(i)
   if ImGui.MenuItem(ctx, "Delete...") then open_delete, delete_idx = true, i end
 end
 
-local function draw_strips_tab()
-  if #strips == 0 then
-    ImGui.TextWrapped(ctx, "No strips yet. Create them in the Setup tab.")
-    if ImGui.Button(ctx, "Create a strip") then new_strip(); goto_setup, scroll_row = true, #strips end
+local FOLDER_ALL, FOLDER_NONE = "__all", "__none"
+
+local function folder_by_id(id)
+  for i, f in ipairs(folders) do if f.id == id then return f, i end end
+end
+
+local function new_folder_id()
+  return "f" .. reaper.genGuid(""):gsub("[{}%-]", ""):sub(1, 12)
+end
+
+local function strip_in_view(s)
+  if sel_folder == FOLDER_ALL then return true end
+  if sel_folder == FOLDER_NONE then return s.folder == nil or not folder_by_id(s.folder) end
+  return s.folder == sel_folder
+end
+
+local function select_folder(id)
+  sel_folder = id
+  reaper.SetExtState(EXT, "folder", id, true)
+end
+
+local function count_in(id)
+  local n = 0
+  for _, s in ipairs(strips) do
+    if id == FOLDER_ALL or (id == FOLDER_NONE and (s.folder == nil or not folder_by_id(s.folder)))
+       or s.folder == id then n = n + 1 end
+  end
+  return n
+end
+
+-- one entry of the folder list (also a drop target for strips and folders)
+local function folder_entry(id, label, fidx)
+  local n = count_in(id)
+  if ImGui.Selectable(ctx, label .. "  (" .. n .. ")##" .. id, sel_folder == id) then select_folder(id) end
+  if fidx then
+    if ImGui.BeginDragDropSource(ctx) then
+      ImGui.SetDragDropPayload(ctx, DND_FOLDER, tostring(fidx))
+      ImGui.Text(ctx, label)
+      ImGui.EndDragDropSource(ctx)
+    end
+    if ImGui.BeginPopupContextItem(ctx, "fctx" .. id) then
+      if ImGui.MenuItem(ctx, "Rename...") then open_frename, frename_id, frename_buf = true, id, label end
+      if ImGui.MenuItem(ctx, "Delete...") then open_fdelete, fdelete_id = true, id end
+      ImGui.EndPopup(ctx)
+    end
+  end
+  if ImGui.BeginDragDropTarget(ctx) then
+    local rv, payload = ImGui.AcceptDragDropPayload(ctx, DND_TYPE)
+    if rv and id ~= FOLDER_ALL then
+      local si = tonumber(payload)
+      if strips[si] then
+        strips[si].folder = (id ~= FOLDER_NONE) and id or nil
+        mark()
+        set_status("Moved \"" .. (strips[si].name or "") .. "\" to " .. label .. ".", "ok")
+      end
+    end
+    if fidx then
+      local rv2, p2 = ImGui.AcceptDragDropPayload(ctx, DND_FOLDER)
+      local from = tonumber(p2)
+      if rv2 and from and folders[from] and from ~= fidx then
+        local f = table.remove(folders, from)
+        table.insert(folders, fidx, f)
+        mark()
+      end
+    end
+    ImGui.EndDragDropTarget(ctx)
+  end
+end
+
+local function draw_folder_list()
+  folder_entry(FOLDER_ALL, "All strips")
+  ImGui.Separator(ctx)
+  for fi, f in ipairs(folders) do
+    ImGui.PushID(ctx, "fold" .. fi)
+    folder_entry(f.id, f.name or "?", fi)
+    ImGui.PopID(ctx)
+  end
+  if #folders > 0 then ImGui.Separator(ctx) end
+  folder_entry(FOLDER_NONE, "No folder")
+  ImGui.Spacing(ctx)
+  if ImGui.Button(ctx, "+ New folder", -FLT_MIN) then open_fnew, fnew_buf = true, "" end
+end
+
+local function draw_strip_buttons()
+  local shown = {}
+  for i, s in ipairs(strips) do if strip_in_view(s) then shown[#shown + 1] = i end end
+  if #shown == 0 then
+    if #strips == 0 then
+      ImGui.TextWrapped(ctx, "No strips yet. Create them in the Setup tab.")
+      if ImGui.Button(ctx, "Create a strip") then new_strip(); goto_setup, scroll_row = true, #strips end
+    else
+      ImGui.TextDisabled(ctx, "This folder is empty.")
+      ImGui.TextWrapped(ctx, "Drag strips from \"All strips\" onto the folder name to file them here.")
+    end
     return
   end
-  ImGui.TextDisabled(ctx, "Click: apply to selected tracks.  Drag: reorder.  Right-click: rename / delete.")
-  ImGui.Spacing(ctx)
 
   local avail = ImGui.GetContentRegionAvail(ctx)
   local bw, bh, sp = 112, 42, 6
   local per_row = math.max(1, math.floor((avail + sp) / (bw + sp)))
   local mv_from, mv_to
 
-  for i, s in ipairs(strips) do
+  for k, i in ipairs(shown) do
+    local s = strips[i]
     ImGui.PushID(ctx, i)
-    if (i - 1) % per_row ~= 0 then ImGui.SameLine(ctx, 0, sp) end
+    if (k - 1) % per_row ~= 0 then ImGui.SameLine(ctx, 0, sp) end
     local pushed = 0
     if s.color then
       ImGui.PushStyleColor(ctx, ImGui.Col_Button, rgba(s.color))
@@ -770,7 +914,8 @@ local function draw_strips_tab()
       ImGui.Text(ctx, label)
       ImGui.EndDragDropSource(ctx)
     elseif ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal) then
-      ImGui.SetTooltip(ctx, describe(s))
+      local f = s.folder and folder_by_id(s.folder)
+      ImGui.SetTooltip(ctx, (f and ("Folder: " .. f.name .. "\n") or "") .. describe(s))
     end
     if ImGui.BeginDragDropTarget(ctx) then
       local rv, payload = ImGui.AcceptDragDropPayload(ctx, DND_TYPE)
@@ -784,6 +929,26 @@ local function draw_strips_tab()
     ImGui.PopID(ctx)
   end
   if mv_from then move_strip(mv_from, mv_to) end
+end
+
+local function draw_strips_tab()
+  if sel_folder ~= FOLDER_ALL and sel_folder ~= FOLDER_NONE and not folder_by_id(sel_folder) then
+    sel_folder = FOLDER_ALL
+  end
+  ImGui.TextDisabled(ctx, "Click: apply to selected tracks.  Drag: reorder, or drop on a folder to file it.  Right-click: menu.")
+  ImGui.Spacing(ctx)
+  local _, h = ImGui.GetContentRegionAvail(ctx)
+  if status ~= "" then h = h - ImGui.GetFrameHeightWithSpacing(ctx) - 4 end
+  if h < 60 then h = 60 end
+  if ImGui.BeginChild(ctx, "folders", 170, h, ImGui.ChildFlags_Border) then
+    draw_folder_list()
+    ImGui.EndChild(ctx)
+  end
+  ImGui.SameLine(ctx)
+  if ImGui.BeginChild(ctx, "strips", 0, h) then
+    draw_strip_buttons()
+    ImGui.EndChild(ctx)
+  end
 end
 
 --------------------------------------------------------------------------------
@@ -1076,6 +1241,14 @@ local COLUMNS = {
 local function draw_setup_tab()
   if ImGui.Button(ctx, "+ Add strip") then new_strip(); scroll_row = #strips; goto_setup = "scroll" end
   ImGui.SameLine(ctx)
+  if ImGui.Button(ctx, "Load default strips") then
+    local n = load_default_strips()
+    set_status(n > 0 and (n .. " default strip" .. (n > 1 and "s" or "") .. " added.") or "All default strips are already there.", "ok")
+  end
+  if ImGui.IsItemHovered(ctx) then
+    ImGui.SetTooltip(ctx, "Adds the missing default strips (drums, bass, guitars, keys, vocals...)\nin their folders. Existing strips are not changed.")
+  end
+  ImGui.SameLine(ctx)
   ImGui.TextDisabled(ctx, "Only the strip name is required. An empty cell is ignored when the strip is applied.")
 
   local flags = ImGui.TableFlags_Borders | ImGui.TableFlags_RowBg | ImGui.TableFlags_ScrollX |
@@ -1099,7 +1272,58 @@ end
 --------------------------------------------------------------------------------
 -- Modals
 --------------------------------------------------------------------------------
+local function name_modal(title, open_flag, buf, on_ok)
+  if open_flag then ImGui.OpenPopup(ctx, title) end
+  if ImGui.BeginPopupModal(ctx, title, nil, ImGui.WindowFlags_AlwaysAutoResize) then
+    if ImGui.IsWindowAppearing(ctx) then ImGui.SetKeyboardFocusHere(ctx) end
+    ImGui.SetNextItemWidth(ctx, 250)
+    local enter
+    enter, buf = ImGui.InputText(ctx, "##name", buf, ImGui.InputTextFlags_EnterReturnsTrue)
+    if ImGui.Button(ctx, "OK", 80) then enter = true end
+    ImGui.SameLine(ctx)
+    if ImGui.Button(ctx, "Cancel", 80) then ImGui.CloseCurrentPopup(ctx) end
+    if enter and nonempty(buf) then on_ok(trim(buf)); ImGui.CloseCurrentPopup(ctx) end
+    ImGui.EndPopup(ctx)
+  end
+  return buf
+end
+
+local function draw_folder_modals()
+  fnew_buf = name_modal("New folder", open_fnew, fnew_buf, function(nm)
+    local f = { id = new_folder_id(), name = nm }
+    folders[#folders + 1] = f
+    select_folder(f.id); mark()
+  end)
+  open_fnew = false
+
+  frename_buf = name_modal("Rename folder", open_frename, frename_buf, function(nm)
+    local f = folder_by_id(frename_id)
+    if f then f.name = nm; mark() end
+  end)
+  open_frename = false
+
+  if open_fdelete then ImGui.OpenPopup(ctx, "Delete folder"); open_fdelete = false end
+  if ImGui.BeginPopupModal(ctx, "Delete folder", nil, ImGui.WindowFlags_AlwaysAutoResize) then
+    local f, fi = folder_by_id(fdelete_id)
+    ImGui.Text(ctx, "Delete the folder \"" .. ((f and f.name) or "") .. "\"?")
+    ImGui.TextDisabled(ctx, "Its strips are kept and go back to \"No folder\".")
+    if ImGui.Button(ctx, "Delete", 80) then
+      if f then
+        for _, s in ipairs(strips) do if s.folder == f.id then s.folder = nil end end
+        table.remove(folders, fi)
+        if sel_folder == f.id then select_folder(FOLDER_ALL) end
+        mark()
+      end
+      ImGui.CloseCurrentPopup(ctx)
+    end
+    ImGui.SameLine(ctx)
+    if ImGui.Button(ctx, "Cancel", 80) then ImGui.CloseCurrentPopup(ctx) end
+    ImGui.EndPopup(ctx)
+  end
+end
+
 local function draw_modals()
+  draw_folder_modals()
   if open_rename then ImGui.OpenPopup(ctx, "Rename strip"); open_rename = false end
   if ImGui.BeginPopupModal(ctx, "Rename strip", nil, ImGui.WindowFlags_AlwaysAutoResize) then
     if ImGui.IsWindowAppearing(ctx) then ImGui.SetKeyboardFocusHere(ctx) end
