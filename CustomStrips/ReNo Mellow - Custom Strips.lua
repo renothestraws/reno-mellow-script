@@ -1,14 +1,14 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.6
+-- @version 1.7
 -- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Export / import des strips (fichiers .rnstrips) : tout ou un dossier ; import en ajout (dossiers fusionnés par nom) ou en remplacement
+-- @changelog Strips de base : chaque strip a maintenant son tag (KIK, SNR, TOM, CYM, BSS, GTR, KEY, VOC...)
 
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.6"
+local VERSION = "1.7"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -74,23 +74,23 @@ local GROUP_FLAGS = {
   { "VOLUME_REVERSE",  "Volume reverse",  "PAN_REVERSE",       "Pan reverse" },
   { "WIDTH_REVERSE",   "Width reverse",   "NO_LEAD_WHEN_FOLLOW", "No lead when follow" },
 }
--- default strips: { folder, { strip names } } (track name = strip name)
+-- default strips: { folder, { { strip name, tag } } } (track name = strip name)
 local DEFAULT_STRIPS = {
-  { "Drums", { "Drums", "Kick", "Kick in", "Kick out", "Kick sub", "Kick trig", "Snare", "Snare top", "Snare bottom", "Snare even", "Snare trig", "Piccolo", "Toms", "Tom high", "Tom mid", "Tom low", "Tom trig", "Octobans", "Rototoms", "Gong", "Overheads", "Underheads", "Glyn Johns", "Front of kit", "Sensor mic", "Cymbals", "Hi-hat", "Ride", "Crash", "Splash", "China", "Stack", "Clap cymbal", "FX cymbal", "Ambiance", "Room", "Talkback mic", "New-York", "Parallel buss" } },
-  { "Drum pad", { "Drum pad", "Drum machine", "Drum module", "Drum replacer", "Drum bank", "E-drums", "Groovebox", "Beat box" } },
-  { "Percussion", { "Percussion", "Clap", "Conga", "Bongo", "Djembe", "Cajon", "Frame drum", "Hand pan", "Steel tongue", "Claves", "Shaker", "Cabasas", "Caxixi", "Chimes", "Tambourine", "Bloc", "Guiros", "Maracas", "Vibraslap", "Timbales", "World percussion" } },
-  { "Bass", { "Bass", "Bass DI", "Bass amp", "Bass pedal", "Bass 808", "Sub Bass" } },
-  { "Acoustic guitar", { "Acoustic guitar", "Nylon guitar", "Classic guitar", "Ukulele", "Banjo", "Mandolin", "Lap steel" } },
-  { "Guitar", { "Guitar", "Guitar DI", "Guitar amp", "Guitar pedal" } },
-  { "Keyboard", { "Keyboard", "Synth", "Pad", "Piano", "Electric piano", "Organ", "Low keys", "Leads", "Soundscape" } },
-  { "Sound FX", { "Sound FX", "Foley", "Noise", "Risers", "Woosh", "Sample", "Impact" } },
-  { "Strings", { "Strings", "Violin", "Viola", "Cello", "Double bass", "Harp" } },
-  { "Woodwinds", { "Woodwinds", "Flute", "Piccolo", "Oboe", "Horn", "Clarinet", "Bassoon" } },
-  { "Brass", { "Brass", "Trumpet", "French Horn", "Trombone", "Tuba", "Euphonium", "Sax" } },
-  { "Orchestral percussion", { "Orchestral percussion", "Xylophone", "Glockenspiel", "Tubular Bells", "Celesta", "Vibraphone" } },
-  { "Choir", { "Choir", "Sopranos", "Alto", "Tenors", "Baritone", "Basses" } },
-  { "Vocals", { "Vocals", "Lead vocals", "Background vocals", "Harmonies", "Gang", "Screams", "Dialogue", "Master of ceremonies", "Talkback", "Listenback" } },
-  { "Miscellaneous", { "Miscellaneous", "Playback", "Production", "Click", "Metronome", "Cues", "Timecode", "MIDI", "DMX", "Video", "Image", "Lyrics", "Chords", "Auxiliary", "Busses", "Dca", "Vca", "Group", "Subgroup", "Matrix", "Master" } },
+  { "Drums", { { "Drums", "DRM" }, { "Kick", "KIK" }, { "Kick in", "KIK" }, { "Kick out", "KIK" }, { "Kick sub", "KIK" }, { "Kick trig", "KIK" }, { "Snare", "SNR" }, { "Snare top", "SNR" }, { "Snare bottom", "SNR" }, { "Snare even", "SNR" }, { "Snare trig", "SNR" }, { "Piccolo", "SNR" }, { "Toms", "TOM" }, { "Tom high", "TOM" }, { "Tom mid", "TOM" }, { "Tom low", "TOM" }, { "Tom trig", "TOM" }, { "Octobans", "OCT" }, { "Rototoms", "ROT" }, { "Gong", "GON" }, { "Overheads", "OHS" }, { "Underheads", "UHS" }, { "Glyn Johns", "GLJ" }, { "Front of kit", "FOK" }, { "Sensor mic", "SNS" }, { "Cymbals", "CYM" }, { "Hi-hat", "HH" }, { "Ride", "CYM" }, { "Crash", "CYM" }, { "Splash", "CYM" }, { "China", "CYM" }, { "Stack", "CYM" }, { "Clap cymbal", "CYM" }, { "FX cymbal", "CYM" }, { "Ambiance", "AMB" }, { "Room", "ROO" }, { "Talkback mic", "TLK" }, { "New-York", "NY" }, { "Parallel buss", "PAR" } } },
+  { "Drum pad", { { "Drum pad", "PAD" }, { "Drum machine", "DRM" }, { "Drum module", "DRM" }, { "Drum replacer", "DRM" }, { "Drum bank", "DRM" }, { "E-drums", "DRM" }, { "Groovebox", "BOX" }, { "Beat box", "BOX" } } },
+  { "Percussion", { { "Percussion", "PRC" }, { "Clap", "PRC" }, { "Conga", "PRC" }, { "Bongo", "PRC" }, { "Djembe", "PRC" }, { "Cajon", "PRC" }, { "Frame drum", "PRC" }, { "Hand pan", "PRC" }, { "Steel tongue", "PRC" }, { "Claves", "PRC" }, { "Shaker", "PRC" }, { "Cabasas", "PRC" }, { "Caxixi", "PRC" }, { "Chimes", "PRC" }, { "Tambourine", "PRC" }, { "Bloc", "PRC" }, { "Guiros", "PRC" }, { "Maracas", "PRC" }, { "Vibraslap", "PRC" }, { "Timbales", "PRC" }, { "World percussion", "PRC" } } },
+  { "Bass", { { "Bass", "BSS" }, { "Bass DI", "BSS" }, { "Bass amp", "BSS" }, { "Bass pedal", "BSS" }, { "Bass 808", "BSS" }, { "Sub Bass", "BSS" } } },
+  { "Acoustic guitar", { { "Acoustic guitar", "ACG" }, { "Nylon guitar", "ACG" }, { "Classic guitar", "ACG" }, { "Ukulele", "ACG" }, { "Banjo", "ACG" }, { "Mandolin", "ACG" }, { "Lap steel", "ACG" } } },
+  { "Guitar", { { "Guitar", "GTR" }, { "Guitar DI", "GTR" }, { "Guitar amp", "GTR" }, { "Guitar pedal", "GTR" } } },
+  { "Keyboard", { { "Keyboard", "KEY" }, { "Synth", "KEY" }, { "Pad", "KEY" }, { "Piano", "KEY" }, { "Electric piano", "KEY" }, { "Organ", "KEY" }, { "Low keys", "KEY" }, { "Leads", "KEY" }, { "Soundscape", "KEY" } } },
+  { "Sound FX", { { "Sound FX", "SFX" }, { "Foley", "SFX" }, { "Noise", "SFX" }, { "Risers", "SFX" }, { "Woosh", "SFX" }, { "Sample", "SFX" }, { "Impact", "SFX" } } },
+  { "Strings", { { "Strings", "STR" }, { "Violin", "STR" }, { "Viola", "STR" }, { "Cello", "STR" }, { "Double bass", "STR" }, { "Harp", "STR" } } },
+  { "Woodwinds", { { "Woodwinds", "WOO" }, { "Flute", "WOO" }, { "Piccolo", "WOO" }, { "Oboe", "WOO" }, { "Horn", "WOO" }, { "Clarinet", "WOO" }, { "Bassoon", "WOO" } } },
+  { "Brass", { { "Brass", "BRA" }, { "Trumpet", "BRA" }, { "French Horn", "BRA" }, { "Trombone", "BRA" }, { "Tuba", "BRA" }, { "Euphonium", "BRA" }, { "Sax", "BRA" } } },
+  { "Orchestral percussion", { { "Orchestral percussion", "ORC" }, { "Xylophone", "ORC" }, { "Glockenspiel", "ORC" }, { "Tubular Bells", "ORC" }, { "Celesta", "ORC" }, { "Vibraphone", "ORC" } } },
+  { "Choir", { { "Choir", "CHO" }, { "Sopranos", "CHO" }, { "Alto", "CHO" }, { "Tenors", "CHO" }, { "Baritone", "CHO" }, { "Basses", "CHO" } } },
+  { "Vocals", { { "Vocals", "VOC" }, { "Lead vocals", "LDV" }, { "Background vocals", "BGV" }, { "Harmonies", "HAR" }, { "Gang", "GNG" }, { "Screams", "SCR" }, { "Dialogue", "DIA" }, { "Master of ceremonies", "MC" }, { "Talkback", "TLK" }, { "Listenback", "LIS" } } },
+  { "Miscellaneous", { { "Miscellaneous", "MSC" }, { "Playback", "PLB" }, { "Production", "PRD" }, { "Click", "CLK" }, { "Metronome", "CLK" }, { "Cues", "CUE" }, { "Timecode", "TMC" }, { "MIDI", "MID" }, { "DMX", "DMX" }, { "Video", "VID" }, { "Image", "IMG" }, { "Lyrics", "LYR" }, { "Chords", "CHD" }, { "Auxiliary", "AUX" }, { "Busses", "BUS" }, { "Dca", "DCA" }, { "Vca", "VCA" }, { "Group", "GRP" }, { "Subgroup", "SUB" }, { "Matrix", "MTX" }, { "Master", "MLR" } } },
 }
 
 local DEFAULT_GROUP_FLAGS = { VOLUME_LEAD = true, VOLUME_FOLLOW = true, MUTE_LEAD = true,
@@ -723,9 +723,10 @@ local function load_default_strips()
     end
     local have = {}
     for _, s in ipairs(strips) do if s.folder == fid and s.name then have[s.name] = true end end
-    for _, nm in ipairs(names) do
+    for _, e in ipairs(names) do
+      local nm, tag = e[1], e[2]
       if not have[nm] then
-        strips[#strips + 1] = { name = nm, track_name = nm, folder = fid }
+        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, folder = fid }
         added = added + 1
       end
     end
