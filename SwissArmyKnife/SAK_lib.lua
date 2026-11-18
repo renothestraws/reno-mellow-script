@@ -145,23 +145,8 @@ function SAK.get_current()
   return c
 end
 
-function SAK.sync_toggles()
-  local cur = SAK.get_current()
-  for i = 1, SAK.NSLOTS do
-    local id = cgets("selcmd_" .. i)
-    if id ~= "" then
-      local cmd = reaper.NamedCommandLookup(id)
-      if cmd and cmd ~= 0 then
-        reaper.SetToggleCommandState(SAK.section, cmd, i == cur and 1 or 0)
-        reaper.RefreshToolbar2(SAK.section, cmd)
-      end
-    end
-  end
-end
-
 function SAK.set_current(i)
   csets("current", i)
-  SAK.sync_toggles()
 end
 
 -- Remember the command ID of the running script (used for toolbar toggle states)
@@ -230,18 +215,6 @@ function SAK.run(which)
   end
 
   if SAK.setting("tt_use", true) then SAK.tooltip("SAK: " .. label) end
-end
-
-function SAK.select(i)
-  SAK.ensure_init()
-  SAK.register_self("selcmd_" .. i)
-  if SAK.is_empty(i) then
-    SAK.sync_toggles()
-    if SAK.setting("tt_change", true) then SAK.tooltip("SAK: slot " .. i .. " is empty") end
-    return
-  end
-  SAK.set_current(i)
-  if SAK.setting("tt_change", true) then SAK.tooltip("SAK tool: " .. SAK.display_name(i)) end
 end
 
 function SAK.step(dir)

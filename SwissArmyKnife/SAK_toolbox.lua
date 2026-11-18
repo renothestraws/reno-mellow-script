@@ -88,9 +88,6 @@ local function companions_for(c)
     { key = "cmd_toolbox", file = base .. " - Toolbox.lua" },
     { key = "cmd_display", file = base .. " - Display.lua" },
   }
-  for i = 1, N do
-    list[#list + 1] = { key = "selcmd_" .. i, file = string.format("%s - Select tool %02d.lua", base, i) }
-  end
   return list
 end
 
@@ -137,9 +134,6 @@ local function register_companions(force)
   SAK.set_context(keep)
 end
 
-local function sync_all_toggles()
-  for_each_context(function() SAK.sync_toggles() end)
-end
 local n_registered, n_total = 0, 0
 
 ---------------------------------------------------------------- action picker (Action List)
@@ -274,7 +268,6 @@ local function import_preset()
   for i = 1, N do SAK.set_tool(i, data[i] or { name = "", main = "", alt = "", alt2 = "" }) end
   reload_tools()
   load_edit(sel_slot)
-  SAK.sync_toggles()
 end
 
 local function reset_defaults()
@@ -284,7 +277,6 @@ local function reset_defaults()
   reload_tools()
   sel_slot = 1
   load_edit(1)
-  SAK.sync_toggles()
 end
 
 ---------------------------------------------------------------- sizes, fonts, auto-close
@@ -455,8 +447,6 @@ local function draw_setup()
     if edit.slot ~= sel_slot then load_edit(sel_slot) end
 
     ImGui.Text(ctx, string.format("Slot %02d", edit.slot))
-    ImGui.SameLine(ctx)
-    ImGui.TextDisabled(ctx, "(script \"Select tool " .. string.format("%02d", edit.slot) .. "\")")
     ImGui.SetNextItemWidth(ctx, -1)
     local rv, v = ImGui.InputTextWithHint(ctx, "##name", "Tool name", edit.name)
     if rv then edit.name = v; save_edit() end
@@ -525,14 +515,13 @@ local function draw_setup()
       if ImGui.Button(ctx, "Register scripts again") then
         later(function()
           register_companions(true)
-          sync_all_toggles()
           n_registered, n_total = count_registered()
         end)
       end
       ImGui.TextDisabled(ctx, "Assign shortcuts in the Action List to:")
       ImGui.TextDisabled(ctx, "  Main section: ReNo Mellow - Swiss Army Knife  /  (alt)  /  (alt2)")
       ImGui.TextDisabled(ctx, "  MIDI Editor section: ReNo Mellow - Swiss Army Knife MIDI  /  (alt)  /  (alt2)")
-      ImGui.TextDisabled(ctx, "  ... - Next tool / Previous tool / Select tool 01-24 (both sections)")
+      ImGui.TextDisabled(ctx, "  ... - Next tool / Previous tool / Display (both sections)")
     end
 
     ImGui.EndChild(ctx)
@@ -583,7 +572,6 @@ end)
 -- ImGui context in a later cycle, right before the first frame
 reaper.defer(function()
   register_companions(false)
-  sync_all_toggles()
   n_registered, n_total = count_registered()
   reaper.defer(function()
     ctx = ImGui.CreateContext(TB_CTX == "midi" and "ReNo Mellow - Swiss Army Knife MIDI" or "ReNo Mellow - Swiss Army Knife")
