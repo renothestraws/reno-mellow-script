@@ -118,3 +118,8 @@ build("ReNo Mellow - Chord Buddy", "ReNo_Mellow_Chord_Buddy", header(main, "vers
       header(main, "changelog"), walk(d, BASE + "/ChordBuddy"),
       no_reg=[BASE + "/ChordBuddy/ChordBuddy_theory.lua", BASE + "/ChordBuddy/ChordBuddy_midi.lua",
               BASE + "/ChordBuddy/ChordBuddy_export.lua"])
+
+# --- Lyrics Buddy (transcription whisper.cpp -> items avec notes) ---------------
+main = os.path.join(ROOT, "LyricsBuddy", "ReNo Mellow - Lyrics Buddy.lua")
+build("ReNo Mellow - Lyrics Buddy", "ReNo_Mellow_Lyrics_Buddy", header(main, "version"),
+      header(main, "changelog"), [(main, BASE + "/LyricsBuddy/ReNo Mellow - Lyrics Buddy.lua")])
