@@ -1,12 +1,14 @@
 -- @description ReNo Mellow - Grid Buddy
 -- @author ReNo Mellow
--- @version 1.1
--- @about Grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles de 1/128 à 4, diviseur et limites, snap, lien avec l'éditeur MIDI (option « Use the same grid division »), mini Display (molette = taille) et actions isolées. D'après Gridbox de FeedTheCat. Nécessite ReaImGui.
--- @changelog Version simplifiée : grille adaptative retirée (service et actions Adaptive), menu du Display réduit aux types de grille + « Link MIDI editor », option Link MIDI editor dans la fenêtre
+-- @version 1.2
+-- @about Grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles de 1/128 à 4, diviseur et limites, snap, lien avec l'éditeur MIDI (option « Use the same grid division »), deux mini Displays indépendants, arrangement et éditeur MIDI (molette = taille), et actions isolées. D'après Gridbox de FeedTheCat. Nécessite ReaImGui.
+-- @changelog Deux Displays indépendants (arrangement et éditeur MIDI) ; menu du Display : Frame, Measure et Hide grid en plus des types ; Display MIDI : option Sync to arrange view (40640)
 -- @provides
 --   GB_lib.lua
 --   GB_startup.lua
+--   GB_display.lua
 --   [main] ReNo Mellow - Grid Buddy - Display.lua
+--   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Display.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Display.lua
 --   [main] ReNo Mellow - Grid Buddy - Adjust grid (mousewheel).lua
 --   [main] ReNo Mellow - Grid Buddy - Wider grid.lua
 --   [main] ReNo Mellow - Grid Buddy - Narrower grid.lua
@@ -45,9 +47,8 @@ GB.register_self("cmd_main")
 -- first launch (manual install or .ReaperPkg): adds the other actions to the action list
 if reaper.GetExtState(GB.S, "reg_v") ~= GB.VERSION then
   local todo = {}
-  for _, n in ipairs({ "Display" }) do
-    todo[#todo + 1] = { 0, dir .. "ReNo Mellow - Grid Buddy - " .. n .. ".lua" }
-  end
+  todo[#todo + 1] = { 0, dir .. "ReNo Mellow - Grid Buddy - Display.lua" }
+  todo[#todo + 1] = { 32060, dir .. "MIDI/ReNo Mellow - Grid Buddy MIDI - Display.lua" }
   for _, n in ipairs(GB.ACTIONS) do
     todo[#todo + 1] = { 0, dir .. "ReNo Mellow - Grid Buddy - " .. n .. ".lua" }
     todo[#todo + 1] = { 32060, dir .. "MIDI/ReNo Mellow - Grid Buddy MIDI - " .. n .. ".lua" }
@@ -284,20 +285,28 @@ local function tab_setup()
   ImGui.SameLine(ctx) checkbox("Measure", "show_measure", false)
   checkbox("Reverse mouse wheel", "wheel_rev", false, "For the Display and the mousewheel actions")
 
-  ImGui.SeparatorText(ctx, "Display")
-  if ImGui.Button(ctx, GB.alive("display") and "Hide Display" or "Show Display") then
-    later(function() GB.launch("display") end)
+  ImGui.SeparatorText(ctx, "Displays")
+  for _, d in ipairs({ { "display", "", "Arrange Display" }, { "display_midi", "me_", "MIDI Display" } }) do
+    local key, p, label = d[1], d[2], d[3]
+    ImGui.AlignTextToFramePadding(ctx)
+    ImGui.TextColored(ctx, COL_GREY, label)
+    ImGui.SameLine(ctx, text_size() * 9)
+    if ImGui.Button(ctx, (GB.alive(key) and "Hide" or "Show") .. "##" .. key, text_size() * 4, 0) then
+      later(function() GB.launch(key) end)
+    end
+    if key == "display_midi" then tip("Shown only while a MIDI editor is open") end
+    ImGui.SameLine(ctx, 0, 12)
+    ImGui.SetNextItemWidth(ctx, 120)
+    local c2, val = ImGui.SliderInt(ctx, "Text size##" .. key,
+      math.floor(GB.clamp(opt(p .. "disp_font", 16), FONT_MIN, FONT_MAX)), FONT_MIN, FONT_MAX)
+    if c2 then GB.set(p .. "disp_font", val) end
+    ImGui.SameLine(ctx, 0, 12) checkbox("Snap button##" .. key, p .. "disp_snap", true)
+    if key == "display" then
+      ImGui.SameLine(ctx) checkbox("Swing bar", "disp_swing", true)
+      ImGui.SameLine(ctx) checkbox("Visible grid", "disp_visible", false,
+        "Shows the grid REAPER really draws at this zoom (straight sizes only)")
+    end
   end
-  ImGui.SameLine(ctx, 0, 20)
-  ImGui.SetNextItemWidth(ctx, 160)
-  local c2, val = ImGui.SliderInt(ctx, "Display text size", math.floor(GB.clamp(opt("disp_font", 16), FONT_MIN, FONT_MAX)),
-    FONT_MIN, FONT_MAX)
-  if c2 then GB.set("disp_font", val) end
-  checkbox("Snap button", "disp_snap", true)
-  ImGui.SameLine(ctx) checkbox("Swing bar", "disp_swing", true)
-  ImGui.SameLine(ctx) checkbox("MIDI editor grid", "disp_midi", true, "Second line when a MIDI editor is open")
-  ImGui.SameLine(ctx) checkbox("Visible grid", "disp_visible", false,
-    "Shows the grid REAPER really draws at this zoom (straight sizes only)")
 
   ImGui.SeparatorText(ctx, "Window")
   ImGui.SetNextItemWidth(ctx, 160)

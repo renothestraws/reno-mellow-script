@@ -12,7 +12,7 @@
 -- portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 GB = {}
-GB.VERSION = "1.1"
+GB.VERSION = "1.2"
 GB.S  = "ReNoMellow_GridBuddy"     -- saved settings
 GB.RT = "ReNoMellow_GridBuddy_RT"  -- run state (not saved)
 GB.ROOT = debug.getinfo(1, "S").source:match("^@(.*[/\\])") or ""
@@ -22,6 +22,7 @@ local r = reaper
 GB.FILES = {
   main    = "ReNo Mellow - Grid Buddy.lua",
   display = "ReNo Mellow - Grid Buddy - Display.lua",
+  display_midi = "MIDI/ReNo Mellow - Grid Buddy MIDI - Display.lua",
 }
 
 -- isolated actions (same file names in MIDI/ with "Grid Buddy MIDI")
@@ -172,6 +173,19 @@ function GB.set_measure()
   if r.GetToggleCommandState(A.MEASURE) ~= 1 then r.Main_OnCommand(A.MEASURE, 0) end
 end
 
+-- "Hide grid" = grid lines off (arrange: Options: Toggle grid lines, MIDI editor: View: Toggle grid)
+function GB.grid_hidden(c)
+  if c == "midi" then return r.GetToggleCommandStateEx(32060, 1017) == 0 end
+  return r.GetToggleCommandState(A.GRID_LINES) == 0
+end
+function GB.toggle_grid_lines(c)
+  if c == "midi" then
+    local h = r.MIDIEditor_GetActive()
+    if h then r.MIDIEditor_OnCommand(h, 1017) end -- View: Toggle grid
+  else
+    r.Main_OnCommand(A.GRID_LINES, 0)
+  end
+end
 function GB.show_grid_lines()
   if r.GetToggleCommandState(A.GRID_LINES) ~= 1 then r.Main_OnCommand(A.GRID_LINES, 0) end
 end
@@ -270,6 +284,9 @@ local function midi_cmd(id)
 end
 
 function GB.midi_snap_on() return r.GetToggleCommandStateEx(32060, M.SNAP) == 1 end
+-- MIDI editor: "Timebase: Toggle sync to arrange view" (40640)
+function GB.midi_sync_on() return r.GetToggleCommandStateEx(32060, 40640) == 1 end
+function GB.toggle_midi_sync() midi_cmd(40640) end
 function GB.midi_toggle_snap() midi_cmd(M.SNAP) end
 function GB.show_midi_grid()
   if GB.midi_editor() and r.GetToggleCommandStateEx(32060, M.GRID) ~= 1 then midi_cmd(M.GRID) end
@@ -472,12 +489,20 @@ function GB.register_self(key)
   end
 end
 
+-- launches a Grid Buddy script from anywhere (a Main-section command; the MIDI Display
+-- gets a Main-section copy for that, like the Tool Buddy MIDI Display)
 function GB.launch(which)
   local path = GB.ROOT .. GB.FILES[which]
   local id = r.GetExtState(GB.S, "cmd_" .. which)
   local cmd = 0
   if id ~= "" then cmd = tonumber(id) or r.NamedCommandLookup(id) or 0 end
-  if cmd == 0 and r.file_exists(path) then cmd = r.AddRemoveReaScript(true, 0, path, true) or 0 end
+  if cmd == 0 and r.file_exists(path) then
+    cmd = r.AddRemoveReaScript(true, 0, path, true) or 0
+    if cmd > 0 then
+      local n = r.ReverseNamedCommandLookup(cmd)
+      GB.set("cmd_" .. which, (n and n ~= "") and ("_" .. n) or tostring(cmd))
+    end
+  end
   if cmd > 0 then r.Main_OnCommand(cmd, 0)
   else r.MB("Could not find:\n" .. path, "Grid Buddy", 0) end
 end
@@ -503,7 +528,7 @@ end
 function GB.ensure_startup_hook()
   local sp = r.GetResourcePath() .. "/Scripts/__startup.lua"
   local target = GB.ROOT .. "GB_startup.lua"
-  local block = "-- >>> ReNo Mellow Grid Buddy (reopens the Display)\n"
+  local block = "-- >>> ReNo Mellow Grid Buddy (reopens the Displays)\n"
     .. "do local f = [[" .. target .. "]]; if reaper.file_exists(f) then dofile(f) end end\n"
     .. "-- <<< ReNo Mellow Grid Buddy\n"
   local cur = ""
