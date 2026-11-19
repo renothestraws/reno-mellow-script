@@ -79,10 +79,22 @@ local function utf8_len(s)
   local ok, n = pcall(utf8.len, s); if ok and n then return n end; return #s
 end
 
-local function track_tag(tr)
+-- trailing tags of a track name: "Kick in [KIK][DRM]" -> { "KIK", "DRM" } (2 at most)
+local function track_tags(tr)
   local _, name = reaper.GetSetMediaTrackInfo_String(tr, "P_NAME", "", false)
-  local t = name:match("%[([^%[%]]+)%]%s*$")
-  if t and utf8_len(t) <= 3 then return t end
+  local out = {}
+  for _ = 1, 2 do
+    local base, t = name:match("^(.-)%s*%[([^%[%]]+)%]%s*$")
+    if not base or utf8_len(t) > 3 then break end
+    table.insert(out, 1, t)
+    name = base
+  end
+  return out
+end
+
+local function has_tag(tr, tag)
+  for _, t in ipairs(track_tags(tr)) do if t == tag then return true end end
+  return false
 end
 
 local tags, tag_info = {}, {}   -- ordered list, tag -> {color=0xRRGGBB|nil, count=n}
@@ -95,8 +107,7 @@ local function scan_tags()
   tags, tag_info = {}, {}
   for i = 0, reaper.CountTracks(0) - 1 do
     local tr = reaper.GetTrack(0, i)
-    local t = track_tag(tr)
-    if t then
+    for _, t in ipairs(track_tags(tr)) do
       local inf = tag_info[t]
       if not inf then
         local c = reaper.GetTrackColor(tr)
@@ -115,7 +126,7 @@ local function tracks_for(tag)
   local list = {}
   for i = 0, reaper.CountTracks(0) - 1 do
     local tr = reaper.GetTrack(0, i)
-    if tag == nil or track_tag(tr) == tag then list[#list + 1] = tr end
+    if tag == nil or has_tag(tr, tag) then list[#list + 1] = tr end
   end
   return list
 end

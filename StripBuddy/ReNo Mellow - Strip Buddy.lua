@@ -2,7 +2,7 @@
 -- @author ReNo Mellow
 -- @version 1.20
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog 71 nouvelles icônes de tags (RID, CRS, PNO, SYN, VLN, TPT, REV, CMT, 808, 909…), 42 nouveaux strips de base dont les dossiers Mix et Live, et nouveaux tags pour 32 strips existants (mis à jour une fois s'ils n'ont pas été modifiés)
+-- @changelog 71 nouvelles icônes de tags (RID, CRS, PNO, SYN, VLN, TPT, REV, CMT, 808, 909…), 42 nouveaux strips de base dont les dossiers Mix et Live, et nouveaux tags pour 32 strips existants (mis à jour une fois s'ils n'ont pas été modifiés) ; nouvelle colonne Tag 2 (Kick in [KIK][DRM]) : le Display liste la piste sous ses deux tags, les strips de base reçoivent le tag de leur dossier
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -243,6 +243,7 @@ local GROUP_FLAGS = {
   { "WIDTH_REVERSE",   "Width reverse",   "NO_LEAD_WHEN_FOLLOW", "No lead when follow" },
 }
 -- default strips: { folder, { { strip name, tag } } } (track name = strip name)
+-- tag 2 of a default strip = the folder tag (FOLDER_TAG2), unless it is its tag 1
 local DEFAULT_STRIPS = {
   { "Drums", { { "Drums", "DRM" }, { "Kick", "KIK" }, { "Kick in", "KIK" }, { "Kick out", "KIK" }, { "Kick sub", "KIK" }, { "Kick trig", "KIK" }, { "Snare", "SNR" }, { "Snare top", "SNR" }, { "Snare bottom", "SNR" }, { "Snare even", "SNR" }, { "Snare trig", "SNR" }, { "Piccolo", "SNR" }, { "Toms", "TOM" }, { "Tom high", "TOM" }, { "Tom mid", "TOM" }, { "Tom low", "TOM" }, { "Tom trig", "TOM" }, { "Octobans", "OCT" }, { "Rototoms", "ROT" }, { "Gong", "GON" }, { "Overheads", "OHS" }, { "Underheads", "UHS" }, { "Glyn Johns", "GLJ" }, { "Front of kit", "FOK" }, { "Sensor mic", "SNS" }, { "Cymbals", "CYM" }, { "Hi-hat", "HH" }, { "Ride", "RID" }, { "Crash", "CRS" }, { "Splash", "SPL" }, { "China", "CHN" }, { "Stack", "CYM" }, { "Clap cymbal", "CYM" }, { "FX cymbal", "CYM" }, { "Ambiance", "AMB" }, { "Room", "ROO" }, { "Talkback mic", "TLK" }, { "New-York", "NY" }, { "Parallel buss", "PAR" }, { "Trigger", "TRI" } } },
   { "Drum pad", { { "Drum pad", "PAD" }, { "Drum machine", "DRM" }, { "Drum module", "DRM" }, { "Drum replacer", "DRM" }, { "Drum bank", "DRM" }, { "E-drums", "DRM" }, { "SPD", "SPD" }, { "Groovebox", "BOX" }, { "Beat box", "BOX" }, { "808", "808" }, { "909", "909" } } },
@@ -261,6 +262,14 @@ local DEFAULT_STRIPS = {
   { "Mix", { { "Reverb", "REV" }, { "Delay", "DLY" }, { "Effects", "FX" }, { "Sidechain", "SC" }, { "Master bus", "MST" }, { "Stems", "STM" }, { "Reference", "REF" }, { "Music", "MUS" }, { "Background", "BKG" }, { "Alternate take", "ALT" }, { "Temporary", "TMP" }, { "Spare", "RSP" }, { "Comment", "CMT" } } },
   { "Live", { { "Monitor mix", "MIX" }, { "In-ears", "IEM" }, { "Monitors", "MON" }, { "Talkback return", "TBK" }, { "Timecode track", "TC" }, { "LTC", "LTC" }, { "MTC", "MTC" }, { "Sampler", "SMP" }, { "Loop", "LOP" }, { "Ghost track", "GHO" } } },
   { "Miscellaneous", { { "Miscellaneous", "MSC" }, { "Playback", "PLB" }, { "Production", "PRD" }, { "Click", "CLK" }, { "Metronome", "CLK" }, { "Cues", "CUE" }, { "Timecode", "TMC" }, { "MIDI", "MID" }, { "DMX", "DMX" }, { "Video", "VID" }, { "Image", "IMG" }, { "Lyrics", "LYR" }, { "Chords", "CHD" }, { "Auxiliary", "AUX" }, { "Busses", "BUS" }, { "Dca", "DCA" }, { "Vca", "VCA" }, { "Group", "GRP" }, { "Subgroup", "SUB" }, { "Matrix", "MTX" }, { "Master", "MLR" } } },
+}
+
+-- folder tag given as tag 2 to the default strips (Mix, Live, Miscellaneous: none)
+local FOLDER_TAG2 = {
+  ["Drums"] = "DRM", ["Drum pad"] = "PAD", ["Percussion"] = "PRC", ["Bass"] = "BSS",
+  ["Acoustic guitar"] = "ACG", ["Guitar"] = "GTR", ["Keyboard"] = "KEY", ["Sound FX"] = "SFX",
+  ["Strings"] = "STR", ["Woodwinds"] = "WOO", ["Brass"] = "BRA", ["Orchestral percussion"] = "ORC",
+  ["Choir"] = "CHO", ["Vocals"] = "VOC",
 }
 
 local DEFAULT_GROUP_FLAGS = { VOLUME_LEAD = true, VOLUME_FOLLOW = true, MUTE_LEAD = true,
@@ -302,11 +311,17 @@ local function utf8_len(s)
   return #s
 end
 
--- remove a trailing " [ABC]" tag (1 to 3 characters)
-local function remove_tag(name)
-  local base, t = name:match("^(.-)%s*%[([^%[%]]+)%]%s*$")
-  if base and utf8_len(t) <= 3 then return base end
-  return name
+-- split the trailing tags (1 to 3 characters, 2 at most) off a name:
+-- "Kick in [KIK][DRM]" -> "Kick in", "KIK", "DRM" ; "Kick [KIK]" -> "Kick", "KIK", nil
+local function split_tags(name)
+  local t = {}
+  for _ = 1, 2 do
+    local base, tg = name:match("^(.-)%s*%[([^%[%]]+)%]%s*$")
+    if not base or utf8_len(tg) > 3 then break end
+    table.insert(t, 1, tg)
+    name = base
+  end
+  return name, t[1], t[2]
 end
 
 -- colours (stored as 0xRRGGBB)
@@ -673,16 +688,20 @@ local function apply_strip(s)
 
   for idx, tr in ipairs(tracks) do
     -- 2-3 : name + tag
-    if s.track_name or s.tag then
+    if s.track_name or s.tag or s.tag2 then
       local _, cur = reaper.GetSetMediaTrackInfo_String(tr, "P_NAME", "", false)
-      local name
+      local base, t1, t2 = split_tags(cur)
       if s.track_name then
-        name = s.track_name
-        if #tracks > 1 then name = name .. " " .. idx end
-      else
-        name = s.tag and remove_tag(cur) or cur
+        base = s.track_name
+        if #tracks > 1 then base = base .. " " .. idx end
+        t1, t2 = nil, nil           -- a new track name drops the old tags
       end
-      if s.tag then name = trim(name .. " [" .. s.tag .. "]") end
+      t1 = s.tag or t1              -- an empty tag cell keeps the track's tag
+      t2 = s.tag2 or t2
+      if t2 == t1 then t2 = nil end
+      if not t1 then t1, t2 = t2, nil end
+      local name = base
+      if t1 then name = trim(base .. " [" .. t1 .. "]" .. (t2 and ("[" .. t2 .. "]") or "")) end
       reaper.GetSetMediaTrackInfo_String(tr, "P_NAME", name, true)
     end
     -- 4 : colour
@@ -841,6 +860,7 @@ local function describe(s)
   local function add(k, v) if v and v ~= "" then t[#t + 1] = k .. ": " .. v end end
   add("Track name", s.track_name)
   add("Tag", s.tag and ("[" .. s.tag .. "]"))
+  add("Tag 2", s.tag2 and ("[" .. s.tag2 .. "]"))
   add("Colour", s.color and string.format("#%06X", s.color))
   add("Icon", s.icon and basename(s.icon))
   add("Layout", sum_layout(s.layout))
@@ -898,7 +918,9 @@ local function load_default_strips()
       if not have[nm] then
         local icon = tag ~= "" and ("cs_tags_" .. tag .. ".png") or nil
         if icon and not reaper.file_exists(ICON_DIR .. "/" .. icon) then icon = nil end
-        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, icon = icon, folder = fid }
+        local t2 = FOLDER_TAG2[fname]
+        if t2 == tag then t2 = nil end
+        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, tag2 = t2, icon = icon, folder = fid }
         added = added + 1
       end
     end
@@ -972,6 +994,26 @@ if reaper.GetExtState(EXT, "retag_120") ~= "1" then
     end
   end
   reaper.SetExtState(EXT, "retag_120", "1", true)
+end
+
+-- 1.20 : tag 2. One-time: the default strips already saved get their folder tag
+-- as tag 2, when they still have their default tag 1 and no tag 2.
+if reaper.GetExtState(EXT, "tag2_120") ~= "1" then
+  local fname = {}
+  for _, f in ipairs(folders) do fname[f.id] = f.name end
+  local def = {}
+  for _, fd in ipairs(DEFAULT_STRIPS) do
+    for _, e in ipairs(fd[2]) do def[fd[1] .. "\0" .. e[1]] = e[2] end
+  end
+  for _, s in ipairs(strips) do
+    local fn = s.folder and fname[s.folder]
+    local t2 = fn and FOLDER_TAG2[fn]
+    if t2 and not s.tag2 and s.name and s.tag and def[fn .. "\0" .. s.name] == s.tag and s.tag ~= t2 then
+      s.tag2 = t2
+      dirty = true
+    end
+  end
+  reaper.SetExtState(EXT, "tag2_120", "1", true)
 end
 
 local function set_status(msg, kind)
@@ -1359,6 +1401,15 @@ local function draw_row(i, s)
   local rv2, tg = ImGui.InputTextWithHint(ctx, "##tag", "ABC", s.tag or "", ImGui.InputTextFlags_CharsUppercase)
   if rv2 then s.tag = clean_tag(tg); mark() end
 
+  -- 3b tag 2 (Display only: colour and icon follow tag 1)
+  ImGui.TableNextColumn(ctx)
+  ImGui.SetNextItemWidth(ctx, -FLT_MIN)
+  local rv3, tg2 = ImGui.InputTextWithHint(ctx, "##tag2", "ABC", s.tag2 or "", ImGui.InputTextFlags_CharsUppercase)
+  if rv3 then s.tag2 = clean_tag(tg2); mark() end
+  if ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal) then
+    ImGui.SetTooltip(ctx, "Second tag, written after the first one: Kick in [KIK][DRM].\nThe Display lists the track under both tags. Colour and icon follow the first tag.")
+  end
+
   -- 4 colour
   ImGui.TableNextColumn(ctx)
   local function set_color(v)
@@ -1572,7 +1623,7 @@ local function draw_row(i, s)
 end
 
 local COLUMNS = {
-  { "#", 24 }, { "Strip name *", 130 }, { "Track name", 110 }, { "Tag", 44 }, { "Colour", 52 },
+  { "#", 24 }, { "Strip name *", 130 }, { "Track name", 110 }, { "Tag", 44 }, { "Tag 2", 44 }, { "Colour", 52 },
   { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Pan mode", 130 }, { "Metering", 120 }, { "FX chain", 130 },
   { "Envelopes", 110 }, { "Item name", 110 }, { "Normalize", 130 }, { "Group", 130 }, { "", 100 },
 }
