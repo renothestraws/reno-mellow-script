@@ -13,6 +13,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 | **ReNo Mellow - Tool Buddy** (ex Swiss Army Knife) | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et trois raccourcis au choix (ex. W / Shift+W / Ctrl+W) lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, sa bulle Display qui affiche l'outil actif, 24 outils, Next / Previous tool. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Grid Buddy** | La grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles de 1/128 à 4, diviseur et limites, snap, et **Link MIDI editor** (même grille dans l'arrangement et l'éditeur MIDI). Deux mini Displays flottants indépendants, arrangement et éditeur MIDI (molette = taille, clic = menu, Alt = swing) et actions isolées pour les raccourcis (molette, plus large / plus étroite, swing), en double pour l'éditeur MIDI. D'après Gridbox de FeedTheCat. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/GridBuddy/GridBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/GridBuddy/GridBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Chord Buddy** | Roue des quintes pour écrire des accords dans l'éditeur MIDI : un clic pose l'accord au curseur (longueur de la grille ×1 / ×2 / ×4 ou 1 mesure) et le curseur passe à la fin pour enchaîner. Roue qui pivote (la tonalité en haut est active, ses accords en couleur avec leurs degrés, majeur / mineur), inversion de −3 à +3 par case, octave au centre, types 7 / maj7 / 6 / sus2 / sus4 / add9, inversion **Auto** (voice leading), basse ajoutée, voicings Close / Open / Drop 2, strum et humanize, mini clavier. **Display** : nom de l'accord sous le curseur et export des accords sélectionnés (item sur une piste « Chords », take marker, text event, notation event). Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ChordBuddy/ChordBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ChordBuddy/ChordBuddy_manual_EN.pdf) |
+| **ReNo Mellow - Lyrics Buddy** | Transcrit les items de voix sélectionnés (chant ou parole, anglais, français et autres langues) avec **whisper.cpp**, en local et sans Python, puis crée sur une piste « Lyrics » sous la piste voix un item vide par phrase, avec le texte en note, calé sur le moment où elle est dite. Windows et macOS, GPU utilisé s'il est disponible |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
@@ -80,6 +81,18 @@ Anciennement **Swiss Army Knife** : au premier lancement, Tool Buddy reprend aut
 **Extensions :** ReaImGui (obligatoire), SWS (conseillée). REAPER 7.03 ou plus pour les infobulles.
 
 **Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manual_EN.pdf)
+
+### ReNo Mellow - Lyrics Buddy
+
+- Sélectionner un ou plusieurs items de voix (ou une piste : tous ses items), lancer **ReNo Mellow - Lyrics Buddy**, choisir la langue (ou Auto) et cliquer **Transcribe**.
+- Résultat : une piste « Lyrics » sous la piste voix, avec un item vide par phrase et le texte dans la note de l'item. Une nouvelle transcription remplace les paroles déjà présentes sous l'item (option). Ctrl+Z annule tout ce qui a été créé pour un item.
+- Champ **Hint** (facultatif) : titre, noms propres, mots rares, pour aider la reconnaissance.
+- **Installation unique de whisper.cpp** (aucun Python, aucun PyTorch), expliquée dans l'onglet **Setup** avec les commandes à copier :
+  - macOS : `brew install whisper-cpp`
+  - Windows : télécharger `whisper-bin-x64.zip` (ou `whisper-cublas-…-bin-x64.zip` pour une carte NVIDIA) sur <https://github.com/ggml-org/whisper.cpp/releases> et le décompresser dans `Data/ReNo_LyricsBuddy/whisper`
+  - Modèle : un fichier `.bin` dans `Data/ReNo_LyricsBuddy/models`, par exemple `ggml-large-v3-turbo.bin` (1,6 Go, le meilleur compromis) depuis <https://huggingface.co/ggerganov/whisper.cpp>
+  - Puis **Auto-detect** et **Test**.
+- Nécessite ReaImGui. Journal : `Data/ReNo_LyricsBuddy/LyricsBuddy.log` (bouton **Open log**).
 
 ### ReNo Mellow - Recording Buddy
 
@@ -160,7 +173,7 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation en un fichier (REAPER 7.86 et plus)
 
-Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy, Grid Buddy, Chord Buddy).
+Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy, Grid Buddy, Chord Buddy, Lyrics Buddy).
 Télécharger le fichier, puis l'ouvrir avec REAPER : les scripts sont installés et ajoutés à la liste d'actions,
 et le paquet peut être désinstallé proprement. Pas de mises à jour automatiques : pour cela, préférer ReaPack.
 
@@ -181,6 +194,9 @@ Grid Buddy en téléchargement direct :
 Chord Buddy en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Chord_Buddy.ReaperPkg>
 
+Lyrics Buddy en téléchargement direct :
+<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Lyrics_Buddy.ReaperPkg>
+
 ## Installation manuelle
 
 **REABACK** : télécharger le dossier `REABACK`, puis charger et lancer `REABACK_Install.lua` depuis la liste d'actions
@@ -199,6 +215,8 @@ Chord Buddy en téléchargement direct :
 
 **Chord Buddy** : copier le dossier `ChordBuddy` dans le dossier `Scripts` de REAPER, puis charger
 `ReNo Mellow - Chord Buddy.lua` et `ReNo Mellow - Chord Buddy - Display.lua` dans la liste d'actions.
+
+**Lyrics Buddy** : copier `LyricsBuddy/ReNo Mellow - Lyrics Buddy.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
 
 **Strip Buddy** : copier `StripBuddy/ReNo Mellow - Strip Buddy.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
 
