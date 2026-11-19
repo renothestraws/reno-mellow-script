@@ -1,5 +1,5 @@
 -- @noindex
--- Grid Buddy: Wider grid: multiplied by the grid divisor (or next adaptive size).
+-- Grid Buddy: Wider grid: multiplied by the grid divisor.
 local path = ({ reaper.get_action_context() })[2]
 local dir = path:match("^(.*[/\\])")
 local lib = dir .. "GB_lib.lua"
