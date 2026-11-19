@@ -1,15 +1,15 @@
 -- @noindex
 -- Shared code of the "Display" scripts: a small bubble showing the active tool.
 -- Loaded by the two Display scripts, which set:
---   SAK_ROOT   = folder holding SAK_lib.lua
---   SAK_TB_CTX = "main" (arrange) or "midi" (MIDI editor)
+--   TB_ROOT   = folder holding TB_lib.lua
+--   TB_WIN_CTX = "main" (arrange) or "midi" (MIDI editor)
 
-local dir = SAK_ROOT
-dofile(dir .. "SAK_lib.lua")
+local dir = TB_ROOT
+dofile(dir .. "TB_lib.lua")
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs ReaImGui.\nInstall it with ReaPack (ReaTeam Extensions), then restart REAPER.",
-    "Swiss Army Knife", 0)
+    "Tool Buddy", 0)
   return
 end
 package.path = reaper.ImGui_GetBuiltinPath() .. "/?.lua"
@@ -26,54 +26,59 @@ local function set_self_toggle(on)
 end
 set_self_toggle(true)
 
-SAK.set_context(SAK_TB_CTX or "main")
-SAK.ensure_init()
-local CTX = SAK.context
-if self_sec == SAK.section then SAK.register_self("cmd_display") end
+TB.set_context(TB_WIN_CTX or "main")
+TB.ensure_init()
+local CTX = TB.context
+if self_sec == TB.section then TB.register_self("cmd_display") end
 
 -- Open / close handshake. The running window writes a heartbeat (not saved) every frame.
 -- A launch that finds a fresh heartbeat is a "close" request: it tells the running
 -- window to close and stops. "disp_wanted" (saved) remembers whether the window is open,
--- so SAK_startup.lua can reopen it when REAPER starts.
-local S = "ReNoMellow_SAK"
+-- so TB_startup.lua can reopen it when REAPER starts.
+local S = "ReNoMellow_ToolBuddy"
 local HB, QUIT = "disp_hb_" .. CTX, "disp_quit_" .. CTX
 local hb = tonumber(reaper.GetExtState(S, HB))
 if hb and reaper.time_precise() - hb < 1.0 then
   reaper.SetExtState(S, QUIT, "1", false)
-  SAK.csets("disp_wanted", "0")
+  TB.csets("disp_wanted", "0")
   if reaper.set_action_options then reaper.set_action_options(8) end
   set_self_toggle(false)
   return
 end
 reaper.DeleteExtState(S, QUIT, false)
-SAK.csets("disp_wanted", "1")
+TB.csets("disp_wanted", "1")
 
 -- Adds (once) a small block to Scripts/__startup.lua that reopens the Display windows
--- when REAPER starts. The block only runs SAK_startup.lua if it still exists.
+-- when REAPER starts. The block only runs TB_startup.lua if it still exists.
 local function ensure_startup_hook()
   local sp = reaper.GetResourcePath() .. "/Scripts/__startup.lua"
-  local target = dir .. "SAK_startup.lua"
-  local block = "-- >>> ReNo Mellow Swiss Army Knife (reopens the Display windows)\n"
+  local target = dir .. "TB_startup.lua"
+  local block = "-- >>> ReNo Mellow Tool Buddy (reopens the Display windows)\n"
     .. "do local f = [[" .. target .. "]]; if reaper.file_exists(f) then dofile(f) end end\n"
-    .. "-- <<< ReNo Mellow Swiss Army Knife\n"
+    .. "-- <<< ReNo Mellow Tool Buddy\n"
   local cur = ""
   local fh = io.open(sp, "r")
   if fh then cur = fh:read("a") or ""; fh:close() end
-  if cur:find(block, 1, true) then return end
-  local a, b = cur:find("%-%- >>> ReNo Mellow Swiss Army Knife.-%-%- <<< ReNo Mellow Swiss Army Knife\n?")
-  if a then
-    cur = cur:sub(1, a - 1) .. block .. cur:sub(b + 1)
-  else
-    if cur ~= "" and not cur:match("\n$") then cur = cur .. "\n" end
-    cur = cur .. block
+  local orig = cur
+  -- remove the block written by the former "Swiss Army Knife" version
+  cur = cur:gsub("%-%- >>> ReNo Mellow Swiss Army Knife.-%-%- <<< ReNo Mellow Swiss Army Knife\n?", "")
+  if not cur:find(block, 1, true) then
+    local a, b = cur:find("%-%- >>> ReNo Mellow Tool Buddy.-%-%- <<< ReNo Mellow Tool Buddy\n?")
+    if a then
+      cur = cur:sub(1, a - 1) .. block .. cur:sub(b + 1)
+    else
+      if cur ~= "" and not cur:match("\n$") then cur = cur .. "\n" end
+      cur = cur .. block
+    end
   end
+  if cur == orig then return end
   fh = io.open(sp, "w")
   if fh then fh:write(cur); fh:close() end
 end
 ensure_startup_hook()
 
-local function opt(k, default) return SAK.setting("disp_" .. k .. "_" .. CTX, default) end
-local function set_opt(k, v) SAK.set_setting("disp_" .. k .. "_" .. CTX, v) end
+local function opt(k, default) return TB.setting("disp_" .. k .. "_" .. CTX, default) end
+local function set_opt(k, v) TB.set_setting("disp_" .. k .. "_" .. CTX, v) end
 
 local FONT_MIN, FONT_MAX = 10, 28
 local COL_BG     = 0x2B2D31FF
@@ -92,25 +97,25 @@ local function text_size()
 end
 
 local function open_toolbox()
-  local id = SAK.cgets("cmd_toolbox")
-  local cmd = SAK.resolve(id)
+  local id = TB.cgets("cmd_toolbox")
+  local cmd = TB.resolve(id)
   if cmd == 0 then
-    reaper.MB("Open the Toolbox once from the Action List first.", "Swiss Army Knife", 0)
+    reaper.MB("Open the Toolbox once from the Action List first.", "Tool Buddy", 0)
     return
   end
   if CTX == "midi" then
     if reaper.MIDIEditor_GetActive() then reaper.MIDIEditor_LastFocused_OnCommand(cmd, false)
-    else reaper.MB("Open a MIDI editor first.", "Swiss Army Knife", 0) end
+    else reaper.MB("Open a MIDI editor first.", "Tool Buddy", 0) end
   else
     reaper.Main_OnCommand(cmd, 0)
   end
 end
 
 local function step(dir_)
-  local cur, n = SAK.get_current(), SAK.NSLOTS
+  local cur, n = TB.get_current(), TB.NSLOTS
   for k = 1, n do
     local i = ((cur - 1 + dir_ * k) % n) + 1
-    if not SAK.is_empty(i) then SAK.set_current(i) return end
+    if not TB.is_empty(i) then TB.set_current(i) return end
   end
 end
 
@@ -125,7 +130,7 @@ local function draw_menu()
     if ch then set_opt("font", v) end
     ImGui.Separator(ctx)
     if ImGui.MenuItem(ctx, "Close") then
-      SAK.csets("disp_wanted", "0")
+      TB.csets("disp_wanted", "0")
       close_request = true
     end
     ImGui.EndPopup(ctx)
@@ -136,14 +141,14 @@ local editor_since = nil
 
 -- (re)creates the ImGui context with its fonts and icon
 local function create_context()
-  ctx = ImGui.CreateContext((CTX == "midi") and "ReNo Mellow - SAK MIDI Display" or "ReNo Mellow - SAK Display")
+  ctx = ImGui.CreateContext((CTX == "midi") and "ReNo Mellow - Tool Buddy MIDI Display" or "ReNo Mellow - Tool Buddy Display")
   fonts = {}
   for sz = FONT_MIN, FONT_MAX do
     fonts[sz] = ImGui.CreateFont("sans-serif", sz)
     ImGui.Attach(ctx, fonts[sz])
   end
   icon = nil
-  local path = reaper.GetResourcePath() .. "/Data/toolbar_icons/toolbar_sak_swiss_army_knife.png"
+  local path = reaper.GetResourcePath() .. "/Data/toolbar_icons/ReNo_ToolBuddy.png"
   if reaper.file_exists(path) then
     local ok, img = pcall(ImGui.CreateImage, path)
     if ok and img then icon = img; ImGui.Attach(ctx, icon) end
@@ -188,14 +193,14 @@ local function loop()
   local flags = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoScrollbar
     | ImGui.WindowFlags_NoScrollWithMouse | ImGui.WindowFlags_NoCollapse
     | ImGui.WindowFlags_AlwaysAutoResize | ImGui.WindowFlags_NoDocking
-  local title = (CTX == "midi") and "SAK MIDI - Active tool" or "SAK - Active tool"
+  local title = (CTX == "midi") and "Tool Buddy MIDI - Active tool" or "Tool Buddy - Active tool"
   local visible, open = ImGui.Begin(ctx, title, true, flags)
   if visible then
-    local cur = SAK.get_current()
-    local name = SAK.display_name(cur)
+    local cur = TB.get_current()
+    local name = TB.display_name(cur)
     local h = ImGui.GetTextLineHeight(ctx)
 
-    -- Swiss Army Knife icon (first state of the toolbar icon), or a short label if it is missing
+    -- Tool Buddy icon (first state of the toolbar icon), or a short label if it is missing
     if icon then
       ImGui.Image(ctx, icon, h * 1.4, h * 1.4, 0, 0, 1 / 3, 1)
       ImGui.SameLine(ctx)
@@ -207,7 +212,7 @@ local function loop()
       end
     else
       ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) + h * 0.2)
-      ImGui.TextColored(ctx, COL_LABEL, (CTX == "midi") and "SAK MIDI" or "SAK")
+      ImGui.TextColored(ctx, COL_LABEL, (CTX == "midi") and "TB MIDI" or "TB")
       ImGui.SameLine(ctx)
       ImGui.SetCursorPosY(ctx, ImGui.GetCursorPosY(ctx) - h * 0.2)
     end

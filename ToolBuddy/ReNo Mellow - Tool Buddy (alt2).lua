@@ -1,5 +1,5 @@
 -- @noindex
 local dir = ({reaper.get_action_context()})[2]:match("^(.*[/\\])")
-dofile(dir .. "SAK_lib.lua")
-SAK.prepare_script()
-SAK.run("main")
+dofile(dir .. "TB_lib.lua")
+TB.prepare_script()
+TB.run("alt2")
