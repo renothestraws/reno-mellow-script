@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
 -- @version 1.20
--- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog 71 nouvelles icônes de tags (RID, CRS, PNO, SYN, VLN, TPT, REV, CMT, 808, 909…), 42 nouveaux strips de base dont les dossiers Mix et Live, et nouveaux tags pour 32 strips existants (mis à jour une fois s'ils n'ont pas été modifiés) ; nouvelle colonne Tag 2 (Kick in [KIK][DRM]) : le Display liste la piste sous ses deux tags, les strips de base reçoivent le tag de leur dossier
+-- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
+-- @changelog 71 nouvelles icônes de tags (RID, CRS, PNO, SYN, VLN, TPT, REV, CMT, 808, 909…), 42 nouveaux strips de base dont les dossiers Mix et Live, et nouveaux tags pour 32 strips existants (mis à jour une fois s'ils n'ont pas été modifiés) ; nouvelle colonne Tag 2 (Kick in [KIK][DRM]) : le Display liste la piste sous ses deux tags, les strips de base reçoivent le tag de leur dossier ; nouvelle colonne Output (master / parent, sorties hardware audio et MIDI)
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -670,6 +670,70 @@ local function set_group(tr, gid, key)
   end
 end
 
+-- outputs: { main = bool, hw = { { ch = 0-based first channel, mono = bool }, ... },
+--            midi = { name = device name, dev = index, chan = 0 (all) / 1-16 } or nil }
+local function out_ch_label(o)
+  if o.mono then return tostring(o.ch + 1) end
+  return (o.ch + 1) .. "/" .. (o.ch + 2)
+end
+
+local function out_ch_name(o)
+  local function nm(i)
+    local n = reaper.GetOutputChannelName(i)
+    return (n and n ~= "") and n or ("Out " .. (i + 1))
+  end
+  if o.mono then return "Mono " .. out_ch_label(o) .. "  (" .. nm(o.ch) .. ")" end
+  return "Stereo " .. out_ch_label(o) .. "  (" .. nm(o.ch) .. " / " .. nm(o.ch + 1) .. ")"
+end
+
+local function midi_out_name(i)
+  local ok, nm = reaper.GetMIDIOutputName(i, "")
+  if ok and nm ~= "" then return nm end
+end
+
+local function midi_out_index(m)
+  if not m then return nil end
+  for i = 0, reaper.GetNumMIDIOutputs() - 1 do
+    if m.name and midi_out_name(i) == m.name then return i end
+  end
+  return m.dev
+end
+
+local function sum_output(o)
+  if not o then return "" end
+  local t = { o.main and "Master" or "No master" }
+  if o.hw and #o.hw > 0 then
+    local c = {}
+    for _, h in ipairs(o.hw) do c[#c + 1] = out_ch_label(h) end
+    t[#t + 1] = "HW " .. table.concat(c, " + ")
+  end
+  if o.midi then
+    t[#t + 1] = "MIDI " .. (o.midi.name or ("#" .. ((o.midi.dev or 0) + 1))) ..
+      (((o.midi.chan or 0) == 0) and "" or (" ch" .. o.midi.chan))
+  end
+  return table.concat(t, ", ")
+end
+
+-- replaces the track's master/parent send, hardware audio outputs and MIDI hardware output;
+-- sends to other tracks are kept
+local function apply_output(tr, o)
+  reaper.SetMediaTrackInfo_Value(tr, "B_MAINSEND", o.main and 1 or 0)
+  for i = reaper.GetTrackNumSends(tr, 1) - 1, 0, -1 do reaper.RemoveTrackSend(tr, 1, i) end
+  for _, h in ipairs(o.hw or {}) do
+    local idx = reaper.CreateTrackSend(tr, nil)
+    if idx and idx >= 0 then
+      reaper.SetTrackSendInfo_Value(tr, 1, idx, "I_SRCCHAN", 0)
+      reaper.SetTrackSendInfo_Value(tr, 1, idx, "I_DSTCHAN", h.ch | (h.mono and 1024 or 0))
+    end
+  end
+  local dev = midi_out_index(o.midi)
+  if dev then
+    reaper.SetMediaTrackInfo_Value(tr, "I_MIDIHWOUT", (dev << 5) | ((o.midi.chan or 0) & 31))
+  else
+    reaper.SetMediaTrackInfo_Value(tr, "I_MIDIHWOUT", -1)
+  end
+end
+
 local function apply_strip(s)
   local n = reaper.CountSelectedTracks(0)
   if n == 0 then return false, "Select one or more tracks first." end
@@ -725,6 +789,8 @@ local function apply_strip(s)
       local m = math.floor(reaper.GetMediaTrackInfo_Value(tr, "I_RECMODE"))
       if OUTPUT_RECMODES[m] then reaper.SetMediaTrackInfo_Value(tr, "I_RECMODE", 0) end
     end
+    -- 7c : outputs (master / parent, hardware audio, hardware MIDI)
+    if s.output then apply_output(tr, s.output) end
     -- 7a : pan mode
     if s.panmode then reaper.SetMediaTrackInfo_Value(tr, "I_PANMODE", s.panmode) end
     -- 7b : metering type (other meter bits kept)
@@ -865,6 +931,7 @@ local function describe(s)
   add("Icon", s.icon and basename(s.icon))
   add("Layout", sum_layout(s.layout))
   add("Record input", s.recout and rec_out_label(s.recout) or (s.recinput and rec_input_label(s.recinput, REC_OPTS)))
+  add("Output", sum_output(s.output))
   add("Pan mode", pan_mode_label(s.panmode))
   add("Metering", sum_meter(s.meter))
   add("FX chain", s.fxchain and basename(s.fxchain))
@@ -1479,6 +1546,71 @@ local function draw_row(i, s)
     ImGui.EndCombo(ctx)
   end
 
+  -- 7c output
+  ImGui.TableNextColumn(ctx)
+  if cell_popup_button("out", sum_output(s.output)) then
+    local rvb, nv = ImGui.Checkbox(ctx, "Set the track outputs", s.output ~= nil)
+    if rvb then s.output = nv and { main = true, hw = {} } or nil; mark() end
+    local o = s.output
+    if o then
+      o.hw = o.hw or {}
+      local rvm, mv = ImGui.Checkbox(ctx, "Master / parent send", o.main == true)
+      if rvm then o.main = mv; mark() end
+
+      ImGui.SeparatorText(ctx, "Hardware audio outputs")
+      local del
+      for k, h in ipairs(o.hw) do
+        if ImGui.SmallButton(ctx, "x##hw" .. k) then del = k end
+        ImGui.SameLine(ctx)
+        ImGui.Text(ctx, out_ch_name(h))
+      end
+      if del then table.remove(o.hw, del); mark() end
+      if #o.hw == 0 then ImGui.TextDisabled(ctx, "None") end
+      local nout = reaper.GetNumAudioOutputs()
+      ImGui.SetNextItemWidth(ctx, 260)
+      if ImGui.BeginCombo(ctx, "##addhw", "Add an output...", ImGui.ComboFlags_HeightLarge) then
+        if nout == 0 then ImGui.TextDisabled(ctx, "No audio output (check the audio device)") end
+        for ch = 0, nout - 2 do
+          local e = { ch = ch, mono = false }
+          if ImGui.Selectable(ctx, out_ch_name(e) .. "##st" .. ch) then o.hw[#o.hw + 1] = e; mark() end
+        end
+        if nout > 0 then ImGui.Separator(ctx) end
+        for ch = 0, nout - 1 do
+          local e = { ch = ch, mono = true }
+          if ImGui.Selectable(ctx, out_ch_name(e) .. "##mo" .. ch) then o.hw[#o.hw + 1] = e; mark() end
+        end
+        ImGui.EndCombo(ctx)
+      end
+
+      ImGui.SeparatorText(ctx, "Hardware MIDI output")
+      ImGui.SetNextItemWidth(ctx, 260)
+      local mprev = o.midi and (o.midi.name or ("Device " .. ((o.midi.dev or 0) + 1))) or "None"
+      if ImGui.BeginCombo(ctx, "Device##midiout", mprev, ImGui.ComboFlags_HeightLarge) then
+        if ImGui.Selectable(ctx, "None", o.midi == nil) then o.midi = nil; mark() end
+        for i = 0, reaper.GetNumMIDIOutputs() - 1 do
+          local nm = midi_out_name(i)
+          if nm and ImGui.Selectable(ctx, nm .. "##mdev" .. i, o.midi ~= nil and o.midi.name == nm) then
+            o.midi = { name = nm, dev = i, chan = o.midi and o.midi.chan or 0 }; mark()
+          end
+        end
+        ImGui.EndCombo(ctx)
+      end
+      if o.midi then
+        ImGui.SetNextItemWidth(ctx, 260)
+        local c = o.midi.chan or 0
+        if ImGui.BeginCombo(ctx, "Channel##midich", c == 0 and "All channels" or ("Channel " .. c)) then
+          if ImGui.Selectable(ctx, "All channels", c == 0) then o.midi.chan = 0; mark() end
+          for k = 1, 16 do
+            if ImGui.Selectable(ctx, "Channel " .. k, c == k) then o.midi.chan = k; mark() end
+          end
+          ImGui.EndCombo(ctx)
+        end
+      end
+      ImGui.TextDisabled(ctx, "Replaces the track's master send, hardware outputs\nand MIDI output. Sends to other tracks are kept.")
+    end
+    ImGui.EndPopup(ctx)
+  end
+
   -- 7a pan mode
   ImGui.TableNextColumn(ctx)
   ImGui.SetNextItemWidth(ctx, -FLT_MIN)
@@ -1624,7 +1756,7 @@ end
 
 local COLUMNS = {
   { "#", 24 }, { "Strip name *", 130 }, { "Track name", 110 }, { "Tag", 44 }, { "Tag 2", 44 }, { "Colour", 52 },
-  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Pan mode", 130 }, { "Metering", 120 }, { "FX chain", 130 },
+  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Output", 130 }, { "Pan mode", 130 }, { "Metering", 120 }, { "FX chain", 130 },
   { "Envelopes", 110 }, { "Item name", 110 }, { "Normalize", 130 }, { "Group", 130 }, { "", 100 },
 }
 
