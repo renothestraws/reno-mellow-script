@@ -1,9 +1,10 @@
 -- @description Custom Strips (track presets window)
 -- @author ReNo Mellow
--- @version 1.14
+-- @version 1.15
 -- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Onglet Setup : multisélection des strips (clic sur #, Ctrl, Shift) ; une modification dans une ligne sélectionnée s'applique à toutes
+-- @changelog Nouveau Display (barre flottante Zoom / View / Scroll / Select + liste des tags du projet) et onglet Display (Display View et Display Scroll : TCP / MCP / Both)
 -- @provides
+--   [main] ReNo Mellow - Custom Strips - Display.lua
 --   [data] Data/toolbar_icons/ReNo_CustomStrips.png > toolbar_icons/ReNo_CustomStrips.png
 --   [data] Data/toolbar_icons/150/ReNo_CustomStrips.png > toolbar_icons/150/ReNo_CustomStrips.png
 --   [data] Data/toolbar_icons/200/ReNo_CustomStrips.png > toolbar_icons/200/ReNo_CustomStrips.png
@@ -73,7 +74,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
-local VERSION = "1.14"
+local VERSION = "1.15"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -1721,6 +1722,65 @@ local function draw_modals()
   end
 end
 
+
+--------------------------------------------------------------------------------
+-- Tab 3 : Display settings (the Display itself is "ReNo Mellow - Custom Strips - Display.lua")
+--------------------------------------------------------------------------------
+local DISPLAY_FILE = (({reaper.get_action_context()})[2]:match("^(.*[/\\])") or "") .. "ReNo Mellow - Custom Strips - Display.lua"
+local START_FILE = reaper.GetResourcePath() .. "/Scripts/__startup.lua"
+local START_A = "-- >>> ReNo Mellow Custom Strips Display (auto-start)"
+local START_B = "-- <<< ReNo Mellow Custom Strips Display"
+local PANES = { { "tcp", "TCP" }, { "mcp", "MCP" }, { "both", "Both" } }
+
+local function remove_startup_block()
+  local f = io.open(START_FILE, "r"); if not f then return end
+  local s = f:read("a"); f:close()
+  local a = s:find(START_A, 1, true); if not a then return end
+  local _, b = s:find(START_B, a, true); if not b then return end
+  if s:sub(b + 1, b + 1) == "\n" then b = b + 1 end
+  f = io.open(START_FILE, "w"); if f then f:write(s:sub(1, a - 1) .. s:sub(b + 1)); f:close() end
+end
+
+local function toggle_display()
+  if not reaper.file_exists(DISPLAY_FILE) then
+    set_status("Display script not found: " .. DISPLAY_FILE, "err") return
+  end
+  local id = reaper.AddRemoveReaScript(true, 0, DISPLAY_FILE, true)
+  if id and id ~= 0 then reaper.Main_OnCommand(id, 0) end
+end
+
+local function pane_radio(label, key, default)
+  local cur = reaper.GetExtState(EXT, key); if cur == "" then cur = default end
+  ImGui.AlignTextToFramePadding(ctx)
+  ImGui.Text(ctx, label)
+  for _, o in ipairs(PANES) do
+    ImGui.SameLine(ctx, 0, 14)
+    if ImGui.RadioButton(ctx, o[2] .. "##" .. key, cur == o[1]) then reaper.SetExtState(EXT, key, o[1], true) end
+  end
+end
+
+local function draw_display_tab()
+  ImGui.TextWrapped(ctx, "The Display is a small floating bar: Zoom / View / Scroll / Select on the left, " ..
+    "the tags of the project on the right. Turn on one or more options, then pick a tag (or All) in the list. " ..
+    "Mouse wheel over the list = next / previous tag. Right-click the bar for text size and startup.")
+  ImGui.Spacing(ctx)
+  if ImGui.Button(ctx, "Open / close the Display") then pending = toggle_display end
+  ImGui.Spacing(ctx); ImGui.Separator(ctx); ImGui.Spacing(ctx)
+  pane_radio("Display View   ", "disp_view", "both")
+  ImGui.TextDisabled(ctx, "View shows only the tracks of the tag (folder parents stay visible) in these panes.")
+  ImGui.Spacing(ctx)
+  pane_radio("Display Scroll ", "disp_scroll", "tcp")
+  ImGui.TextDisabled(ctx, "Scroll brings the first track of the tag to the top (TCP) or to the left (mixer).")
+  ImGui.Spacing(ctx); ImGui.Separator(ctx); ImGui.Spacing(ctx)
+  local st = reaper.GetExtState(EXT, "disp_startup") ~= "0"
+  local rv, v = ImGui.Checkbox(ctx, "Reopen the Display when REAPER starts", st)
+  if rv then
+    reaper.SetExtState(EXT, "disp_startup", v and "1" or "0", true)
+    if not v then remove_startup_block() end
+  end
+  ImGui.TextDisabled(ctx, "Zoom fits the tag's tracks to the arrange height (needs js_ReaScriptAPI, or SWS). Zoom All resets the heights.")
+end
+
 --------------------------------------------------------------------------------
 -- Main loop
 --------------------------------------------------------------------------------
@@ -1747,6 +1807,10 @@ local function loop()
       if goto_setup == true then goto_setup = "scroll" end
       if ImGui.BeginTabItem(ctx, "Setup", nil, sel_flag) then
         draw_setup_tab()
+        ImGui.EndTabItem(ctx)
+      end
+      if ImGui.BeginTabItem(ctx, "Display") then
+        draw_display_tab()
         ImGui.EndTabItem(ctx)
       end
       ImGui.EndTabBar(ctx)

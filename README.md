@@ -84,6 +84,7 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 - **Dossiers** (liste à gauche de l'onglet Strips) : « + New folder », glisser un strip sur un dossier pour l'y ranger, clic droit sur un dossier pour le renommer ou le supprimer (ses strips repassent dans « No folder »), glisser les dossiers pour les réordonner.
 - Onglet **Setup** : une ligne par strip, seul le nom est obligatoire. **Multisélection** : clic sur le numéro (#), Ctrl+clic pour ajouter / retirer, Shift+clic pour une plage ; une modification dans une ligne sélectionnée (couleur, normalisation, groupe…) s'applique à toutes les lignes sélectionnées, sauf le nom du strip. Plusieurs pistes sélectionnées avec un nom de piste : numérotation automatique (Tom 1, Tom 2...).
 - **Héritage par tag** : la couleur et l'icône données au premier strip d'un tag (ex. Kick pour [KIK]) passent aux autres strips du même tag dans le même dossier, s'ils n'en ont pas encore.
+- **Display** (action « ReNo Mellow - Custom Strips - Display ») : petite barre flottante avec Zoom / View / Scroll / Select à gauche et la liste des tags du projet à droite (All + chaque tag, à la couleur de sa première piste). Un clic sur un tag applique les options allumées : View n'affiche que les pistes du tag (dossiers parents gardés), Zoom les agrandit à la hauteur de l'arrangement, Scroll amène la première en haut (TCP) ou à gauche (mixer), Select les sélectionne. Molette sur la liste = tag suivant / précédent. Onglet **Display** de la fenêtre principale : Display View et Display Scroll (TCP / MCP / Both), réouverture au démarrage. Relancer l'action ferme le Display.
 - Normalisation par strip : LUFS-I, RMS, Peak ou True peak, chaque item à la cible ou tous ensemble (gain commun) ; par défaut -15 dBFS Peak, tous ensemble.
 - **Strips de base** : 164 strips (batterie, percussions, basse, guitares, claviers, cordes, vents, cuivres, chœur, voix, divers…) rangés en 15 dossiers, chacun avec son nom de piste et son tag ([KIK], [SNR], [VOC]…), créés au premier lancement ; le bouton **Load default strips** (onglet Setup) rajoute ceux qui manquent sans toucher aux autres.
 - Les strips sont enregistrés dans `Data/ReNo_CustomStrips/strips.lua`.
@@ -93,7 +94,7 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 
 **Icône de barre d'outils :** `ReNo_CustomStrips.png` (style TCP, 3 états), installée avec le script dans `Data/toolbar_icons` (+ 150 / 200 %).
 
-**Extensions :** ReaImGui (obligatoire), js_ReaScriptAPI (optionnelle, filtre des fenêtres de choix de fichiers).
+**Extensions :** ReaImGui (obligatoire), js_ReaScriptAPI (optionnelle : filtre des fenêtres de choix de fichiers, Zoom et Scroll précis du Display ; sans elle, le Zoom utilise SWS s'il est installé).
 
 **Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manual_EN.pdf)
 
