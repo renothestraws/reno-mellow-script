@@ -1,31 +1,57 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.19
--- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Normalisation désactivée par défaut sur tous les strips (case non cochée) ; la normalisation -15 dBFS peak ensemble est décochée une fois sur les strips existants
+-- @version 1.20
+-- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
+-- @changelog 71 nouvelles icônes de tags (RID, CRS, PNO, SYN, VLN, TPT, REV, CMT, 808, 909…), 42 nouveaux strips de base dont les dossiers Mix et Live, et nouveaux tags pour 32 strips existants (mis à jour une fois s'ils n'ont pas été modifiés) ; nouvelle colonne Tag 2 (Kick in [KIK][DRM]) : le Display liste la piste sous ses deux tags, les strips de base reçoivent le tag de leur dossier ; nouvelle colonne Output (master / parent, sorties hardware audio et MIDI)
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
 --   [data] Data/toolbar_icons/150/ReNo_StripBuddy.png > toolbar_icons/150/ReNo_StripBuddy.png
 --   [data] Data/toolbar_icons/200/ReNo_StripBuddy.png > toolbar_icons/200/ReNo_StripBuddy.png
+--   [data] Data/track_icons/cs_tags_808.png > track_icons/cs_tags_808.png
+--   [data] Data/track_icons/cs_tags_909.png > track_icons/cs_tags_909.png
+--   [data] Data/track_icons/cs_tags_ACC.png > track_icons/cs_tags_ACC.png
 --   [data] Data/track_icons/cs_tags_ACG.png > track_icons/cs_tags_ACG.png
+--   [data] Data/track_icons/cs_tags_ADL.png > track_icons/cs_tags_ADL.png
+--   [data] Data/track_icons/cs_tags_ALT.png > track_icons/cs_tags_ALT.png
 --   [data] Data/track_icons/cs_tags_AMB.png > track_icons/cs_tags_AMB.png
+--   [data] Data/track_icons/cs_tags_AMP.png > track_icons/cs_tags_AMP.png
+--   [data] Data/track_icons/cs_tags_ARP.png > track_icons/cs_tags_ARP.png
 --   [data] Data/track_icons/cs_tags_AUX.png > track_icons/cs_tags_AUX.png
 --   [data] Data/track_icons/cs_tags_BGV.png > track_icons/cs_tags_BGV.png
+--   [data] Data/track_icons/cs_tags_BJO.png > track_icons/cs_tags_BJO.png
+--   [data] Data/track_icons/cs_tags_BKG.png > track_icons/cs_tags_BKG.png
+--   [data] Data/track_icons/cs_tags_BNG.png > track_icons/cs_tags_BNG.png
 --   [data] Data/track_icons/cs_tags_BOX.png > track_icons/cs_tags_BOX.png
 --   [data] Data/track_icons/cs_tags_BRA.png > track_icons/cs_tags_BRA.png
 --   [data] Data/track_icons/cs_tags_BSS.png > track_icons/cs_tags_BSS.png
 --   [data] Data/track_icons/cs_tags_BUS.png > track_icons/cs_tags_BUS.png
+--   [data] Data/track_icons/cs_tags_CAJ.png > track_icons/cs_tags_CAJ.png
 --   [data] Data/track_icons/cs_tags_CHD.png > track_icons/cs_tags_CHD.png
+--   [data] Data/track_icons/cs_tags_CHN.png > track_icons/cs_tags_CHN.png
 --   [data] Data/track_icons/cs_tags_CHO.png > track_icons/cs_tags_CHO.png
+--   [data] Data/track_icons/cs_tags_CHR.png > track_icons/cs_tags_CHR.png
 --   [data] Data/track_icons/cs_tags_CLK.png > track_icons/cs_tags_CLK.png
+--   [data] Data/track_icons/cs_tags_CLO.png > track_icons/cs_tags_CLO.png
+--   [data] Data/track_icons/cs_tags_CMT.png > track_icons/cs_tags_CMT.png
+--   [data] Data/track_icons/cs_tags_CNG.png > track_icons/cs_tags_CNG.png
+--   [data] Data/track_icons/cs_tags_CRS.png > track_icons/cs_tags_CRS.png
+--   [data] Data/track_icons/cs_tags_CTB.png > track_icons/cs_tags_CTB.png
 --   [data] Data/track_icons/cs_tags_CUE.png > track_icons/cs_tags_CUE.png
 --   [data] Data/track_icons/cs_tags_CYM.png > track_icons/cs_tags_CYM.png
+--   [data] Data/track_icons/cs_tags_DBL.png > track_icons/cs_tags_DBL.png
 --   [data] Data/track_icons/cs_tags_DCA.png > track_icons/cs_tags_DCA.png
+--   [data] Data/track_icons/cs_tags_DI.png > track_icons/cs_tags_DI.png
 --   [data] Data/track_icons/cs_tags_DIA.png > track_icons/cs_tags_DIA.png
+--   [data] Data/track_icons/cs_tags_DLY.png > track_icons/cs_tags_DLY.png
 --   [data] Data/track_icons/cs_tags_DMX.png > track_icons/cs_tags_DMX.png
 --   [data] Data/track_icons/cs_tags_DRM.png > track_icons/cs_tags_DRM.png
+--   [data] Data/track_icons/cs_tags_ELG.png > track_icons/cs_tags_ELG.png
+--   [data] Data/track_icons/cs_tags_FLT.png > track_icons/cs_tags_FLT.png
 --   [data] Data/track_icons/cs_tags_FOK.png > track_icons/cs_tags_FOK.png
+--   [data] Data/track_icons/cs_tags_FOL.png > track_icons/cs_tags_FOL.png
+--   [data] Data/track_icons/cs_tags_FX.png > track_icons/cs_tags_FX.png
+--   [data] Data/track_icons/cs_tags_GHO.png > track_icons/cs_tags_GHO.png
 --   [data] Data/track_icons/cs_tags_GLJ.png > track_icons/cs_tags_GLJ.png
 --   [data] Data/track_icons/cs_tags_GNG.png > track_icons/cs_tags_GNG.png
 --   [data] Data/track_icons/cs_tags_GON.png > track_icons/cs_tags_GON.png
@@ -33,49 +59,94 @@
 --   [data] Data/track_icons/cs_tags_GTR.png > track_icons/cs_tags_GTR.png
 --   [data] Data/track_icons/cs_tags_HAR.png > track_icons/cs_tags_HAR.png
 --   [data] Data/track_icons/cs_tags_HH.png > track_icons/cs_tags_HH.png
+--   [data] Data/track_icons/cs_tags_HRM.png > track_icons/cs_tags_HRM.png
+--   [data] Data/track_icons/cs_tags_HRN.png > track_icons/cs_tags_HRN.png
+--   [data] Data/track_icons/cs_tags_IEM.png > track_icons/cs_tags_IEM.png
 --   [data] Data/track_icons/cs_tags_IMG.png > track_icons/cs_tags_IMG.png
 --   [data] Data/track_icons/cs_tags_KEY.png > track_icons/cs_tags_KEY.png
 --   [data] Data/track_icons/cs_tags_KIK.png > track_icons/cs_tags_KIK.png
 --   [data] Data/track_icons/cs_tags_LDV.png > track_icons/cs_tags_LDV.png
+--   [data] Data/track_icons/cs_tags_LED.png > track_icons/cs_tags_LED.png
 --   [data] Data/track_icons/cs_tags_LIS.png > track_icons/cs_tags_LIS.png
+--   [data] Data/track_icons/cs_tags_LOP.png > track_icons/cs_tags_LOP.png
+--   [data] Data/track_icons/cs_tags_LTC.png > track_icons/cs_tags_LTC.png
 --   [data] Data/track_icons/cs_tags_LYR.png > track_icons/cs_tags_LYR.png
 --   [data] Data/track_icons/cs_tags_MC.png > track_icons/cs_tags_MC.png
 --   [data] Data/track_icons/cs_tags_MID.png > track_icons/cs_tags_MID.png
+--   [data] Data/track_icons/cs_tags_MIX.png > track_icons/cs_tags_MIX.png
 --   [data] Data/track_icons/cs_tags_MLR.png > track_icons/cs_tags_MLR.png
+--   [data] Data/track_icons/cs_tags_MND.png > track_icons/cs_tags_MND.png
+--   [data] Data/track_icons/cs_tags_MON.png > track_icons/cs_tags_MON.png
 --   [data] Data/track_icons/cs_tags_MSC.png > track_icons/cs_tags_MSC.png
+--   [data] Data/track_icons/cs_tags_MST.png > track_icons/cs_tags_MST.png
+--   [data] Data/track_icons/cs_tags_MTC.png > track_icons/cs_tags_MTC.png
 --   [data] Data/track_icons/cs_tags_MTX.png > track_icons/cs_tags_MTX.png
+--   [data] Data/track_icons/cs_tags_MUS.png > track_icons/cs_tags_MUS.png
+--   [data] Data/track_icons/cs_tags_NOI.png > track_icons/cs_tags_NOI.png
 --   [data] Data/track_icons/cs_tags_NY.png > track_icons/cs_tags_NY.png
 --   [data] Data/track_icons/cs_tags_OCT.png > track_icons/cs_tags_OCT.png
 --   [data] Data/track_icons/cs_tags_OHS.png > track_icons/cs_tags_OHS.png
 --   [data] Data/track_icons/cs_tags_ORC.png > track_icons/cs_tags_ORC.png
+--   [data] Data/track_icons/cs_tags_ORG.png > track_icons/cs_tags_ORG.png
 --   [data] Data/track_icons/cs_tags_PAD.png > track_icons/cs_tags_PAD.png
 --   [data] Data/track_icons/cs_tags_PAR.png > track_icons/cs_tags_PAR.png
 --   [data] Data/track_icons/cs_tags_PLB.png > track_icons/cs_tags_PLB.png
+--   [data] Data/track_icons/cs_tags_PNO.png > track_icons/cs_tags_PNO.png
 --   [data] Data/track_icons/cs_tags_PRC.png > track_icons/cs_tags_PRC.png
 --   [data] Data/track_icons/cs_tags_PRD.png > track_icons/cs_tags_PRD.png
+--   [data] Data/track_icons/cs_tags_RAP.png > track_icons/cs_tags_RAP.png
+--   [data] Data/track_icons/cs_tags_REF.png > track_icons/cs_tags_REF.png
+--   [data] Data/track_icons/cs_tags_REV.png > track_icons/cs_tags_REV.png
+--   [data] Data/track_icons/cs_tags_RHD.png > track_icons/cs_tags_RHD.png
+--   [data] Data/track_icons/cs_tags_RHY.png > track_icons/cs_tags_RHY.png
+--   [data] Data/track_icons/cs_tags_RID.png > track_icons/cs_tags_RID.png
 --   [data] Data/track_icons/cs_tags_ROO.png > track_icons/cs_tags_ROO.png
 --   [data] Data/track_icons/cs_tags_ROT.png > track_icons/cs_tags_ROT.png
+--   [data] Data/track_icons/cs_tags_RSP.png > track_icons/cs_tags_RSP.png
+--   [data] Data/track_icons/cs_tags_SAX.png > track_icons/cs_tags_SAX.png
+--   [data] Data/track_icons/cs_tags_SC.png > track_icons/cs_tags_SC.png
 --   [data] Data/track_icons/cs_tags_SCR.png > track_icons/cs_tags_SCR.png
+--   [data] Data/track_icons/cs_tags_SEQ.png > track_icons/cs_tags_SEQ.png
 --   [data] Data/track_icons/cs_tags_SFX.png > track_icons/cs_tags_SFX.png
+--   [data] Data/track_icons/cs_tags_SHK.png > track_icons/cs_tags_SHK.png
+--   [data] Data/track_icons/cs_tags_SMP.png > track_icons/cs_tags_SMP.png
 --   [data] Data/track_icons/cs_tags_SNR.png > track_icons/cs_tags_SNR.png
---   [data] Data/track_icons/cs_tags_SPD.png > track_icons/cs_tags_SPD.png
 --   [data] Data/track_icons/cs_tags_SNS.png > track_icons/cs_tags_SNS.png
+--   [data] Data/track_icons/cs_tags_SOL.png > track_icons/cs_tags_SOL.png
+--   [data] Data/track_icons/cs_tags_SPD.png > track_icons/cs_tags_SPD.png
+--   [data] Data/track_icons/cs_tags_SPL.png > track_icons/cs_tags_SPL.png
+--   [data] Data/track_icons/cs_tags_STM.png > track_icons/cs_tags_STM.png
 --   [data] Data/track_icons/cs_tags_STR.png > track_icons/cs_tags_STR.png
 --   [data] Data/track_icons/cs_tags_SUB.png > track_icons/cs_tags_SUB.png
+--   [data] Data/track_icons/cs_tags_SYB.png > track_icons/cs_tags_SYB.png
+--   [data] Data/track_icons/cs_tags_SYN.png > track_icons/cs_tags_SYN.png
+--   [data] Data/track_icons/cs_tags_TAM.png > track_icons/cs_tags_TAM.png
+--   [data] Data/track_icons/cs_tags_TBK.png > track_icons/cs_tags_TBK.png
+--   [data] Data/track_icons/cs_tags_TBN.png > track_icons/cs_tags_TBN.png
+--   [data] Data/track_icons/cs_tags_TBX.png > track_icons/cs_tags_TBX.png
+--   [data] Data/track_icons/cs_tags_TC.png > track_icons/cs_tags_TC.png
 --   [data] Data/track_icons/cs_tags_TLK.png > track_icons/cs_tags_TLK.png
 --   [data] Data/track_icons/cs_tags_TMC.png > track_icons/cs_tags_TMC.png
+--   [data] Data/track_icons/cs_tags_TMP.png > track_icons/cs_tags_TMP.png
 --   [data] Data/track_icons/cs_tags_TOM.png > track_icons/cs_tags_TOM.png
+--   [data] Data/track_icons/cs_tags_TPT.png > track_icons/cs_tags_TPT.png
+--   [data] Data/track_icons/cs_tags_TRI.png > track_icons/cs_tags_TRI.png
 --   [data] Data/track_icons/cs_tags_UHS.png > track_icons/cs_tags_UHS.png
+--   [data] Data/track_icons/cs_tags_UKE.png > track_icons/cs_tags_UKE.png
 --   [data] Data/track_icons/cs_tags_VCA.png > track_icons/cs_tags_VCA.png
 --   [data] Data/track_icons/cs_tags_VID.png > track_icons/cs_tags_VID.png
+--   [data] Data/track_icons/cs_tags_VLA.png > track_icons/cs_tags_VLA.png
+--   [data] Data/track_icons/cs_tags_VLN.png > track_icons/cs_tags_VLN.png
 --   [data] Data/track_icons/cs_tags_VOC.png > track_icons/cs_tags_VOC.png
+--   [data] Data/track_icons/cs_tags_VOX.png > track_icons/cs_tags_VOX.png
 --   [data] Data/track_icons/cs_tags_WOO.png > track_icons/cs_tags_WOO.png
+--   [data] Data/track_icons/cs_tags_WRL.png > track_icons/cs_tags_WRL.png
 
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.19"
+local VERSION = "1.20"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -172,22 +243,33 @@ local GROUP_FLAGS = {
   { "WIDTH_REVERSE",   "Width reverse",   "NO_LEAD_WHEN_FOLLOW", "No lead when follow" },
 }
 -- default strips: { folder, { { strip name, tag } } } (track name = strip name)
+-- tag 2 of a default strip = the folder tag (FOLDER_TAG2), unless it is its tag 1
 local DEFAULT_STRIPS = {
-  { "Drums", { { "Drums", "DRM" }, { "Kick", "KIK" }, { "Kick in", "KIK" }, { "Kick out", "KIK" }, { "Kick sub", "KIK" }, { "Kick trig", "KIK" }, { "Snare", "SNR" }, { "Snare top", "SNR" }, { "Snare bottom", "SNR" }, { "Snare even", "SNR" }, { "Snare trig", "SNR" }, { "Piccolo", "SNR" }, { "Toms", "TOM" }, { "Tom high", "TOM" }, { "Tom mid", "TOM" }, { "Tom low", "TOM" }, { "Tom trig", "TOM" }, { "Octobans", "OCT" }, { "Rototoms", "ROT" }, { "Gong", "GON" }, { "Overheads", "OHS" }, { "Underheads", "UHS" }, { "Glyn Johns", "GLJ" }, { "Front of kit", "FOK" }, { "Sensor mic", "SNS" }, { "Cymbals", "CYM" }, { "Hi-hat", "HH" }, { "Ride", "CYM" }, { "Crash", "CYM" }, { "Splash", "CYM" }, { "China", "CYM" }, { "Stack", "CYM" }, { "Clap cymbal", "CYM" }, { "FX cymbal", "CYM" }, { "Ambiance", "AMB" }, { "Room", "ROO" }, { "Talkback mic", "TLK" }, { "New-York", "NY" }, { "Parallel buss", "PAR" } } },
-  { "Drum pad", { { "Drum pad", "PAD" }, { "Drum machine", "DRM" }, { "Drum module", "DRM" }, { "Drum replacer", "DRM" }, { "Drum bank", "DRM" }, { "E-drums", "DRM" }, { "SPD", "SPD" }, { "Groovebox", "BOX" }, { "Beat box", "BOX" } } },
-  { "Percussion", { { "Percussion", "PRC" }, { "Clap", "PRC" }, { "Conga", "PRC" }, { "Bongo", "PRC" }, { "Djembe", "PRC" }, { "Cajon", "PRC" }, { "Frame drum", "PRC" }, { "Hand pan", "PRC" }, { "Steel tongue", "PRC" }, { "Claves", "PRC" }, { "Shaker", "PRC" }, { "Cabasas", "PRC" }, { "Caxixi", "PRC" }, { "Chimes", "PRC" }, { "Tambourine", "PRC" }, { "Bloc", "PRC" }, { "Guiros", "PRC" }, { "Maracas", "PRC" }, { "Vibraslap", "PRC" }, { "Timbales", "PRC" }, { "World percussion", "PRC" } } },
-  { "Bass", { { "Bass", "BSS" }, { "Bass DI", "BSS" }, { "Bass amp", "BSS" }, { "Bass pedal", "BSS" }, { "Bass 808", "BSS" }, { "Sub Bass", "BSS" } } },
-  { "Acoustic guitar", { { "Acoustic guitar", "ACG" }, { "Nylon guitar", "ACG" }, { "Classic guitar", "ACG" }, { "Ukulele", "ACG" }, { "Banjo", "ACG" }, { "Mandolin", "ACG" }, { "Lap steel", "ACG" } } },
-  { "Guitar", { { "Guitar", "GTR" }, { "Guitar DI", "GTR" }, { "Guitar amp", "GTR" }, { "Guitar pedal", "GTR" } } },
-  { "Keyboard", { { "Keyboard", "KEY" }, { "Synth", "KEY" }, { "Pad", "KEY" }, { "Piano", "KEY" }, { "Electric piano", "KEY" }, { "Organ", "KEY" }, { "Low keys", "KEY" }, { "Leads", "KEY" }, { "Soundscape", "KEY" } } },
-  { "Sound FX", { { "Sound FX", "SFX" }, { "Foley", "SFX" }, { "Noise", "SFX" }, { "Risers", "SFX" }, { "Woosh", "SFX" }, { "Sample", "SFX" }, { "Impact", "SFX" } } },
-  { "Strings", { { "Strings", "STR" }, { "Violin", "STR" }, { "Viola", "STR" }, { "Cello", "STR" }, { "Double bass", "STR" }, { "Harp", "STR" } } },
-  { "Woodwinds", { { "Woodwinds", "WOO" }, { "Flute", "WOO" }, { "Piccolo", "WOO" }, { "Oboe", "WOO" }, { "Horn", "WOO" }, { "Clarinet", "WOO" }, { "Bassoon", "WOO" } } },
-  { "Brass", { { "Brass", "BRA" }, { "Trumpet", "BRA" }, { "French Horn", "BRA" }, { "Trombone", "BRA" }, { "Tuba", "BRA" }, { "Euphonium", "BRA" }, { "Sax", "BRA" } } },
+  { "Drums", { { "Drums", "DRM" }, { "Kick", "KIK" }, { "Kick in", "KIK" }, { "Kick out", "KIK" }, { "Kick sub", "KIK" }, { "Kick trig", "KIK" }, { "Snare", "SNR" }, { "Snare top", "SNR" }, { "Snare bottom", "SNR" }, { "Snare even", "SNR" }, { "Snare trig", "SNR" }, { "Piccolo", "SNR" }, { "Toms", "TOM" }, { "Tom high", "TOM" }, { "Tom mid", "TOM" }, { "Tom low", "TOM" }, { "Tom trig", "TOM" }, { "Octobans", "OCT" }, { "Rototoms", "ROT" }, { "Gong", "GON" }, { "Overheads", "OHS" }, { "Underheads", "UHS" }, { "Glyn Johns", "GLJ" }, { "Front of kit", "FOK" }, { "Sensor mic", "SNS" }, { "Cymbals", "CYM" }, { "Hi-hat", "HH" }, { "Ride", "RID" }, { "Crash", "CRS" }, { "Splash", "SPL" }, { "China", "CHN" }, { "Stack", "CYM" }, { "Clap cymbal", "CYM" }, { "FX cymbal", "CYM" }, { "Ambiance", "AMB" }, { "Room", "ROO" }, { "Talkback mic", "TLK" }, { "New-York", "NY" }, { "Parallel buss", "PAR" }, { "Trigger", "TRI" } } },
+  { "Drum pad", { { "Drum pad", "PAD" }, { "Drum machine", "DRM" }, { "Drum module", "DRM" }, { "Drum replacer", "DRM" }, { "Drum bank", "DRM" }, { "E-drums", "DRM" }, { "SPD", "SPD" }, { "Groovebox", "BOX" }, { "Beat box", "BOX" }, { "808", "808" }, { "909", "909" } } },
+  { "Percussion", { { "Percussion", "PRC" }, { "Clap", "PRC" }, { "Conga", "CNG" }, { "Bongo", "BNG" }, { "Djembe", "PRC" }, { "Cajon", "CAJ" }, { "Frame drum", "PRC" }, { "Hand pan", "PRC" }, { "Steel tongue", "PRC" }, { "Claves", "PRC" }, { "Shaker", "SHK" }, { "Cabasas", "PRC" }, { "Caxixi", "PRC" }, { "Chimes", "PRC" }, { "Tambourine", "TAM" }, { "Bloc", "PRC" }, { "Guiros", "PRC" }, { "Maracas", "PRC" }, { "Vibraslap", "PRC" }, { "Timbales", "PRC" }, { "World percussion", "PRC" } } },
+  { "Bass", { { "Bass", "BSS" }, { "Bass DI", "DI" }, { "Bass amp", "AMP" }, { "Bass pedal", "BSS" }, { "Bass 808", "808" }, { "Sub Bass", "BSS" }, { "Synth bass", "SYB" } } },
+  { "Acoustic guitar", { { "Acoustic guitar", "ACG" }, { "Nylon guitar", "ACG" }, { "Classic guitar", "ACG" }, { "Ukulele", "UKE" }, { "Banjo", "BJO" }, { "Mandolin", "MND" }, { "Lap steel", "ACG" } } },
+  { "Guitar", { { "Guitar", "GTR" }, { "Guitar DI", "DI" }, { "Guitar amp", "AMP" }, { "Guitar pedal", "GTR" }, { "Electric guitar", "ELG" }, { "Rhythm guitar", "RHY" }, { "Guitar solo", "SOL" } } },
+  { "Keyboard", { { "Keyboard", "KEY" }, { "Synth", "SYN" }, { "Pad", "KEY" }, { "Piano", "PNO" }, { "Electric piano", "KEY" }, { "Organ", "ORG" }, { "Low keys", "KEY" }, { "Leads", "LED" }, { "Soundscape", "KEY" }, { "Rhodes", "RHD" }, { "Wurlitzer", "WRL" }, { "Arpeggio", "ARP" }, { "Sequence", "SEQ" } } },
+  { "Sound FX", { { "Sound FX", "SFX" }, { "Foley", "FOL" }, { "Noise", "NOI" }, { "Risers", "SFX" }, { "Woosh", "SFX" }, { "Sample", "SFX" }, { "Impact", "SFX" } } },
+  { "Strings", { { "Strings", "STR" }, { "Violin", "VLN" }, { "Viola", "VLA" }, { "Cello", "CLO" }, { "Double bass", "CTB" }, { "Harp", "STR" } } },
+  { "Woodwinds", { { "Woodwinds", "WOO" }, { "Flute", "FLT" }, { "Piccolo", "WOO" }, { "Oboe", "WOO" }, { "Horn", "WOO" }, { "Clarinet", "WOO" }, { "Bassoon", "WOO" }, { "Harmonica", "HRM" }, { "Accordion", "ACC" } } },
+  { "Brass", { { "Brass", "BRA" }, { "Trumpet", "TPT" }, { "French Horn", "HRN" }, { "Trombone", "TBN" }, { "Tuba", "BRA" }, { "Euphonium", "BRA" }, { "Sax", "SAX" } } },
   { "Orchestral percussion", { { "Orchestral percussion", "ORC" }, { "Xylophone", "ORC" }, { "Glockenspiel", "ORC" }, { "Tubular Bells", "ORC" }, { "Celesta", "ORC" }, { "Vibraphone", "ORC" } } },
   { "Choir", { { "Choir", "CHO" }, { "Sopranos", "CHO" }, { "Alto", "CHO" }, { "Tenors", "CHO" }, { "Baritone", "CHO" }, { "Basses", "CHO" } } },
-  { "Vocals", { { "Vocals", "VOC" }, { "Lead vocals", "LDV" }, { "Background vocals", "BGV" }, { "Harmonies", "HAR" }, { "Gang", "GNG" }, { "Screams", "SCR" }, { "Dialogue", "DIA" }, { "Master of ceremonies", "MC" }, { "Talkback", "TLK" }, { "Listenback", "LIS" } } },
+  { "Vocals", { { "Vocals", "VOC" }, { "Lead vocals", "LDV" }, { "Background vocals", "BGV" }, { "Harmonies", "HAR" }, { "Gang", "GNG" }, { "Screams", "SCR" }, { "Dialogue", "DIA" }, { "Master of ceremonies", "MC" }, { "Talkback", "TLK" }, { "Listenback", "LIS" }, { "Doubles", "DBL" }, { "Ad-libs", "ADL" }, { "Rap", "RAP" }, { "Chorus vocals", "CHR" }, { "Talkbox", "TBX" }, { "Vocal bus", "VOX" } } },
+  { "Mix", { { "Reverb", "REV" }, { "Delay", "DLY" }, { "Effects", "FX" }, { "Sidechain", "SC" }, { "Master bus", "MST" }, { "Stems", "STM" }, { "Reference", "REF" }, { "Music", "MUS" }, { "Background", "BKG" }, { "Alternate take", "ALT" }, { "Temporary", "TMP" }, { "Spare", "RSP" }, { "Comment", "CMT" } } },
+  { "Live", { { "Monitor mix", "MIX" }, { "In-ears", "IEM" }, { "Monitors", "MON" }, { "Talkback return", "TBK" }, { "Timecode track", "TC" }, { "LTC", "LTC" }, { "MTC", "MTC" }, { "Sampler", "SMP" }, { "Loop", "LOP" }, { "Ghost track", "GHO" } } },
   { "Miscellaneous", { { "Miscellaneous", "MSC" }, { "Playback", "PLB" }, { "Production", "PRD" }, { "Click", "CLK" }, { "Metronome", "CLK" }, { "Cues", "CUE" }, { "Timecode", "TMC" }, { "MIDI", "MID" }, { "DMX", "DMX" }, { "Video", "VID" }, { "Image", "IMG" }, { "Lyrics", "LYR" }, { "Chords", "CHD" }, { "Auxiliary", "AUX" }, { "Busses", "BUS" }, { "Dca", "DCA" }, { "Vca", "VCA" }, { "Group", "GRP" }, { "Subgroup", "SUB" }, { "Matrix", "MTX" }, { "Master", "MLR" } } },
+}
+
+-- folder tag given as tag 2 to the default strips (Mix, Live, Miscellaneous: none)
+local FOLDER_TAG2 = {
+  ["Drums"] = "DRM", ["Drum pad"] = "PAD", ["Percussion"] = "PRC", ["Bass"] = "BSS",
+  ["Acoustic guitar"] = "ACG", ["Guitar"] = "GTR", ["Keyboard"] = "KEY", ["Sound FX"] = "SFX",
+  ["Strings"] = "STR", ["Woodwinds"] = "WOO", ["Brass"] = "BRA", ["Orchestral percussion"] = "ORC",
+  ["Choir"] = "CHO", ["Vocals"] = "VOC",
 }
 
 local DEFAULT_GROUP_FLAGS = { VOLUME_LEAD = true, VOLUME_FOLLOW = true, MUTE_LEAD = true,
@@ -229,11 +311,17 @@ local function utf8_len(s)
   return #s
 end
 
--- remove a trailing " [ABC]" tag (1 to 3 characters)
-local function remove_tag(name)
-  local base, t = name:match("^(.-)%s*%[([^%[%]]+)%]%s*$")
-  if base and utf8_len(t) <= 3 then return base end
-  return name
+-- split the trailing tags (1 to 3 characters, 2 at most) off a name:
+-- "Kick in [KIK][DRM]" -> "Kick in", "KIK", "DRM" ; "Kick [KIK]" -> "Kick", "KIK", nil
+local function split_tags(name)
+  local t = {}
+  for _ = 1, 2 do
+    local base, tg = name:match("^(.-)%s*%[([^%[%]]+)%]%s*$")
+    if not base or utf8_len(tg) > 3 then break end
+    table.insert(t, 1, tg)
+    name = base
+  end
+  return name, t[1], t[2]
 end
 
 -- colours (stored as 0xRRGGBB)
@@ -582,6 +670,70 @@ local function set_group(tr, gid, key)
   end
 end
 
+-- outputs: { main = bool, hw = { { ch = 0-based first channel, mono = bool }, ... },
+--            midi = { name = device name, dev = index, chan = 0 (all) / 1-16 } or nil }
+local function out_ch_label(o)
+  if o.mono then return tostring(o.ch + 1) end
+  return (o.ch + 1) .. "/" .. (o.ch + 2)
+end
+
+local function out_ch_name(o)
+  local function nm(i)
+    local n = reaper.GetOutputChannelName(i)
+    return (n and n ~= "") and n or ("Out " .. (i + 1))
+  end
+  if o.mono then return "Mono " .. out_ch_label(o) .. "  (" .. nm(o.ch) .. ")" end
+  return "Stereo " .. out_ch_label(o) .. "  (" .. nm(o.ch) .. " / " .. nm(o.ch + 1) .. ")"
+end
+
+local function midi_out_name(i)
+  local ok, nm = reaper.GetMIDIOutputName(i, "")
+  if ok and nm ~= "" then return nm end
+end
+
+local function midi_out_index(m)
+  if not m then return nil end
+  for i = 0, reaper.GetNumMIDIOutputs() - 1 do
+    if m.name and midi_out_name(i) == m.name then return i end
+  end
+  return m.dev
+end
+
+local function sum_output(o)
+  if not o then return "" end
+  local t = { o.main and "Master" or "No master" }
+  if o.hw and #o.hw > 0 then
+    local c = {}
+    for _, h in ipairs(o.hw) do c[#c + 1] = out_ch_label(h) end
+    t[#t + 1] = "HW " .. table.concat(c, " + ")
+  end
+  if o.midi then
+    t[#t + 1] = "MIDI " .. (o.midi.name or ("#" .. ((o.midi.dev or 0) + 1))) ..
+      (((o.midi.chan or 0) == 0) and "" or (" ch" .. o.midi.chan))
+  end
+  return table.concat(t, ", ")
+end
+
+-- replaces the track's master/parent send, hardware audio outputs and MIDI hardware output;
+-- sends to other tracks are kept
+local function apply_output(tr, o)
+  reaper.SetMediaTrackInfo_Value(tr, "B_MAINSEND", o.main and 1 or 0)
+  for i = reaper.GetTrackNumSends(tr, 1) - 1, 0, -1 do reaper.RemoveTrackSend(tr, 1, i) end
+  for _, h in ipairs(o.hw or {}) do
+    local idx = reaper.CreateTrackSend(tr, nil)
+    if idx and idx >= 0 then
+      reaper.SetTrackSendInfo_Value(tr, 1, idx, "I_SRCCHAN", 0)
+      reaper.SetTrackSendInfo_Value(tr, 1, idx, "I_DSTCHAN", h.ch | (h.mono and 1024 or 0))
+    end
+  end
+  local dev = midi_out_index(o.midi)
+  if dev then
+    reaper.SetMediaTrackInfo_Value(tr, "I_MIDIHWOUT", (dev << 5) | ((o.midi.chan or 0) & 31))
+  else
+    reaper.SetMediaTrackInfo_Value(tr, "I_MIDIHWOUT", -1)
+  end
+end
+
 local function apply_strip(s)
   local n = reaper.CountSelectedTracks(0)
   if n == 0 then return false, "Select one or more tracks first." end
@@ -600,16 +752,20 @@ local function apply_strip(s)
 
   for idx, tr in ipairs(tracks) do
     -- 2-3 : name + tag
-    if s.track_name or s.tag then
+    if s.track_name or s.tag or s.tag2 then
       local _, cur = reaper.GetSetMediaTrackInfo_String(tr, "P_NAME", "", false)
-      local name
+      local base, t1, t2 = split_tags(cur)
       if s.track_name then
-        name = s.track_name
-        if #tracks > 1 then name = name .. " " .. idx end
-      else
-        name = s.tag and remove_tag(cur) or cur
+        base = s.track_name
+        if #tracks > 1 then base = base .. " " .. idx end
+        t1, t2 = nil, nil           -- a new track name drops the old tags
       end
-      if s.tag then name = trim(name .. " [" .. s.tag .. "]") end
+      t1 = s.tag or t1              -- an empty tag cell keeps the track's tag
+      t2 = s.tag2 or t2
+      if t2 == t1 then t2 = nil end
+      if not t1 then t1, t2 = t2, nil end
+      local name = base
+      if t1 then name = trim(base .. " [" .. t1 .. "]" .. (t2 and ("[" .. t2 .. "]") or "")) end
       reaper.GetSetMediaTrackInfo_String(tr, "P_NAME", name, true)
     end
     -- 4 : colour
@@ -633,6 +789,8 @@ local function apply_strip(s)
       local m = math.floor(reaper.GetMediaTrackInfo_Value(tr, "I_RECMODE"))
       if OUTPUT_RECMODES[m] then reaper.SetMediaTrackInfo_Value(tr, "I_RECMODE", 0) end
     end
+    -- 7c : outputs (master / parent, hardware audio, hardware MIDI)
+    if s.output then apply_output(tr, s.output) end
     -- 7a : pan mode
     if s.panmode then reaper.SetMediaTrackInfo_Value(tr, "I_PANMODE", s.panmode) end
     -- 7b : metering type (other meter bits kept)
@@ -768,10 +926,12 @@ local function describe(s)
   local function add(k, v) if v and v ~= "" then t[#t + 1] = k .. ": " .. v end end
   add("Track name", s.track_name)
   add("Tag", s.tag and ("[" .. s.tag .. "]"))
+  add("Tag 2", s.tag2 and ("[" .. s.tag2 .. "]"))
   add("Colour", s.color and string.format("#%06X", s.color))
   add("Icon", s.icon and basename(s.icon))
   add("Layout", sum_layout(s.layout))
   add("Record input", s.recout and rec_out_label(s.recout) or (s.recinput and rec_input_label(s.recinput, REC_OPTS)))
+  add("Output", sum_output(s.output))
   add("Pan mode", pan_mode_label(s.panmode))
   add("Metering", sum_meter(s.meter))
   add("FX chain", s.fxchain and basename(s.fxchain))
@@ -825,7 +985,9 @@ local function load_default_strips()
       if not have[nm] then
         local icon = tag ~= "" and ("cs_tags_" .. tag .. ".png") or nil
         if icon and not reaper.file_exists(ICON_DIR .. "/" .. icon) then icon = nil end
-        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, icon = icon, folder = fid }
+        local t2 = FOLDER_TAG2[fname]
+        if t2 == tag then t2 = nil end
+        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, tag2 = t2, icon = icon, folder = fid }
         added = added + 1
       end
     end
@@ -848,6 +1010,77 @@ if reaper.GetExtState(EXT, "norm_default_off") ~= "1" then
     end
   end
   reaper.SetExtState(EXT, "norm_default_off", "1", true)
+end
+
+-- 1.20 : new tags for some default strips. One-time update of the strips still on
+-- their old default tag (and old default icon or no icon); edited ones are kept.
+local RETAG_120 = {
+  { "Ride", "CYM", "RID" },
+  { "Crash", "CYM", "CRS" },
+  { "Splash", "CYM", "SPL" },
+  { "China", "CYM", "CHN" },
+  { "Conga", "PRC", "CNG" },
+  { "Bongo", "PRC", "BNG" },
+  { "Cajon", "PRC", "CAJ" },
+  { "Shaker", "PRC", "SHK" },
+  { "Tambourine", "PRC", "TAM" },
+  { "Bass DI", "BSS", "DI" },
+  { "Bass amp", "BSS", "AMP" },
+  { "Bass 808", "BSS", "808" },
+  { "Ukulele", "ACG", "UKE" },
+  { "Banjo", "ACG", "BJO" },
+  { "Mandolin", "ACG", "MND" },
+  { "Guitar DI", "GTR", "DI" },
+  { "Guitar amp", "GTR", "AMP" },
+  { "Synth", "KEY", "SYN" },
+  { "Piano", "KEY", "PNO" },
+  { "Organ", "KEY", "ORG" },
+  { "Leads", "KEY", "LED" },
+  { "Foley", "SFX", "FOL" },
+  { "Noise", "SFX", "NOI" },
+  { "Violin", "STR", "VLN" },
+  { "Viola", "STR", "VLA" },
+  { "Cello", "STR", "CLO" },
+  { "Double bass", "STR", "CTB" },
+  { "Flute", "WOO", "FLT" },
+  { "Trumpet", "BRA", "TPT" },
+  { "French Horn", "BRA", "HRN" },
+  { "Trombone", "BRA", "TBN" },
+  { "Sax", "BRA", "SAX" },
+}
+if reaper.GetExtState(EXT, "retag_120") ~= "1" then
+  local map = {}
+  for _, r in ipairs(RETAG_120) do map[r[1] .. "\0" .. r[2]] = r[3] end
+  for _, s in ipairs(strips) do
+    local new = s.name and s.tag and map[s.name .. "\0" .. s.tag]
+    if new and (s.icon == nil or s.icon == "cs_tags_" .. s.tag .. ".png") then
+      local icon = "cs_tags_" .. new .. ".png"
+      s.tag = new
+      if reaper.file_exists(ICON_DIR .. "/" .. icon) then s.icon = icon end
+      dirty = true
+    end
+  end
+  reaper.SetExtState(EXT, "retag_120", "1", true)
+end
+
+-- 1.20 : tag 2. One-time: the default strips already saved get their folder tag
+-- as tag 2, when they still have their default tag 1 and no tag 2.
+if reaper.GetExtState(EXT, "tag2_120") ~= "1" then
+  local fname = {}
+  for _, f in ipairs(folders) do fname[f.id] = f.name end
+  local def = {}
+  for _, fd in ipairs(DEFAULT_STRIPS) do
+    for _, e in ipairs(fd[2]) do def[fd[1] .. "\0" .. e[1]] = e[2] end
+  end
+  for _, s in ipairs(strips) do
+    local fn = s.folder and fname[s.folder]
+    local t2 = fn and FOLDER_TAG2[fn]
+    if t2 and not s.tag2 and s.name and s.tag and def[fn .. "\0" .. s.name] == s.tag and s.tag ~= t2 then
+      s.tag2 = t2
+      dirty = true
+    end
+  end
+  reaper.SetExtState(EXT, "tag2_120", "1", true)
 end
 
 local function set_status(msg, kind)
@@ -1235,6 +1468,15 @@ local function draw_row(i, s)
   local rv2, tg = ImGui.InputTextWithHint(ctx, "##tag", "ABC", s.tag or "", ImGui.InputTextFlags_CharsUppercase)
   if rv2 then s.tag = clean_tag(tg); mark() end
 
+  -- 3b tag 2 (Display only: colour and icon follow tag 1)
+  ImGui.TableNextColumn(ctx)
+  ImGui.SetNextItemWidth(ctx, -FLT_MIN)
+  local rv3, tg2 = ImGui.InputTextWithHint(ctx, "##tag2", "ABC", s.tag2 or "", ImGui.InputTextFlags_CharsUppercase)
+  if rv3 then s.tag2 = clean_tag(tg2); mark() end
+  if ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal) then
+    ImGui.SetTooltip(ctx, "Second tag, written after the first one: Kick in [KIK][DRM].\nThe Display lists the track under both tags. Colour and icon follow the first tag.")
+  end
+
   -- 4 colour
   ImGui.TableNextColumn(ctx)
   local function set_color(v)
@@ -1302,6 +1544,71 @@ local function draw_row(i, s)
       end
     end
     ImGui.EndCombo(ctx)
+  end
+
+  -- 7c output
+  ImGui.TableNextColumn(ctx)
+  if cell_popup_button("out", sum_output(s.output)) then
+    local rvb, nv = ImGui.Checkbox(ctx, "Set the track outputs", s.output ~= nil)
+    if rvb then s.output = nv and { main = true, hw = {} } or nil; mark() end
+    local o = s.output
+    if o then
+      o.hw = o.hw or {}
+      local rvm, mv = ImGui.Checkbox(ctx, "Master / parent send", o.main == true)
+      if rvm then o.main = mv; mark() end
+
+      ImGui.SeparatorText(ctx, "Hardware audio outputs")
+      local del
+      for k, h in ipairs(o.hw) do
+        if ImGui.SmallButton(ctx, "x##hw" .. k) then del = k end
+        ImGui.SameLine(ctx)
+        ImGui.Text(ctx, out_ch_name(h))
+      end
+      if del then table.remove(o.hw, del); mark() end
+      if #o.hw == 0 then ImGui.TextDisabled(ctx, "None") end
+      local nout = reaper.GetNumAudioOutputs()
+      ImGui.SetNextItemWidth(ctx, 260)
+      if ImGui.BeginCombo(ctx, "##addhw", "Add an output...", ImGui.ComboFlags_HeightLarge) then
+        if nout == 0 then ImGui.TextDisabled(ctx, "No audio output (check the audio device)") end
+        for ch = 0, nout - 2 do
+          local e = { ch = ch, mono = false }
+          if ImGui.Selectable(ctx, out_ch_name(e) .. "##st" .. ch) then o.hw[#o.hw + 1] = e; mark() end
+        end
+        if nout > 0 then ImGui.Separator(ctx) end
+        for ch = 0, nout - 1 do
+          local e = { ch = ch, mono = true }
+          if ImGui.Selectable(ctx, out_ch_name(e) .. "##mo" .. ch) then o.hw[#o.hw + 1] = e; mark() end
+        end
+        ImGui.EndCombo(ctx)
+      end
+
+      ImGui.SeparatorText(ctx, "Hardware MIDI output")
+      ImGui.SetNextItemWidth(ctx, 260)
+      local mprev = o.midi and (o.midi.name or ("Device " .. ((o.midi.dev or 0) + 1))) or "None"
+      if ImGui.BeginCombo(ctx, "Device##midiout", mprev, ImGui.ComboFlags_HeightLarge) then
+        if ImGui.Selectable(ctx, "None", o.midi == nil) then o.midi = nil; mark() end
+        for i = 0, reaper.GetNumMIDIOutputs() - 1 do
+          local nm = midi_out_name(i)
+          if nm and ImGui.Selectable(ctx, nm .. "##mdev" .. i, o.midi ~= nil and o.midi.name == nm) then
+            o.midi = { name = nm, dev = i, chan = o.midi and o.midi.chan or 0 }; mark()
+          end
+        end
+        ImGui.EndCombo(ctx)
+      end
+      if o.midi then
+        ImGui.SetNextItemWidth(ctx, 260)
+        local c = o.midi.chan or 0
+        if ImGui.BeginCombo(ctx, "Channel##midich", c == 0 and "All channels" or ("Channel " .. c)) then
+          if ImGui.Selectable(ctx, "All channels", c == 0) then o.midi.chan = 0; mark() end
+          for k = 1, 16 do
+            if ImGui.Selectable(ctx, "Channel " .. k, c == k) then o.midi.chan = k; mark() end
+          end
+          ImGui.EndCombo(ctx)
+        end
+      end
+      ImGui.TextDisabled(ctx, "Replaces the track's master send, hardware outputs\nand MIDI output. Sends to other tracks are kept.")
+    end
+    ImGui.EndPopup(ctx)
   end
 
   -- 7a pan mode
@@ -1448,8 +1755,8 @@ local function draw_row(i, s)
 end
 
 local COLUMNS = {
-  { "#", 24 }, { "Strip name *", 130 }, { "Track name", 110 }, { "Tag", 44 }, { "Colour", 52 },
-  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Pan mode", 130 }, { "Metering", 120 }, { "FX chain", 130 },
+  { "#", 24 }, { "Strip name *", 130 }, { "Track name", 110 }, { "Tag", 44 }, { "Tag 2", 44 }, { "Colour", 52 },
+  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Output", 130 }, { "Pan mode", 130 }, { "Metering", 120 }, { "FX chain", 130 },
   { "Envelopes", 110 }, { "Item name", 110 }, { "Normalize", 130 }, { "Group", 130 }, { "", 100 },
 }
 
