@@ -11,6 +11,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 | **ReNo Mellow - Recording Buddy** | Répéter puis enregistrer une boucle en plusieurs passes : chaque passe a son pré-roll (mesures ou ms), sa vitesse de lecture (hauteur conservée), son mode (Listen, Play avec les pistes armées muettes sous la boucle, Record en auto punch, Move on pour avancer dans l'arrangement), sa pause et, au choix, sa propre boucle. Séquences sauvegardables (Default, 4 takes, Practice fournies), mini Display et actions Start-Stop / Stop. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/RecordingBuddy/RecordingBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/RecordingBuddy/RecordingBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Strip Buddy** | Fenêtre de « strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC], couleur, icône, layouts TCP/MCP, entrée d'enregistrement ou record output (stereo, mono, MIDI), pan mode, type de metering, FX chain ajoutée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Tool Buddy** (ex Swiss Army Knife) | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et trois raccourcis au choix (ex. W / Shift+W / Ctrl+W) lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, sa bulle Display qui affiche l'outil actif, 24 outils, Next / Previous tool. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manual_EN.pdf) |
+| **ReNo Mellow - Grid Buddy** | La grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles fixes de 1/128 à 4, grille **adaptative** qui suit le zoom (Narrowest à Widest + taille perso en pixels), diviseur et limites, snap. Mini Display flottant (molette = taille, clic = menu, Alt = swing) et actions isolées pour les raccourcis (molette, plus large / plus étroite, modes adaptatifs), en double pour l'éditeur MIDI. D'après Adaptive Grid et Gridbox de FeedTheCat |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
@@ -31,6 +32,15 @@ Ensuite, tout fonctionne hors ligne. Pour profiter des nouveaux modèles et corr
 En cas d'erreur : bouton **Open log** (journaux `install.log` et `last_run.log`).
 
 Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac Apple Silicon, 2 à 6 min sur processeur seul.
+
+### ReNo Mellow - Grid Buddy
+
+- Lancer **ReNo Mellow - Grid Buddy** : onglet **Grid** pour l'arrangement et l'éditeur MIDI (type, taille fixe, mode adaptatif, snap), onglet **Set up** pour la taille perso, le diviseur (2 par défaut : 1/8 → 1/16), les limites (ex. 1/128 et 1), « Preserve grid type per size », les boutons affichés et le Display.
+- **Grille adaptative** : Narrowest, Narrow, Medium, Wide, Widest ou Custom ; la grille suit le zoom grâce à un petit service de fond lancé tout seul (action *Service*). Recliquer le mode actif repasse en grille fixe. Option « Keep the adaptive mode when REAPER restarts ».
+- **Display** : petite fenêtre sans titre à placer où l'on veut (près du transport). Clic = menu de la grille, molette = taille, Alt+clic = swing on/off, Alt+molette = quantité de swing (Ctrl : plus fin), icône aimant = snap (Alt+clic : snap relatif, clic droit : réglages), clic droit = fenêtre Grid Buddy. Deuxième ligne pour l'éditeur MIDI quand il est ouvert. Rouvert au démarrage de REAPER s'il était ouvert ; relancer l'action le ferme.
+- **Actions isolées** (section Main, et dans la section MIDI Editor sous le nom « Grid Buddy MIDI ») : Adaptive off / narrowest / narrow / medium / wide / widest / custom, Adjust grid (mousewheel), Adjust fixed grid (mousewheel), Wider grid, Narrower grid, Adapt grid to zoom, Toggle swing. Les actions « mousewheel » sont à associer à une molette (ex. Ctrl+molette) dans la liste d'actions.
+- Les réglages d'Adaptive Grid (FeedTheCat) sont repris au premier lancement. Ne pas faire tourner Adaptive Grid / Gridbox en même temps que Grid Buddy.
+- Nécessite **ReaImGui** ; **js_ReaScriptAPI** est conseillée pour la grille adaptative de l'éditeur MIDI (sans elle, la vue est mesurée en la faisant défiler).
 
 ### ReNo Mellow - Tool Buddy
 
@@ -132,7 +142,7 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation en un fichier (REAPER 7.86 et plus)
 
-Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy).
+Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy, Grid Buddy).
 Télécharger le fichier, puis l'ouvrir avec REAPER : les scripts sont installés et ajoutés à la liste d'actions,
 et le paquet peut être désinstallé proprement. Pas de mises à jour automatiques : pour cela, préférer ReaPack.
 
@@ -145,6 +155,10 @@ Strip Buddy en téléchargement direct :
 
 Recording Buddy en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Recording_Buddy.ReaperPkg>
+
+Grid Buddy en téléchargement direct :
+<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Grid_Buddy.ReaperPkg>
+(les actions de l'éditeur MIDI sont ajoutées à la section MIDI Editor au premier lancement de Grid Buddy).
 
 ## Installation manuelle
 
@@ -159,6 +173,9 @@ Recording Buddy en téléchargement direct :
 **Recording Buddy** : copier le dossier `RecordingBuddy` dans le dossier `Scripts` de REAPER, puis charger et lancer
 `ReNo Mellow - Recording Buddy.lua` : il ajoute les actions Display, Start-Stop et Stop.
 
+**Grid Buddy** : copier le dossier `GridBuddy` dans le dossier `Scripts` de REAPER, puis charger et lancer
+`ReNo Mellow - Grid Buddy.lua` : il ajoute le Display, le service et toutes les actions (Main et MIDI Editor).
+
 **Strip Buddy** : copier `StripBuddy/ReNo Mellow - Strip Buddy.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
 
 **ReNo StemSplit** : copier le dossier `StemSplit` dans le dossier `Scripts` de REAPER
@@ -172,4 +189,6 @@ Gratuit pour tout usage, y compris commercial.
 **ReNo StemSplit** s'appuie sur [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator),
 Demucs v4 (Meta Research, licence MIT) et le modèle DrumSep MDX23C d'aufr33 et jarredou. Les modèles sont téléchargés
 depuis leurs sources d'origine et restent la propriété de leurs auteurs.
+**Grid Buddy** reprend du code d'Adaptive Grid et de Gridbox d'Ilias-Timon Poulakis (FeedTheCat), sous licence MIT.
+
 Logic Pro et Stem Splitter sont des marques d'Apple ; ReNo n'est affilié à aucune de ces marques.

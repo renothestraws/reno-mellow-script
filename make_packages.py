@@ -100,3 +100,13 @@ main = os.path.join(d, "ReNo Mellow - Recording Buddy.lua")
 build("ReNo Mellow - Recording Buddy", "ReNo_Mellow_Recording_Buddy", header(main, "version"),
       header(main, "changelog"), walk(d, BASE + "/RecordingBuddy"),
       no_reg=[BASE + "/RecordingBuddy/RecBuddy_lib.lua", BASE + "/RecordingBuddy/RecBuddy_startup.lua"])
+
+# --- Grid Buddy (grille fixe / adaptative, Display, service ; actions Arrange + MIDI Editor) ---
+d = os.path.join(ROOT, "GridBuddy")
+main = os.path.join(d, "ReNo Mellow - Grid Buddy.lua")
+files = [f for f in walk(d, BASE + "/GridBuddy") if "/GridBuddy/Data/" not in f[1]]
+files += walk(os.path.join(d, "Data"), "Data")          # icône de barre d'outils
+build("ReNo Mellow - Grid Buddy", "ReNo_Mellow_Grid_Buddy", header(main, "version"),
+      header(main, "changelog"), files,
+      no_reg=[BASE + "/GridBuddy/GB_lib.lua", BASE + "/GridBuddy/GB_startup.lua",
+              BASE + "/GridBuddy/MIDI/*"])
