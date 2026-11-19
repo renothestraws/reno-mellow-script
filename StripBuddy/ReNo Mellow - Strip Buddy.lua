@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.15
+-- @version 1.16
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Custom Strips devient Strip Buddy (strips, réglages et exports repris automatiquement) ; nouveau Display (Zoom / View / Scroll / Select + liste des tags) et onglet Display (Display View / Display Scroll : TCP / MCP / Both)
+-- @changelog Display : bouton « Strip Buddy » (et clic droit > Open Strip Buddy) pour ouvrir la fenêtre principale ou la ramener au premier plan
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -74,7 +74,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.15"
+local VERSION = "1.16"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -1830,6 +1830,10 @@ end)
 
 local function loop()
   ImGui.SetNextWindowSize(ctx, 900, 480, ImGui.Cond_FirstUseEver)
+  if reaper.GetExtState(EXT, "main_focus") == "1" then -- asked by the Display
+    reaper.SetExtState(EXT, "main_focus", "0", false)
+    ImGui.SetNextWindowFocus(ctx)
+  end
   local visible, open = ImGui.Begin(ctx, SCRIPT_TITLE .. " " .. VERSION, true)
   if visible then
     if ImGui.BeginTabBar(ctx, "tabs") then

@@ -254,6 +254,20 @@ local function make_ctx()
   end
 end
 
+-- open the Strip Buddy window (or bring it to the front if it is already open)
+local MAIN_FILE = (SCRIPT_FILE:match("^(.*[/\\])") or "") .. "ReNo Mellow - Strip Buddy.lua"
+local open_main_queued = false
+local function open_main()
+  if not reaper.file_exists(MAIN_FILE) then message = "Strip Buddy not found next to the Display." return end
+  local id = reaper.AddRemoveReaScript(true, 0, MAIN_FILE, true)
+  if not id or id == 0 then return end
+  if reaper.GetToggleCommandStateEx(0, id) == 1 then
+    reaper.SetExtState(EXT, "main_focus", "1", false) -- already open: ask it to come to the front
+  else
+    reaper.Main_OnCommand(id, 0)
+  end
+end
+
 local OPTS = { { "zoom", "Zoom" }, { "view", "View" }, { "scroll", "Scroll" }, { "select", "Select" } }
 
 local function tag_label(t)
@@ -277,6 +291,17 @@ local function draw()
   local visible, open = ImGui.Begin(ctx, TITLE, true, flags)
   if not visible then return open end
   ImGui.PushFont(ctx, fonts[font_size] or fonts[16])
+
+  -- Strip Buddy button (opens the main window)
+  ImGui.PushStyleColor(ctx, ImGui.Col_Button, 0x8E3B2FFF)
+  ImGui.PushStyleColor(ctx, ImGui.Col_ButtonHovered, 0xB04A3AFF)
+  ImGui.PushStyleColor(ctx, ImGui.Col_ButtonActive, 0x6E2C22FF)
+  if ImGui.Button(ctx, "Strip Buddy##open") then open_main_queued = true end
+  ImGui.PopStyleColor(ctx, 3)
+  if ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal) then ImGui.SetTooltip(ctx, "Open the Strip Buddy window") end
+  ImGui.SameLine(ctx, 0, 10)
+  ImGui.TextDisabled(ctx, "|")
+  ImGui.SameLine(ctx, 0, 10)
 
   -- left part: options
   for i, o in ipairs(OPTS) do
@@ -342,6 +367,7 @@ local function draw()
       if not st then ensure_startup_block() end
     end
     ImGui.Separator(ctx)
+    if ImGui.MenuItem(ctx, "Open Strip Buddy") then open_main_queued = true end
     if ImGui.MenuItem(ctx, "Close") then open = false end
     ImGui.EndPopup(ctx)
   end
@@ -372,7 +398,9 @@ local function loop()
   end
   scan_tags()
   if current and not tag_info[current] then current = nil end
-  if draw() then reaper.defer(loop) end
+  local keep = draw()
+  if open_main_queued then open_main_queued = false; open_main() end -- after the frame
+  if keep then reaper.defer(loop) end
 end
 
 reaper.defer(loop)
