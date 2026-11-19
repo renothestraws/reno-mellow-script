@@ -8,6 +8,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 | Script | Description |
 |---|---|
 | **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils |
+| **ReNo Mellow - Recording Buddy** | Répéter puis enregistrer une boucle en plusieurs passes : chaque passe a son pré-roll (mesures ou ms), sa vitesse de lecture (hauteur conservée), son mode (Listen, Play avec les pistes armées muettes sous la boucle, Record en auto punch, Move on pour avancer dans l'arrangement), sa pause et, au choix, sa propre boucle. Séquences sauvegardables (Default, 4 takes, Practice fournies), mini Display et actions Start-Stop / Stop |
 | **ReNo Mellow - Custom Strips** | Fenêtre de « custom strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC], couleur, icône, layouts TCP/MCP, entrée d'enregistrement ou record output (stereo, mono, MIDI), pan mode, type de metering, FX chain ajoutée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée |
 | **ReNo Mellow - Swiss Army Knife** | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et W / Shift+W / Ctrl+W lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, sa bulle Display qui affiche l'outil actif, 24 outils, Next / Previous tool. |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
@@ -47,6 +48,31 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 - Les outils sont enregistrés pour toutes les sessions (reaper-extstate.ini, section ReNoMellow_SAK).
 
 **Extensions :** ReaImGui (obligatoire), SWS (conseillée). REAPER 7.03 ou plus pour les infobulles.
+
+### ReNo Mellow - Recording Buddy
+
+- Définir une **time selection** (ou une boucle) dans l'arrangement, puis lancer **ReNo Mellow - Recording Buddy**.
+- Onglet **Rec Buddy** : gros bouton Play (couleur selon lecture / enregistrement / pause, vitesse affichée), jauge
+  « Pass » qui suit la progression dans la boucle (en bleu pendant le pré-roll), bouton **STOP** forcé.
+- Onglet **Set up** : une ligne par passe, jouées de haut en bas.
+  - **Loop** : « def » = la boucle de l'arrangement ; `[` et `]` fixent une boucle propre à la passe depuis le curseur
+    d'édition (gardée en position musicale), bouton « def » pour revenir à la boucle de l'arrangement.
+  - **Pre-roll** en mesures ou en ms (2 décimales) ; bouton **C** = du curseur d'édition au début de la boucle
+    (ou **All pre-rolls from edit cursor** pour toutes les lignes).
+  - **Rate** : vitesse de lecture, la hauteur est conservée.
+  - **Mode** : **Listen** (lecture simple), **Play** (les items des pistes armées sont muets sous la boucle, le pré-roll
+    reste audible, le monitoring aussi), **Record** (time selection auto punch), **Move on** (arrêt, la boucle de
+    l'arrangement avance de sa propre longueur, puis pause d'au moins 0,5 s).
+  - **Pause** après la passe.
+- **Séquences** : charger, Save, Save as..., Delete ; **Examples** remet Default, 4 takes et Practice.
+- Chaque stop sauvegarde les prises. Pendant la séquence, le script coupe le repeat, le pré-roll et le count-in de
+  REAPER et active la conservation du pitch ; tout est remis comme avant à la fin.
+- **Display** : petite fenêtre sans barre de titre ; double-clic = démarrer, Ctrl+Alt+double-clic = stop forcé,
+  clic droit = ouvrir l'onglet Set up. Se rouvre au démarrage de REAPER (bloc ajouté à `Scripts/__startup.lua`),
+  relancer le script la ferme.
+- Actions isolées : **Start-Stop** (sans fenêtre, relancer = arrêter) et **Stop**.
+
+**Extensions :** ReaImGui (obligatoire).
 
 ### ReNo Mellow - Custom Strips
 
@@ -95,13 +121,16 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation en un fichier (REAPER 7.86 et plus)
 
-Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Custom Strips, Swiss Army Knife).
+Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Custom Strips, Swiss Army Knife, Recording Buddy).
 Télécharger le fichier, puis l'ouvrir avec REAPER : les scripts sont installés et ajoutés à la liste d'actions,
 et le paquet peut être désinstallé proprement. Pas de mises à jour automatiques : pour cela, préférer ReaPack.
 
 Swiss Army Knife en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_SwissArmyKnife.ReaperPkg>
 (la version éditeur MIDI est ajoutée à la section MIDI Editor au premier lancement de la Toolbox).
+
+Recording Buddy en téléchargement direct :
+<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Recording_Buddy.ReaperPkg>
 
 ## Installation manuelle
 
@@ -112,6 +141,9 @@ Swiss Army Knife en téléchargement direct :
 
 **Swiss Army Knife** : copier le dossier `SwissArmyKnife` dans le dossier `Scripts` de REAPER, puis charger et lancer
 `ReNo Mellow - Swiss Army Knife - Toolbox.lua` : elle ajoute toutes les autres actions (Main et MIDI Editor).
+
+**Recording Buddy** : copier le dossier `RecordingBuddy` dans le dossier `Scripts` de REAPER, puis charger et lancer
+`ReNo Mellow - Recording Buddy.lua` : il ajoute les actions Display, Start-Stop et Stop.
 
 **Custom Strips** : copier `CustomStrips/ReNo Mellow - Custom Strips.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
 
