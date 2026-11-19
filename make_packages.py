@@ -84,15 +84,15 @@ build("ReNo Mellow - Strip Buddy", "ReNo_Mellow_Strip_Buddy", header(main, "vers
         BASE + "/StripBuddy/ReNo Mellow - Strip Buddy - Display.lua")]
       + walk(os.path.join(ROOT, "StripBuddy", "Data"), "Data"))          # icône de barre d'outils
 
-# --- Swiss Army Knife (versions Arrange + MIDI Editor) ------------
-d = os.path.join(ROOT, "SwissArmyKnife")
-main = os.path.join(d, "ReNo Mellow - Swiss Army Knife - Toolbox.lua")
-files = [f for f in walk(d, BASE + "/SwissArmyKnife") if "/SwissArmyKnife/Data/" not in f[1]]
-files += walk(os.path.join(d, "Data"), "Data")          # icône du couteau suisse (bulle Display)
-build("ReNo Mellow - Swiss Army Knife", "ReNo_Mellow_SwissArmyKnife", header(main, "version"),
+# --- Tool Buddy (ex Swiss Army Knife ; versions Arrange + MIDI Editor) -----
+d = os.path.join(ROOT, "ToolBuddy")
+main = os.path.join(d, "ReNo Mellow - Tool Buddy - Toolbox.lua")
+files = [f for f in walk(d, BASE + "/ToolBuddy") if "/ToolBuddy/Data/" not in f[1]]
+files += walk(os.path.join(d, "Data"), "Data")          # icône du couteau (bulle Display)
+build("ReNo Mellow - Tool Buddy", "ReNo_Mellow_Tool_Buddy", header(main, "version"),
       header(main, "changelog"), files,
-      no_reg=[BASE + "/SwissArmyKnife/SAK_lib.lua", BASE + "/SwissArmyKnife/SAK_toolbox.lua", BASE + "/SwissArmyKnife/SAK_display.lua", BASE + "/SwissArmyKnife/SAK_startup.lua",
-              BASE + "/SwissArmyKnife/MIDI/*"])
+      no_reg=[BASE + "/ToolBuddy/TB_lib.lua", BASE + "/ToolBuddy/TB_toolbox.lua", BASE + "/ToolBuddy/TB_display.lua", BASE + "/ToolBuddy/TB_startup.lua",
+              BASE + "/ToolBuddy/MIDI/*"])
 
 # --- Recording Buddy -------------------------------------------------------------
 d = os.path.join(ROOT, "RecordingBuddy")

@@ -1,13 +1,13 @@
 -- @noindex
 -- Shared toolbox code. Loaded by the two toolbox scripts, which set:
---   SAK_ROOT    = folder holding SAK_lib.lua
---   SAK_TB_CTX  = "main" (arrange) or "midi" (MIDI editor)
-local dir = SAK_ROOT
-dofile(dir .. "SAK_lib.lua")
+--   TB_ROOT    = folder holding TB_lib.lua
+--   TB_WIN_CTX  = "main" (arrange) or "midi" (MIDI editor)
+local dir = TB_ROOT
+dofile(dir .. "TB_lib.lua")
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs ReaImGui.\nInstall it with ReaPack (ReaTeam Extensions), then restart REAPER.",
-    "Swiss Army Knife", 0)
+    "Tool Buddy", 0)
   return
 end
 package.path = reaper.ImGui_GetBuiltinPath() .. "/?.lua"
@@ -25,12 +25,12 @@ end
 set_self_toggle(true)
 
 -- both contexts get their defaults, then the last used one is restored
-SAK.set_context("midi"); SAK.ensure_init()
-SAK.set_context("main"); SAK.ensure_init()
-SAK.set_context(SAK_TB_CTX or "main")
-local TB_CTX = SAK.context
+TB.set_context("midi"); TB.ensure_init()
+TB.set_context("main"); TB.ensure_init()
+TB.set_context(TB_WIN_CTX or "main")
+local TB_CTX = TB.context
 
-local N = SAK.NSLOTS
+local N = TB.NSLOTS
 local ctx -- created after the start-up work (see bottom of file)
 
 -- Modal dialogs (MB, file dialogs) must not run inside an ImGui frame:
@@ -56,11 +56,11 @@ end
 ---------------------------------------------------------------- state
 local tools = {}
 local function reload_tools()
-  for i = 1, N do tools[i] = SAK.get_tool(i) end
+  for i = 1, N do tools[i] = TB.get_tool(i) end
 end
 reload_tools()
 
-local sel_slot = SAK.get_current()
+local sel_slot = TB.get_current()
 local edit = {}
 local function load_edit(i)
   local t = tools[i]
@@ -69,8 +69,8 @@ end
 load_edit(sel_slot)
 
 local function save_edit()
-  SAK.set_tool(edit.slot, edit)
-  tools[edit.slot] = SAK.get_tool(edit.slot)
+  TB.set_tool(edit.slot, edit)
+  tools[edit.slot] = TB.get_tool(edit.slot)
 end
 
 local picking = nil -- { slot = i, key = "main"/"alt"/"alt2" }
@@ -78,7 +78,7 @@ local picking = nil -- { slot = i, key = "main"/"alt"/"alt2" }
 ---------------------------------------------------------------- companion scripts
 local function companions_for(c)
   -- MIDI editor scripts live in the MIDI/ subfolder
-  local base = (c == "midi") and "MIDI/ReNo Mellow - Swiss Army Knife MIDI" or "ReNo Mellow - Swiss Army Knife"
+  local base = (c == "midi") and "MIDI/ReNo Mellow - Tool Buddy MIDI" or "ReNo Mellow - Tool Buddy"
   local list = {
     { key = "cmd_main", file = base .. ".lua" },
     { key = "cmd_alt",  file = base .. " (alt).lua" },
@@ -93,12 +93,12 @@ end
 
 -- runs fn(c) in each context, then restores the current one
 local function for_each_context(fn)
-  local keep = SAK.context
+  local keep = TB.context
   for _, c in ipairs({ "main", "midi" }) do
-    SAK.set_context(c)
+    TB.set_context(c)
     fn(c)
   end
-  SAK.set_context(keep)
+  TB.set_context(keep)
 end
 
 local function count_registered()
@@ -106,8 +106,8 @@ local function count_registered()
   for_each_context(function(c)
     for _, comp in ipairs(companions_for(c)) do
       total = total + 1
-      local id = SAK.cgets(comp.key)
-      if id ~= "" and SAK.resolve(id) ~= 0 then n = n + 1 end
+      local id = TB.cgets(comp.key)
+      if id ~= "" and TB.resolve(id) ~= 0 then n = n + 1 end
     end
   end)
   return n, total
@@ -119,19 +119,19 @@ local function register_companions(force)
   for_each_context(function(c)
     for _, comp in ipairs(companions_for(c)) do
       local path = dir .. comp.file
-      local id = SAK.cgets(comp.key)
-      if reaper.file_exists(path) and (force or id == "" or SAK.resolve(id) == 0) then
+      local id = TB.cgets(comp.key)
+      if reaper.file_exists(path) and (force or id == "" or TB.resolve(id) == 0) then
         todo[#todo + 1] = { ctx = c, key = comp.key, path = path }
       end
     end
   end)
-  local keep = SAK.context
+  local keep = TB.context
   for k, t in ipairs(todo) do
-    SAK.set_context(t.ctx)
-    local cmd = reaper.AddRemoveReaScript(true, SAK.section, t.path, k == #todo)
-    if cmd and cmd > 0 then SAK.csets(t.key, SAK.id_from_cmd(cmd)) end
+    TB.set_context(t.ctx)
+    local cmd = reaper.AddRemoveReaScript(true, TB.section, t.path, k == #todo)
+    if cmd and cmd > 0 then TB.csets(t.key, TB.id_from_cmd(cmd)) end
   end
-  SAK.set_context(keep)
+  TB.set_context(keep)
 end
 
 local n_registered, n_total = 0, 0
@@ -139,19 +139,19 @@ local n_registered, n_total = 0, 0
 ---------------------------------------------------------------- action picker (Action List)
 local function start_pick(key)
   if not reaper.PromptForAction then return end
-  picking = { slot = edit.slot, key = key, section = SAK.section }
-  reaper.PromptForAction(1, SAK.resolve(edit[key]), SAK.section)
+  picking = { slot = edit.slot, key = key, section = TB.section }
+  reaper.PromptForAction(1, TB.resolve(edit[key]), TB.section)
 end
 
 local function poll_pick()
   if not picking then return end
   local r = reaper.PromptForAction(0, 0, picking.section)
   if r > 0 then
-    local id = SAK.id_from_cmd(r)
+    local id = TB.id_from_cmd(r)
     local t = tools[picking.slot]
     t[picking.key] = id
-    SAK.set_tool(picking.slot, t)
-    tools[picking.slot] = SAK.get_tool(picking.slot)
+    TB.set_tool(picking.slot, t)
+    tools[picking.slot] = TB.get_tool(picking.slot)
     if edit.slot == picking.slot then edit[picking.key] = id end
     reaper.PromptForAction(-1, 0, picking.section)
     picking = nil
@@ -170,7 +170,7 @@ end
 -- returns slot, key of the armed tool action (or nil), and the armed command
 local function same_section(sec)
   sec = (sec or ""):lower()
-  if SAK.context == "midi" then return sec:find("midi") ~= nil end
+  if TB.context == "midi" then return sec:find("midi") ~= nil end
   return sec == "" or sec == "main"
 end
 
@@ -179,8 +179,8 @@ local function armed_info()
   if not cmd or cmd == 0 then return nil, nil, 0, sec end
   if not same_section(sec) then return nil, nil, cmd, sec end
   for i = 1, N do
-    for _, k in ipairs(SAK.KEYS) do
-      if tools[i][k] ~= "" and SAK.resolve(tools[i][k]) == cmd then return i, k, cmd, sec end
+    for _, k in ipairs(TB.KEYS) do
+      if tools[i][k] ~= "" and TB.resolve(tools[i][k]) == cmd then return i, k, cmd, sec end
     end
   end
   return nil, nil, cmd, sec
@@ -190,33 +190,33 @@ end
 local function swap_slots(a, b)
   if b < 1 or b > N then return end
   tools[a], tools[b] = tools[b], tools[a]
-  SAK.set_tool(a, tools[a]); SAK.set_tool(b, tools[b])
-  local cur = SAK.get_current()
-  if cur == a then SAK.set_current(b) elseif cur == b then SAK.set_current(a) end
+  TB.set_tool(a, tools[a]); TB.set_tool(b, tools[b])
+  local cur = TB.get_current()
+  if cur == a then TB.set_current(b) elseif cur == b then TB.set_current(a) end
   sel_slot = b
   load_edit(b)
 end
 
 local function duplicate_slot(a)
   for i = 1, N do
-    if SAK.is_empty(i, tools[i]) then
+    if TB.is_empty(i, tools[i]) then
       local t = tools[a]
-      SAK.set_tool(i, { name = (t.name ~= "" and t.name or ("Tool " .. a)) .. " copy",
+      TB.set_tool(i, { name = (t.name ~= "" and t.name or ("Tool " .. a)) .. " copy",
         main = t.main, alt = t.alt, alt2 = t.alt2 })
-      tools[i] = SAK.get_tool(i)
+      tools[i] = TB.get_tool(i)
       sel_slot = i
       load_edit(i)
       return
     end
   end
-  reaper.MB("No empty slot left.", "Swiss Army Knife", 0)
+  reaper.MB("No empty slot left.", "Tool Buddy", 0)
 end
 
 local function clear_slot(a)
-  if reaper.MB("Clear slot " .. a .. " (" .. SAK.display_name(a, tools[a]) .. ")?",
-      "Swiss Army Knife", 4) ~= 6 then return end
-  SAK.set_tool(a, { name = "", main = "", alt = "", alt2 = "" })
-  tools[a] = SAK.get_tool(a)
+  if reaper.MB("Clear slot " .. a .. " (" .. TB.display_name(a, tools[a]) .. ")?",
+      "Tool Buddy", 4) ~= 6 then return end
+  TB.set_tool(a, { name = "", main = "", alt = "", alt2 = "" })
+  tools[a] = TB.get_tool(a)
   load_edit(a)
 end
 
@@ -224,36 +224,36 @@ end
 local function export_preset()
   local path
   if reaper.JS_Dialog_BrowseForSaveFile then
-    local rv, p = reaper.JS_Dialog_BrowseForSaveFile("Export Swiss Army Knife preset",
-      reaper.GetResourcePath(), (SAK.context == "midi" and "Swiss Army Knife MIDI preset.txt" or "Swiss Army Knife preset.txt"), "Text files (*.txt)\0*.txt\0\0")
+    local rv, p = reaper.JS_Dialog_BrowseForSaveFile("Export Tool Buddy preset",
+      reaper.GetResourcePath(), (TB.context == "midi" and "Tool Buddy MIDI preset.txt" or "Tool Buddy preset.txt"), "Text files (*.txt)\0*.txt\0\0")
     if rv ~= 1 or p == "" then return end
     path = p
     if not path:lower():match("%.txt$") then path = path .. ".txt" end
   else
     local d = reaper.GetResourcePath() .. "/Data"
     reaper.RecursiveCreateDirectory(d, 0)
-    path = d .. (SAK.context == "midi" and "/ReNoMellow_SAK_MIDI_preset.txt" or "/ReNoMellow_SAK_preset.txt")
+    path = d .. (TB.context == "midi" and "/ReNoMellow_ToolBuddy_MIDI_preset.txt" or "/ReNoMellow_ToolBuddy_preset.txt")
   end
   local f = io.open(path, "w")
-  if not f then reaper.MB("Could not write:\n" .. path, "Swiss Army Knife", 0) return end
-  f:write("ReNoMellow_SAK_preset\t2\n")
+  if not f then reaper.MB("Could not write:\n" .. path, "Tool Buddy", 0) return end
+  f:write("ReNoMellow_ToolBuddy_preset\t2\n")
   for i = 1, N do
     local t = tools[i]
     f:write(table.concat({ i, t.name, t.main, t.alt, t.alt2 }, "\t"), "\n")
   end
   f:close()
-  reaper.MB("Preset exported to:\n" .. path, "Swiss Army Knife", 0)
+  reaper.MB("Preset exported to:\n" .. path, "Tool Buddy", 0)
 end
 
 local function import_preset()
-  local rv, path = reaper.GetUserFileNameForRead(reaper.GetResourcePath() .. "/", "Import Swiss Army Knife preset", "txt")
+  local rv, path = reaper.GetUserFileNameForRead(reaper.GetResourcePath() .. "/", "Import Tool Buddy preset", "txt")
   if not rv then return end
   local f = io.open(path, "r")
   if not f then return end
   local data, ok = {}, false
   for line in f:lines() do
     line = line:gsub("\r$", "")
-    if line:match("^ReNoMellow_SAK_preset") then ok = true
+    if line:match("^ReNoMellow_ToolBuddy_preset") or line:match("^ReNoMellow_SAK_preset") then ok = true -- also Swiss Army Knife presets
     else
       local fields = {}
       for v in (line .. "\t"):gmatch("([^\t]*)\t") do fields[#fields + 1] = v end
@@ -264,16 +264,16 @@ local function import_preset()
     end
   end
   f:close()
-  if not ok then reaper.MB("This is not a Swiss Army Knife preset.", "Swiss Army Knife", 0) return end
-  for i = 1, N do SAK.set_tool(i, data[i] or { name = "", main = "", alt = "", alt2 = "" }) end
+  if not ok then reaper.MB("This is not a Tool Buddy preset.", "Tool Buddy", 0) return end
+  for i = 1, N do TB.set_tool(i, data[i] or { name = "", main = "", alt = "", alt2 = "" }) end
   reload_tools()
   load_edit(sel_slot)
 end
 
 local function reset_defaults()
-  if reaper.MB("Replace all " .. SAK.CONTEXTS[SAK.context].label .. " tools with the default set?",
-    "Swiss Army Knife", 4) ~= 6 then return end
-  SAK.load_defaults()
+  if reaper.MB("Replace all " .. TB.CONTEXTS[TB.context].label .. " tools with the default set?",
+    "Tool Buddy", 4) ~= 6 then return end
+  TB.load_defaults()
   reload_tools()
   sel_slot = 1
   load_edit(1)
@@ -281,8 +281,8 @@ end
 
 ---------------------------------------------------------------- sizes, fonts, auto-close
 -- Per toolbox (Arrange / MIDI) settings
-local function tb_setting(k, default) return SAK.setting(k .. "_" .. TB_CTX, default) end
-local function tb_set(k, v) SAK.set_setting(k .. "_" .. TB_CTX, v) end
+local function tb_setting(k, default) return TB.setting(k .. "_" .. TB_CTX, default) end
+local function tb_set(k, v) TB.set_setting(k .. "_" .. TB_CTX, v) end
 
 -- Sizes chosen by the user (Setup > Settings), one set per toolbox.
 -- ReaImGui fonts have a fixed size, so one font per size is created at start-up.
@@ -300,15 +300,15 @@ end
 ---------------------------------------------------------------- tab 1 : tools
 local function action_desc(id)
   if id == "" then return "(none)" end
-  return SAK.action_name(id) or ("not found: " .. id)
+  return TB.action_name(id) or ("not found: " .. id)
 end
 
 local function draw_tools()
-  local cur = SAK.get_current()
+  local cur = TB.get_current()
   local armed_slot, armed_key, armed_cmd, armed_sec = armed_info()
 
   local list = {}
-  for i = 1, N do if not SAK.is_empty(i, tools[i]) then list[#list + 1] = i end end
+  for i = 1, N do if not TB.is_empty(i, tools[i]) then list[#list + 1] = i end end
   if #list == 0 then
     ImGui.TextDisabled(ctx, "No tool defined. Create your tools in the Setup tab.")
     return
@@ -340,8 +340,8 @@ local function draw_tools()
       ImGui.PushStyleColor(ctx, ImGui.Col_Border, COL_BORDER)
     end
 
-    if ImGui.Button(ctx, SAK.display_name(i, t) .. "##tool" .. i, bw, size_of("tool_h")) then
-      SAK.set_current(i)
+    if ImGui.Button(ctx, TB.display_name(i, t) .. "##tool" .. i, bw, size_of("tool_h")) then
+      TB.set_current(i)
       if tb_setting("autoclose", false) then close_request = true end
     end
 
@@ -357,8 +357,8 @@ local function draw_tools()
         reaper.ArmCommand(0, armed_sec or "")
       else
         local key = ctrl and "alt2" or (shift and "alt" or "main")
-        local cmd = SAK.resolve(t[key])
-        if cmd ~= 0 then reaper.ArmCommand(cmd, SAK.arm_section) end
+        local cmd = TB.resolve(t[key])
+        if cmd ~= 0 then reaper.ArmCommand(cmd, TB.arm_section) end
       end
     end
 
@@ -374,7 +374,7 @@ local function draw_tools()
   ImGui.Spacing(ctx)
   ImGui.Separator(ctx)
   local t = tools[cur]
-  ImGui.Text(ctx, "Current tool: " .. SAK.display_name(cur, t))
+  ImGui.Text(ctx, "Current tool: " .. TB.display_name(cur, t))
   ImGui.TextColored(ctx, COL_GREY, "Main:  " .. action_desc(t.main))
   ImGui.TextColored(ctx, COL_GREY, "Alt:   " .. action_desc(t.alt))
   ImGui.TextColored(ctx, COL_GREY, "Alt 2: " .. action_desc(t.alt2))
@@ -383,9 +383,9 @@ local function draw_tools()
     ImGui.Spacing(ctx)
     local what
     if armed_slot then
-      what = SAK.display_name(armed_slot, tools[armed_slot]) .. " (" .. SAK.LABELS[armed_key] .. ")"
+      what = TB.display_name(armed_slot, tools[armed_slot]) .. " (" .. TB.LABELS[armed_key] .. ")"
     else
-      what = SAK.action_name(tostring(armed_cmd)) or tostring(armed_cmd)
+      what = TB.action_name(tostring(armed_cmd)) or tostring(armed_cmd)
     end
     ImGui.TextColored(ctx, COL_RED, "ARMED: " .. what)
     ImGui.SameLine(ctx)
@@ -396,12 +396,12 @@ end
 ---------------------------------------------------------------- tab 2 : setup
 local function action_row(key)
   ImGui.PushID(ctx, key)
-  ImGui.Text(ctx, SAK.LABELS[key] .. " action")
+  ImGui.Text(ctx, TB.LABELS[key] .. " action")
   ImGui.SetNextItemWidth(ctx, -150)
   local rv, v = ImGui.InputText(ctx, "##id", edit[key])
   if rv then edit[key] = v; save_edit() end
   if ImGui.IsItemDeactivatedAfterEdit(ctx) then
-    edit[key] = SAK.normalize_id(edit[key]); save_edit()
+    edit[key] = TB.normalize_id(edit[key]); save_edit()
   end
   if ImGui.IsItemHovered(ctx) then
     ImGui.SetTooltip(ctx, "Command ID: native (40012), SWS (_SWS_...), script (_RS...) or custom action (_hash)")
@@ -416,7 +416,7 @@ local function action_row(key)
   if edit[key] == "" then
     ImGui.TextDisabled(ctx, "(none)")
   else
-    local nm = SAK.action_name(edit[key])
+    local nm = TB.action_name(edit[key])
     if nm then ImGui.TextColored(ctx, COL_GREY, nm)
     else ImGui.TextColored(ctx, COL_RED, "Action not found in the Main section") end
   end
@@ -427,10 +427,10 @@ end
 local function draw_setup()
   -- slot list
   if ImGui.BeginChild(ctx, "slots", 190, 0, ImGui.ChildFlags_Border) then
-    local cur = SAK.get_current()
+    local cur = TB.get_current()
     for i = 1, N do
       local t = tools[i]
-      local label = string.format("%02d  %s", i, SAK.is_empty(i, t) and "-" or SAK.display_name(i, t))
+      local label = string.format("%02d  %s", i, TB.is_empty(i, t) and "-" or TB.display_name(i, t))
       if i == cur then ImGui.PushStyleColor(ctx, ImGui.Col_Text, 0x7CF0A6FF) end
       if ImGui.Selectable(ctx, label .. "##slot" .. i, sel_slot == i) then
         sel_slot = i
@@ -452,7 +452,7 @@ local function draw_setup()
     if rv then edit.name = v; save_edit() end
     ImGui.Spacing(ctx)
 
-    for _, k in ipairs(SAK.KEYS) do action_row(k) end
+    for _, k in ipairs(TB.KEYS) do action_row(k) end
 
     if picking then
       ImGui.TextColored(ctx, COL_RED, "Choose an action in the Action List...")
@@ -474,13 +474,13 @@ local function draw_setup()
     ImGui.Spacing(ctx)
     if ImGui.CollapsingHeader(ctx, "Settings") then
       local c, b
-      c, b = ImGui.Checkbox(ctx, "Tooltip when the tool changes", SAK.setting("tt_change", true))
-      if c then SAK.set_setting("tt_change", b) end
-      c, b = ImGui.Checkbox(ctx, "Tooltip when a tool action is run", SAK.setting("tt_use", true))
-      if c then SAK.set_setting("tt_use", b) end
+      c, b = ImGui.Checkbox(ctx, "Tooltip when the tool changes", TB.setting("tt_change", true))
+      if c then TB.set_setting("tt_change", b) end
+      c, b = ImGui.Checkbox(ctx, "Tooltip when a tool action is run", TB.setting("tt_use", true))
+      if c then TB.set_setting("tt_use", b) end
       ImGui.SetNextItemWidth(ctx, 200)
-      local cd, d = ImGui.SliderDouble(ctx, "Tooltip duration", SAK.setting("tt_dur", 1.0), 0.3, 3.0, "%.1f s")
-      if cd then SAK.set_setting("tt_dur", string.format("%.2f", d)) end
+      local cd, d = ImGui.SliderDouble(ctx, "Tooltip duration", TB.setting("tt_dur", 1.0), 0.3, 3.0, "%.1f s")
+      if cd then TB.set_setting("tt_dur", string.format("%.2f", d)) end
       if not reaper.set_action_options then
         ImGui.TextColored(ctx, COL_RED, "Tooltips need REAPER 7.03 or newer.")
       end
@@ -519,8 +519,8 @@ local function draw_setup()
         end)
       end
       ImGui.TextDisabled(ctx, "Assign shortcuts in the Action List to:")
-      ImGui.TextDisabled(ctx, "  Main section: ReNo Mellow - Swiss Army Knife  /  (alt)  /  (alt2)")
-      ImGui.TextDisabled(ctx, "  MIDI Editor section: ReNo Mellow - Swiss Army Knife MIDI  /  (alt)  /  (alt2)")
+      ImGui.TextDisabled(ctx, "  Main section: ReNo Mellow - Tool Buddy  /  (alt)  /  (alt2)")
+      ImGui.TextDisabled(ctx, "  MIDI Editor section: ReNo Mellow - Tool Buddy MIDI  /  (alt)  /  (alt2)")
       ImGui.TextDisabled(ctx, "  ... - Next tool / Previous tool / Display (both sections)")
     end
 
@@ -534,7 +534,7 @@ local function loop()
 
   ImGui.PushFont(ctx, fonts[size_of("ui_font")])
   ImGui.SetNextWindowSize(ctx, 600, 420, ImGui.Cond_FirstUseEver)
-  local visible, open = ImGui.Begin(ctx, TB_CTX == "midi" and "Swiss Army Knife MIDI" or "Swiss Army Knife", true)
+  local visible, open = ImGui.Begin(ctx, TB_CTX == "midi" and "Tool Buddy MIDI" or "Tool Buddy", true)
   if visible then
     if ImGui.BeginTabBar(ctx, "tabs") then
       if ImGui.BeginTabItem(ctx, "Tools") then
@@ -574,7 +574,7 @@ reaper.defer(function()
   register_companions(false)
   n_registered, n_total = count_registered()
   reaper.defer(function()
-    ctx = ImGui.CreateContext(TB_CTX == "midi" and "ReNo Mellow - Swiss Army Knife MIDI" or "ReNo Mellow - Swiss Army Knife")
+    ctx = ImGui.CreateContext(TB_CTX == "midi" and "ReNo Mellow - Tool Buddy MIDI" or "ReNo Mellow - Tool Buddy")
     for sz = FONT_MIN, FONT_MAX do
       fonts[sz] = ImGui.CreateFont("sans-serif", sz)
       ImGui.Attach(ctx, fonts[sz])
