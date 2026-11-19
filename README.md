@@ -9,7 +9,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 |---|---|
 | **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils |
 | **ReNo Mellow - Recording Buddy** | Répéter puis enregistrer une boucle en plusieurs passes : chaque passe a son pré-roll (mesures ou ms), sa vitesse de lecture (hauteur conservée), son mode (Listen, Play avec les pistes armées muettes sous la boucle, Record en auto punch, Move on pour avancer dans l'arrangement), sa pause et, au choix, sa propre boucle. Séquences sauvegardables (Default, 4 takes, Practice fournies), mini Display et actions Start-Stop / Stop |
-| **ReNo Mellow - Custom Strips** | Fenêtre de « custom strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC], couleur, icône, layouts TCP/MCP, entrée d'enregistrement ou record output (stereo, mono, MIDI), pan mode, type de metering, FX chain ajoutée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée |
+| **ReNo Mellow - Custom Strips** | Fenêtre de « custom strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC], couleur, icône, layouts TCP/MCP, entrée d'enregistrement ou record output (stereo, mono, MIDI), pan mode, type de metering, FX chain ajoutée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manual_EN.pdf) |
 | **ReNo Mellow - Swiss Army Knife** | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et trois raccourcis au choix (ex. W / Shift+W / Ctrl+W) lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, sa bulle Display qui affiche l'outil actif, 24 outils, Next / Previous tool. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/SwissArmyKnife/SwissArmyKnife_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/SwissArmyKnife/SwissArmyKnife_manual_EN.pdf) |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
@@ -93,6 +93,8 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 
 **Extensions :** ReaImGui (obligatoire), js_ReaScriptAPI (optionnelle, filtre des fenêtres de choix de fichiers).
 
+**Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manual_EN.pdf)
+
 ### REABACK
 
 - **REABACK** : fenêtre principale (liste des régions réordonnable, renumérotation des IDs, sets de régions,
@@ -130,6 +132,9 @@ et le paquet peut être désinstallé proprement. Pas de mises à jour automatiq
 Swiss Army Knife en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_SwissArmyKnife.ReaperPkg>
 (la version éditeur MIDI est ajoutée à la section MIDI Editor au premier lancement de la Toolbox).
+
+Custom Strips en téléchargement direct :
+<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Custom_Strips.ReaperPkg>
 
 Recording Buddy en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Recording_Buddy.ReaperPkg>
