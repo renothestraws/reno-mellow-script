@@ -108,5 +108,5 @@ files = [f for f in walk(d, BASE + "/GridBuddy") if "/GridBuddy/Data/" not in f[
 files += walk(os.path.join(d, "Data"), "Data")          # icône de barre d'outils
 build("ReNo Mellow - Grid Buddy", "ReNo_Mellow_Grid_Buddy", header(main, "version"),
       header(main, "changelog"), files,
-      no_reg=[BASE + "/GridBuddy/GB_lib.lua", BASE + "/GridBuddy/GB_startup.lua",
+      no_reg=[BASE + "/GridBuddy/GB_lib.lua", BASE + "/GridBuddy/GB_startup.lua", BASE + "/GridBuddy/GB_display.lua",
               BASE + "/GridBuddy/MIDI/*"])
