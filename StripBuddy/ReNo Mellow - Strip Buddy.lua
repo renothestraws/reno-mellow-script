@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.18
+-- @version 1.19
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Nouvelle icône de piste cs_tags_SPD.png et strip de base « SPD » (sampleur à pads Roland) dans le dossier Drum pad
+-- @changelog Normalisation désactivée par défaut sur tous les strips (case non cochée) ; la normalisation -15 dBFS peak ensemble est décochée une fois sur les strips existants
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -75,7 +75,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.18"
+local VERSION = "1.19"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -825,8 +825,7 @@ local function load_default_strips()
       if not have[nm] then
         local icon = tag ~= "" and ("cs_tags_" .. tag .. ".png") or nil
         if icon and not reaper.file_exists(ICON_DIR .. "/" .. icon) then icon = nil end
-        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, icon = icon, folder = fid,
-                                normalize = { type = 2, target = -15.0, mode = "together" } }
+        strips[#strips + 1] = { name = nm, track_name = nm, tag = tag ~= "" and tag or nil, icon = icon, folder = fid }
         added = added + 1
       end
     end
@@ -836,6 +835,20 @@ local function load_default_strips()
 end
 
 if first_run and #strips == 0 then load_default_strips() end
+
+-- 1.19 : the default strips no longer normalize. One-time clean-up: untick the
+-- old default (-15 dBFS peak, together) on every strip; other settings are kept.
+if reaper.GetExtState(EXT, "norm_default_off") ~= "1" then
+  for _, s in ipairs(strips) do
+    local nz = s.normalize
+    if nz and (nz.type or 2) == 2 and math.abs((nz.target or -15) + 15) < 0.001
+       and (nz.mode or "together") == "together" then
+      s.normalize = nil
+      dirty = true
+    end
+  end
+  reaper.SetExtState(EXT, "norm_default_off", "1", true)
+end
 
 local function set_status(msg, kind)
   status = msg or ""
