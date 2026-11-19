@@ -9,7 +9,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 |---|---|
 | **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils |
 | **ReNo Mellow - Recording Buddy** | Répéter puis enregistrer une boucle en plusieurs passes : chaque passe a son pré-roll (mesures ou ms), sa vitesse de lecture (hauteur conservée), son mode (Listen, Play avec les pistes armées muettes sous la boucle, Record en auto punch, Move on pour avancer dans l'arrangement), sa pause et, au choix, sa propre boucle. Séquences sauvegardables (Default, 4 takes, Practice fournies), mini Display et actions Start-Stop / Stop. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/RecordingBuddy/RecordingBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/RecordingBuddy/RecordingBuddy_manual_EN.pdf) |
-| **ReNo Mellow - Custom Strips** | Fenêtre de « custom strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC], couleur, icône, layouts TCP/MCP, entrée d'enregistrement ou record output (stereo, mono, MIDI), pan mode, type de metering, FX chain ajoutée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manual_EN.pdf) |
+| **ReNo Mellow - Strip Buddy** | Fenêtre de « strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC], couleur, icône, layouts TCP/MCP, entrée d'enregistrement ou record output (stereo, mono, MIDI), pan mode, type de metering, FX chain ajoutée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Swiss Army Knife** | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et trois raccourcis au choix (ex. W / Shift+W / Ctrl+W) lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, sa bulle Display qui affiche l'outil actif, 24 outils, Next / Previous tool. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/SwissArmyKnife/SwissArmyKnife_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/SwissArmyKnife/SwissArmyKnife_manual_EN.pdf) |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
@@ -78,24 +78,27 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 
 **Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/RecordingBuddy/RecordingBuddy_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/RecordingBuddy/RecordingBuddy_manual_EN.pdf)
 
-### ReNo Mellow - Custom Strips
+### ReNo Mellow - Strip Buddy
+
+Anciennement **Custom Strips** : au premier lancement, Strip Buddy reprend automatiquement les strips, dossiers, exports et réglages de Custom Strips (l'ancien dossier `Data/ReNo_CustomStrips` est gardé). Si Custom Strips était installé par ReaPack, le désinstaller (Browse packages > clic droit > Uninstall) et remplacer son bouton de barre d'outils par l'action « ReNo Mellow - Strip Buddy ».
 
 - Onglet **Strips** : clic = appliquer aux pistes sélectionnées (une seule annulation), glisser = réordonner, clic droit = renommer, dupliquer, supprimer.
 - **Dossiers** (liste à gauche de l'onglet Strips) : « + New folder », glisser un strip sur un dossier pour l'y ranger, clic droit sur un dossier pour le renommer ou le supprimer (ses strips repassent dans « No folder »), glisser les dossiers pour les réordonner.
 - Onglet **Setup** : une ligne par strip, seul le nom est obligatoire. **Multisélection** : clic sur le numéro (#), Ctrl+clic pour ajouter / retirer, Shift+clic pour une plage ; une modification dans une ligne sélectionnée (couleur, normalisation, groupe…) s'applique à toutes les lignes sélectionnées, sauf le nom du strip. Plusieurs pistes sélectionnées avec un nom de piste : numérotation automatique (Tom 1, Tom 2...).
 - **Héritage par tag** : la couleur et l'icône données au premier strip d'un tag (ex. Kick pour [KIK]) passent aux autres strips du même tag dans le même dossier, s'ils n'en ont pas encore.
+- **Display** (action « ReNo Mellow - Strip Buddy - Display ») : petite barre flottante avec Zoom / View / Scroll / Select à gauche et la liste des tags du projet à droite (All + chaque tag, à la couleur de sa première piste). Un clic sur un tag applique les options allumées : View n'affiche que les pistes du tag (dossiers parents gardés), Zoom les agrandit à la hauteur de l'arrangement, Scroll amène la première en haut (TCP) ou à gauche (mixer), Select les sélectionne. Molette sur la liste = tag suivant / précédent. Onglet **Display** de la fenêtre principale : Display View et Display Scroll (TCP / MCP / Both), réouverture au démarrage. Relancer l'action ferme le Display.
 - Normalisation par strip : LUFS-I, RMS, Peak ou True peak, chaque item à la cible ou tous ensemble (gain commun) ; par défaut -15 dBFS Peak, tous ensemble.
 - **Strips de base** : 164 strips (batterie, percussions, basse, guitares, claviers, cordes, vents, cuivres, chœur, voix, divers…) rangés en 15 dossiers, chacun avec son nom de piste et son tag ([KIK], [SNR], [VOC]…), créés au premier lancement ; le bouton **Load default strips** (onglet Setup) rajoute ceux qui manquent sans toucher aux autres.
-- Les strips sont enregistrés dans `Data/ReNo_CustomStrips/strips.lua`.
-- **Export / Import** (onglet Setup) : sauver tous les strips ou un seul dossier dans un fichier `.rnstrips` (par défaut dans `Data/ReNo_CustomStrips/Exports`), puis le recharger en ajout (dossiers de même nom fusionnés, doublons ignorés) ou en remplacement. **Clear all strips** efface tous les strips (et, au choix, les dossiers) après confirmation.
+- Les strips sont enregistrés dans `Data/ReNo_StripBuddy/strips.lua`.
+- **Export / Import** (onglet Setup) : sauver tous les strips ou un seul dossier dans un fichier `.rnstrips` (par défaut dans `Data/ReNo_StripBuddy/Exports`), puis le recharger en ajout (dossiers de même nom fusionnés, doublons ignorés) ou en remplacement. **Clear all strips** efface tous les strips (et, au choix, les dossiers) après confirmation.
 
 **Icônes de piste :** 61 icônes `cs_tags_XXX.png` (le tag en blanc, 128 × 128), une par tag des strips de base, installées dans `Data/track_icons` ; les strips de base créés par Load default strips les utilisent, avec la normalisation activée (-15 dBFS Peak, ensemble).
 
-**Icône de barre d'outils :** `ReNo_CustomStrips.png` (style TCP, 3 états), installée avec le script dans `Data/toolbar_icons` (+ 150 / 200 %).
+**Icône de barre d'outils :** `ReNo_StripBuddy.png` (style TCP, 3 états), installée avec le script dans `Data/toolbar_icons` (+ 150 / 200 %).
 
-**Extensions :** ReaImGui (obligatoire), js_ReaScriptAPI (optionnelle, filtre des fenêtres de choix de fichiers).
+**Extensions :** ReaImGui (obligatoire), js_ReaScriptAPI (optionnelle : filtre des fenêtres de choix de fichiers, Zoom et Scroll précis du Display ; sans elle, le Zoom utilise SWS s'il est installé).
 
-**Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/CustomStrips/CustomStrips_manual_EN.pdf)
+**Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manual_EN.pdf)
 
 ### REABACK
 
@@ -127,7 +130,7 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation en un fichier (REAPER 7.86 et plus)
 
-Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Custom Strips, Swiss Army Knife, Recording Buddy).
+Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Swiss Army Knife, Recording Buddy).
 Télécharger le fichier, puis l'ouvrir avec REAPER : les scripts sont installés et ajoutés à la liste d'actions,
 et le paquet peut être désinstallé proprement. Pas de mises à jour automatiques : pour cela, préférer ReaPack.
 
@@ -135,8 +138,8 @@ Swiss Army Knife en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_SwissArmyKnife.ReaperPkg>
 (la version éditeur MIDI est ajoutée à la section MIDI Editor au premier lancement de la Toolbox).
 
-Custom Strips en téléchargement direct :
-<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Custom_Strips.ReaperPkg>
+Strip Buddy en téléchargement direct :
+<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Strip_Buddy.ReaperPkg>
 
 Recording Buddy en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Recording_Buddy.ReaperPkg>
@@ -154,7 +157,7 @@ Recording Buddy en téléchargement direct :
 **Recording Buddy** : copier le dossier `RecordingBuddy` dans le dossier `Scripts` de REAPER, puis charger et lancer
 `ReNo Mellow - Recording Buddy.lua` : il ajoute les actions Display, Start-Stop et Stop.
 
-**Custom Strips** : copier `CustomStrips/ReNo Mellow - Custom Strips.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
+**Strip Buddy** : copier `StripBuddy/ReNo Mellow - Strip Buddy.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
 
 **ReNo StemSplit** : copier le dossier `StemSplit` dans le dossier `Scripts` de REAPER
 (Options > Show REAPER resource path), puis charger ses actions dans la liste d'actions
