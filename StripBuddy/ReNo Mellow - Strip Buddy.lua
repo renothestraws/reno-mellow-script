@@ -1,13 +1,13 @@
--- @description Custom Strips (track presets window)
+-- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
 -- @version 1.15
--- @about Fenêtre à 2 onglets : appliquer ses « custom strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Nouveau Display (barre flottante Zoom / View / Scroll / Select + liste des tags du projet) et onglet Display (Display View et Display Scroll : TCP / MCP / Both)
+-- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
+-- @changelog Custom Strips devient Strip Buddy (strips, réglages et exports repris automatiquement) ; nouveau Display (Zoom / View / Scroll / Select + liste des tags) et onglet Display (Display View / Display Scroll : TCP / MCP / Both)
 -- @provides
---   [main] ReNo Mellow - Custom Strips - Display.lua
---   [data] Data/toolbar_icons/ReNo_CustomStrips.png > toolbar_icons/ReNo_CustomStrips.png
---   [data] Data/toolbar_icons/150/ReNo_CustomStrips.png > toolbar_icons/150/ReNo_CustomStrips.png
---   [data] Data/toolbar_icons/200/ReNo_CustomStrips.png > toolbar_icons/200/ReNo_CustomStrips.png
+--   [main] ReNo Mellow - Strip Buddy - Display.lua
+--   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
+--   [data] Data/toolbar_icons/150/ReNo_StripBuddy.png > toolbar_icons/150/ReNo_StripBuddy.png
+--   [data] Data/toolbar_icons/200/ReNo_StripBuddy.png > toolbar_icons/200/ReNo_StripBuddy.png
 --   [data] Data/track_icons/cs_tags_ACG.png > track_icons/cs_tags_ACG.png
 --   [data] Data/track_icons/cs_tags_AMB.png > track_icons/cs_tags_AMB.png
 --   [data] Data/track_icons/cs_tags_AUX.png > track_icons/cs_tags_AUX.png
@@ -73,7 +73,7 @@
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
-local SCRIPT_TITLE = "ReNo Mellow - Custom Strips"
+local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
 local VERSION = "1.15"
 
 if not reaper.ImGui_GetBuiltinPath then
@@ -91,13 +91,43 @@ local ImGui = require "imgui" "0.9"
 --------------------------------------------------------------------------------
 local FLT_MIN   = 1.17549435e-38
 local RES       = reaper.GetResourcePath():gsub("\\", "/")
-local DATA_DIR  = RES .. "/Data/ReNo_CustomStrips"
+local DATA_DIR  = RES .. "/Data/ReNo_StripBuddy"
 local DATA_FILE = DATA_DIR .. "/strips.lua"
 local ICON_DIR  = RES .. "/Data/track_icons"
 local FXC_DIR   = RES .. "/FXChains"
 local DND_TYPE  = "RNCS_STRIP"
 local DND_FOLDER = "RNCS_FOLDER"
-local EXT = "ReNo_CustomStrips"
+local EXT = "ReNo_StripBuddy"
+
+-- one-time migration from the former name "Custom Strips" (data folder + settings); the old folder is kept
+do
+  local OLD_DIR, OLD_EXT = RES .. "/Data/ReNo_CustomStrips", "ReNo_CustomStrips"
+  local function copy_file(a, b)
+    local f = io.open(a, "rb"); if not f then return false end
+    local d = f:read("a"); f:close()
+    local g = io.open(b, "wb"); if not g then return false end
+    g:write(d); g:close(); return true
+  end
+  if not reaper.file_exists(DATA_DIR .. "/strips.lua") and reaper.file_exists(OLD_DIR .. "/strips.lua") then
+    reaper.RecursiveCreateDirectory(DATA_DIR .. "/Exports", 0)
+    copy_file(OLD_DIR .. "/strips.lua", DATA_DIR .. "/strips.lua")
+    local i = 0
+    while true do
+      local fn = reaper.EnumerateFiles(OLD_DIR .. "/Exports", i)
+      if not fn then break end
+      copy_file(OLD_DIR .. "/Exports/" .. fn, DATA_DIR .. "/Exports/" .. fn)
+      i = i + 1
+    end
+  end
+  if reaper.GetExtState(EXT, "migrated") ~= "1" then
+    for _, k in ipairs({ "folder", "disp_view", "disp_scroll", "disp_startup", "disp_font",
+                         "disp_opt_zoom", "disp_opt_view", "disp_opt_scroll", "disp_opt_select" }) do
+      local v = reaper.GetExtState(OLD_EXT, k)
+      if v ~= "" and reaper.GetExtState(EXT, k) == "" then reaper.SetExtState(EXT, k, v, true) end
+    end
+    reaper.SetExtState(EXT, "migrated", "1", true)
+  end
+end
 
 local NORM_TYPES = {
   { label = "LUFS-I",    v = 0 },
@@ -219,7 +249,7 @@ local function text_on(c)
 end
 
 --------------------------------------------------------------------------------
--- Storage (Data/ReNo_CustomStrips/strips.lua)
+-- Storage (Data/ReNo_StripBuddy/strips.lua)
 --------------------------------------------------------------------------------
 local function ser(v, ind)
   ind = ind or ""
@@ -272,7 +302,7 @@ local function save_data(d)
   local tmp = DATA_FILE .. ".tmp"
   local f = io.open(tmp, "w")
   if not f then return false end
-  f:write("-- ReNo Mellow - Custom Strips data\nreturn ", ser(d), "\n")
+  f:write("-- ReNo Mellow - Strip Buddy data\nreturn ", ser(d), "\n")
   f:close()
   os.remove(DATA_FILE)
   return os.rename(tmp, DATA_FILE)
@@ -678,7 +708,7 @@ local function apply_strip(s)
   reaper.PreventUIRefresh(-1)
   reaper.TrackList_AdjustWindows(false)
   reaper.UpdateArrange()
-  reaper.Undo_EndBlock("Custom strip: " .. (s.name or ""), -1)
+  reaper.Undo_EndBlock("Strip Buddy: " .. (s.name or ""), -1)
 
   local msg = string.format("Applied \"%s\" to %d track%s.", s.name or "", #tracks, #tracks > 1 and "s" or "")
   local w = {}
@@ -1415,7 +1445,7 @@ local COLUMNS = {
 --------------------------------------------------------------------------------
 local EXPORT_DIR = DATA_DIR .. "/Exports"
 local EXPORT_EXT = "rnstrips"
-local EXPORT_FILTER = "Custom strips (*.rnstrips)\0*.rnstrips\0All files (*.*)\0*.*\0\0"
+local EXPORT_FILTER = "Strip Buddy (*.rnstrips)\0*.rnstrips\0All files (*.*)\0*.*\0\0"
 local import_data, import_name, open_import = nil, "", false
 
 local function safe_filename(n)
@@ -1425,7 +1455,7 @@ end
 
 -- scope: nil = everything, folder id, or FOLDER_NONE
 local function export_strips(scope, scope_name)
-  local out = { format = "ReNo Mellow Custom Strips", version = 1, folders = {}, strips = {} }
+  local out = { format = "ReNo Mellow Strip Buddy", version = 1, folders = {}, strips = {} }
   for _, f in ipairs(folders) do
     if scope == nil or scope == f.id then out.folders[#out.folders + 1] = copy(f) end
   end
@@ -1449,7 +1479,7 @@ local function export_strips(scope, scope_name)
     if rv ~= 1 or not fn or fn == "" then return end
     path = norm_path(fn)
   else
-    local ok, nm = reaper.GetUserInputs("Export strips", 1, "File name (saved in Data/ReNo_CustomStrips/Exports):,extrawidth=150",
+    local ok, nm = reaper.GetUserInputs("Export strips", 1, "File name (saved in Data/ReNo_StripBuddy/Exports):,extrawidth=150",
       (default:gsub("%." .. EXPORT_EXT .. "$", "")))
     if not ok or trim(nm) == "" then return end
     path = EXPORT_DIR .. "/" .. safe_filename(trim(nm))
@@ -1458,7 +1488,7 @@ local function export_strips(scope, scope_name)
 
   local f = io.open(path, "w")
   if not f then set_status("Could not write " .. path, "err") return end
-  f:write("-- ReNo Mellow - Custom Strips export\nreturn ", ser(out), "\n")
+  f:write("-- ReNo Mellow - Strip Buddy export\nreturn ", ser(out), "\n")
   f:close()
   set_status(string.format("Exported %d strip%s to %s", #out.strips, #out.strips > 1 and "s" or "", path), "ok")
 end
@@ -1474,7 +1504,7 @@ local function pick_import_file()
   local ok, d = false, nil
   if fn then ok, d = pcall(fn) end
   if not ok or type(d) ~= "table" or type(d.strips) ~= "table" then
-    set_status("This file is not a Custom Strips export.", "err") return
+    set_status("This file is not a Strip Buddy export.", "err") return
   end
   d.folders = type(d.folders) == "table" and d.folders or {}
   import_data, import_name, open_import = d, basename(path), true
@@ -1724,22 +1754,26 @@ end
 
 
 --------------------------------------------------------------------------------
--- Tab 3 : Display settings (the Display itself is "ReNo Mellow - Custom Strips - Display.lua")
+-- Tab 3 : Display settings (the Display itself is "ReNo Mellow - Strip Buddy - Display.lua")
 --------------------------------------------------------------------------------
-local DISPLAY_FILE = (({reaper.get_action_context()})[2]:match("^(.*[/\\])") or "") .. "ReNo Mellow - Custom Strips - Display.lua"
+local DISPLAY_FILE = (({reaper.get_action_context()})[2]:match("^(.*[/\\])") or "") .. "ReNo Mellow - Strip Buddy - Display.lua"
 local START_FILE = reaper.GetResourcePath() .. "/Scripts/__startup.lua"
-local START_A = "-- >>> ReNo Mellow Custom Strips Display (auto-start)"
-local START_B = "-- <<< ReNo Mellow Custom Strips Display"
+local START_A = "-- >>> ReNo Mellow Strip Buddy Display (auto-start)"
+local START_B = "-- <<< ReNo Mellow Strip Buddy Display"
 local PANES = { { "tcp", "TCP" }, { "mcp", "MCP" }, { "both", "Both" } }
 
-local function remove_startup_block()
+local function remove_startup_block(ma, mb)
+  ma, mb = ma or START_A, mb or START_B
   local f = io.open(START_FILE, "r"); if not f then return end
   local s = f:read("a"); f:close()
-  local a = s:find(START_A, 1, true); if not a then return end
-  local _, b = s:find(START_B, a, true); if not b then return end
+  local a = s:find(ma, 1, true); if not a then return end
+  local _, b = s:find(mb, a, true); if not b then return end
   if s:sub(b + 1, b + 1) == "\n" then b = b + 1 end
   f = io.open(START_FILE, "w"); if f then f:write(s:sub(1, a - 1) .. s:sub(b + 1)); f:close() end
 end
+
+-- the startup block of the former "Custom Strips" Display is no longer needed
+remove_startup_block("-- >>> ReNo Mellow Custom Strips Display (auto-start)", "-- <<< ReNo Mellow Custom Strips Display")
 
 local function toggle_display()
   if not reaper.file_exists(DISPLAY_FILE) then

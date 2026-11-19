@@ -1,11 +1,11 @@
 -- @noindex
--- ReNo Mellow - Custom Strips - Display
+-- ReNo Mellow - Strip Buddy - Display
 -- Small floating bar: Zoom / View / Scroll / Select on the left, the project's tags on the right.
 -- Settings (View in TCP / MCP / both, Scroll in TCP / MCP / both, reopen at startup) are in the
--- Custom Strips window, tab "Display". Run the action again to close the Display.
+-- Strip Buddy window, tab "Display". Run the action again to close the Display.
 
-local TITLE = "Custom Strips Display"
-local EXT = "ReNo_CustomStrips"
+local TITLE = "Strip Buddy Display"
+local EXT = "ReNo_StripBuddy"
 local _, SCRIPT_FILE, SEC, CMD = reaper.get_action_context()
 
 if not reaper.ImGui_GetBuiltinPath then
@@ -47,8 +47,8 @@ local font_size = tonumber(get("disp_font", "16")) or 16
 -- Startup block (Scripts/__startup.lua)
 --------------------------------------------------------------------------------
 local START_FILE = reaper.GetResourcePath() .. "/Scripts/__startup.lua"
-local MARK_A = "-- >>> ReNo Mellow Custom Strips Display (auto-start)"
-local MARK_B = "-- <<< ReNo Mellow Custom Strips Display"
+local MARK_A = "-- >>> ReNo Mellow Strip Buddy Display (auto-start)"
+local MARK_B = "-- <<< ReNo Mellow Strip Buddy Display"
 
 local function read_file(p)
   local f = io.open(p, "r"); if not f then return nil end
@@ -230,7 +230,7 @@ local function run(tag)
   if opt.scroll then do_scroll(list) end
   local what = {}
   for _, k in ipairs({ "view", "zoom", "scroll", "select" }) do if opt[k] then what[#what + 1] = k end end
-  reaper.Undo_EndBlock("Custom Strips Display: " .. table.concat(what, " + ") .. " " .. (tag or "all"), -1)
+  reaper.Undo_EndBlock("Strip Buddy Display: " .. table.concat(what, " + ") .. " " .. (tag or "all"), -1)
 end
 
 --------------------------------------------------------------------------------

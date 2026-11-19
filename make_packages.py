@@ -76,13 +76,13 @@ main = os.path.join(ROOT, "MIDI", "ReNo Mellow - MIDI cleaner.lua")
 build("ReNo Mellow - MIDI cleaner", "ReNo_Mellow_MIDI_cleaner", header(main, "version"),
       header(main, "changelog"), [(main, BASE + "/MIDI/ReNo Mellow - MIDI cleaner.lua")])
 
-# --- Custom Strips --------------------------------------------------------------
-main = os.path.join(ROOT, "CustomStrips", "ReNo Mellow - Custom Strips.lua")
-build("ReNo Mellow - Custom Strips", "ReNo_Mellow_Custom_Strips", header(main, "version"),
-      header(main, "changelog"), [(main, BASE + "/CustomStrips/ReNo Mellow - Custom Strips.lua"),
-       (os.path.join(ROOT, "CustomStrips", "ReNo Mellow - Custom Strips - Display.lua"),
-        BASE + "/CustomStrips/ReNo Mellow - Custom Strips - Display.lua")]
-      + walk(os.path.join(ROOT, "CustomStrips", "Data"), "Data"))          # icône de barre d'outils
+# --- Strip Buddy --------------------------------------------------------------
+main = os.path.join(ROOT, "StripBuddy", "ReNo Mellow - Strip Buddy.lua")
+build("ReNo Mellow - Strip Buddy", "ReNo_Mellow_Strip_Buddy", header(main, "version"),
+      header(main, "changelog"), [(main, BASE + "/StripBuddy/ReNo Mellow - Strip Buddy.lua"),
+       (os.path.join(ROOT, "StripBuddy", "ReNo Mellow - Strip Buddy - Display.lua"),
+        BASE + "/StripBuddy/ReNo Mellow - Strip Buddy - Display.lua")]
+      + walk(os.path.join(ROOT, "StripBuddy", "Data"), "Data"))          # icône de barre d'outils
 
 # --- Swiss Army Knife (versions Arrange + MIDI Editor) ------------
 d = os.path.join(ROOT, "SwissArmyKnife")
