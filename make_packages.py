@@ -110,3 +110,11 @@ build("ReNo Mellow - Grid Buddy", "ReNo_Mellow_Grid_Buddy", header(main, "versio
       header(main, "changelog"), files,
       no_reg=[BASE + "/GridBuddy/GB_lib.lua", BASE + "/GridBuddy/GB_startup.lua", BASE + "/GridBuddy/GB_display.lua",
               BASE + "/GridBuddy/MIDI/*"])
+
+# --- Chord Buddy (fenêtre + Display ; bibliothèques non enregistrées) -------------
+d = os.path.join(ROOT, "ChordBuddy")
+main = os.path.join(d, "ReNo Mellow - Chord Buddy.lua")
+build("ReNo Mellow - Chord Buddy", "ReNo_Mellow_Chord_Buddy", header(main, "version"),
+      header(main, "changelog"), walk(d, BASE + "/ChordBuddy"),
+      no_reg=[BASE + "/ChordBuddy/ChordBuddy_theory.lua", BASE + "/ChordBuddy/ChordBuddy_midi.lua",
+              BASE + "/ChordBuddy/ChordBuddy_export.lua"])
