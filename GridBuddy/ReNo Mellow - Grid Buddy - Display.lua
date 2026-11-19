@@ -1,6 +1,6 @@
 -- @noindex
 -- Small floating window showing the grid (place it anywhere, e.g. next to the transport).
--- Click: grid menu | Wheel: grid size | Alt+click: swing on/off | Alt+wheel: swing amount
+-- Click: grid type menu | Wheel: grid size | Alt+click: swing on/off | Alt+wheel: swing amount
 -- Snap icon: click = snap, Alt+click = relative snap, right-click = snap/grid settings
 -- Right-click on the grid: Grid Buddy window. Launching this script again closes the window.
 
@@ -60,7 +60,6 @@ local first_frame = true
 local hover_since = nil
 local post = nil
 local function later(fn) post = fn end
-local last_svc_check = 0
 
 local function lighten(c, a)
   local rr = math.min(255, ((c >> 24) & 255) + a)
@@ -84,11 +83,10 @@ local function clicked(btn)
 end
 
 ---------------------------------------------------------------- grid menu
+-- grid types only (the size is set with the mouse wheel) + Link MIDI editor
 local function menu(c)
   if not ImGui.BeginPopup(ctx, "gbmenu_" .. c) then return end
   local is_midi = c == "midi"
-  ImGui.TextDisabled(ctx, is_midi and "MIDI editor" or "Arrange view")
-  ImGui.Separator(ctx)
   local types = { "straight", "triplet" }
   if GB.flag("show_quint", false) then types[#types + 1] = "quintuplet" end
   if GB.flag("show_sept", false) then types[#types + 1] = "septuplet" end
@@ -108,35 +106,8 @@ local function menu(c)
     end
     ImGui.EndMenu(ctx)
   end
-
   ImGui.Separator(ctx)
-  ImGui.TextDisabled(ctx, "Fixed")
-  if not is_midi then
-    if GB.flag("show_frame", false) and ImGui.MenuItem(ctx, "Frame", nil, GB.is_frame()) then later(GB.set_frame) end
-    if GB.flag("show_measure", false) and ImGui.MenuItem(ctx, "Measure", nil, GB.is_measure()) then later(GB.set_measure) end
-  end
-  for _, s in ipairs(GB.SIZES) do
-    if ImGui.MenuItem(ctx, s[1], nil, GB.is_fixed(c, s[2])) then later(function() GB.set_fixed(c, s[2]) end) end
-  end
-
-  ImGui.Separator(ctx)
-  ImGui.TextDisabled(ctx, "Adaptive")
-  local m = GB.mult(c)
-  for _, md in ipairs(GB.MODES) do
-    if ImGui.MenuItem(ctx, md[1], nil, m == md[2]) then later(function() GB.toggle_mult(c, md[2]) end) end
-  end
-
-  ImGui.Separator(ctx)
-  if not is_midi and ImGui.BeginMenu(ctx, "MIDI editor") then
-    local mm = GB.mult("midi")
-    if ImGui.MenuItem(ctx, "Fixed", nil, mm == 0) then later(function() GB.apply_mult("midi", 0) end) end
-    for _, md in ipairs(GB.MODES) do
-      if ImGui.MenuItem(ctx, md[1], nil, mm == md[2]) then later(function() GB.toggle_mult("midi", md[2]) end) end
-    end
-    ImGui.EndMenu(ctx)
-  end
-  if ImGui.MenuItem(ctx, "Open Grid Buddy...") then later(function() GB.open_main(1) end) end
-  if ImGui.MenuItem(ctx, "Set up...") then later(function() GB.open_main(2) end) end
+  if ImGui.MenuItem(ctx, "Link MIDI editor", nil, GB.synced()) then later(GB.toggle_link) end
   ImGui.EndPopup(ctx)
 end
 
@@ -162,13 +133,12 @@ local function grid_line(c, main_line)
   local dl = ImGui.GetWindowDrawList(ctx)
   local is_midi = c == "midi"
   local d, sw, amt = GB.current(c)
-  local adaptive = GB.is_adaptive(c)
   local txt
-  if not is_midi and GB.is_frame() then txt = "Frame" adaptive = false
-  elseif not is_midi and GB.is_measure() then txt = "Measure" adaptive = false
+  if not is_midi and GB.is_frame() then txt = "Frame"
+  elseif not is_midi and GB.is_measure() then txt = "Measure"
   elseif d then
     local shown = d
-    if not is_midi and not adaptive and GB.flag("disp_visible", false) then shown = GB.visible_div(d) end
+    if not is_midi and GB.flag("disp_visible", false) then shown = GB.visible_div(d) end
     txt = GB.grid_text(shown)
   else txt = "-" end
 
@@ -176,11 +146,10 @@ local function grid_line(c, main_line)
   local hovering = ImGui.IsWindowHovered(ctx)
   if not is_midi and hovering and alt_down() and d then
     txt = sw == 1 and string.format("Swing %d%%", math.floor(amt * 100 + 0.5)) or "Swing off"
-    adaptive = false
   end
 
   local prefix = is_midi and "MIDI " or ""
-  local a_txt = adaptive and "A " or ""
+  local a_txt = ""
   local pw = ImGui.CalcTextSize(ctx, prefix)
   local aw = ImGui.CalcTextSize(ctx, a_txt)
   local tw, th = ImGui.CalcTextSize(ctx, txt)
@@ -214,7 +183,7 @@ local function handle_grid(c, hovered)
     else
       local dir = wheel > 0 and -1 or 1 -- wheel up = finer grid
       if GB.flag("wheel_rev", false) then dir = -dir end
-      later(function() GB.step(c, dir) end)
+      later(function() GB.step_fixed(c, dir) end)
     end
   end
   if clicked(ImGui.MouseButton_Left) then
@@ -231,8 +200,6 @@ local function loop()
     reaper.DeleteExtState(GB.RT, QUIT, false)
     return -- closed by a new launch of the script
   end
-  local now = reaper.time_precise()
-  if now - last_svc_check > 1 then last_svc_check = now GB.start_service() end
 
   ImGui.PushFont(ctx, fonts[text_size()])
   ImGui.PushStyleColor(ctx, ImGui.Col_WindowBg, COL_BG)
@@ -247,7 +214,8 @@ local function loop()
   if visible then
     local h = ImGui.GetTextLineHeight(ctx)
     local dl = ImGui.GetWindowDrawList(ctx)
-    local show_midi = GB.flag("disp_midi", true) and GB.midi_editor() ~= nil
+    -- linked: the MIDI editor uses the arrange grid, no second line
+    local show_midi = GB.flag("disp_midi", true) and GB.midi_editor() ~= nil and not GB.synced()
 
     if GB.flag("disp_snap", true) then
       local s = show_midi and h * 2 + 4 or h + 4
@@ -277,7 +245,7 @@ local function loop()
     if ImGui.IsWindowHovered(ctx, ImGui.HoveredFlags_ChildWindows) and not ImGui.IsPopupOpen(ctx, "", ImGui.PopupFlags_AnyPopupId) then
       hover_since = hover_since or reaper.time_precise()
       if reaper.time_precise() - hover_since > 1.5 then
-        ImGui.SetTooltip(ctx, "Click: grid menu\nWheel: grid size\nAlt+click: swing on/off\n"
+        ImGui.SetTooltip(ctx, "Click: grid type menu\nWheel: grid size\nAlt+click: swing on/off\n"
           .. "Alt+wheel: swing amount (Ctrl: finer)\nSnap icon: click = snap, Alt+click = relative,\n"
           .. "  right-click = snap/grid settings\nRight-click: Grid Buddy window\nDrag: move")
       end

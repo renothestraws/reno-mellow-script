@@ -1,6 +1,6 @@
 -- @noindex
--- ReNo Mellow - Grid Buddy : shared engine (grid types, fixed sizes, adaptive grid,
--- background service, toolbar states). Loaded by every Grid Buddy script.
+-- ReNo Mellow - Grid Buddy : shared engine (grid types, sizes, swing, snap, link with the
+-- MIDI editor). Loaded by every Grid Buddy script.
 -- Adapted from "Adaptive Grid" and "Gridbox" by Ilias-Timon Poulakis (FeedTheCat).
 -- Portions Copyright (c) Ilias-Timon Poulakis, MIT License:
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -12,7 +12,7 @@
 -- portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 GB = {}
-GB.VERSION = "1.0"
+GB.VERSION = "1.1"
 GB.S  = "ReNoMellow_GridBuddy"     -- saved settings
 GB.RT = "ReNoMellow_GridBuddy_RT"  -- run state (not saved)
 GB.ROOT = debug.getinfo(1, "S").source:match("^@(.*[/\\])") or ""
@@ -22,16 +22,10 @@ local r = reaper
 GB.FILES = {
   main    = "ReNo Mellow - Grid Buddy.lua",
   display = "ReNo Mellow - Grid Buddy - Display.lua",
-  service = "ReNo Mellow - Grid Buddy - Service.lua",
 }
 
 -- isolated actions (same file names in MIDI/ with "Grid Buddy MIDI")
-GB.ACTIONS = {
-  "Adaptive off (fixed)", "Adaptive narrowest", "Adaptive narrow", "Adaptive medium",
-  "Adaptive wide", "Adaptive widest", "Adaptive custom",
-  "Adjust grid (mousewheel)", "Adjust fixed grid (mousewheel)",
-  "Wider grid", "Narrower grid", "Adapt grid to zoom", "Toggle swing",
-}
+GB.ACTIONS = { "Adjust grid (mousewheel)", "Wider grid", "Narrower grid", "Toggle swing" }
 
 ---------------------------------------------------------------- settings
 function GB.get(key, default)
@@ -58,10 +52,10 @@ if GB.get("imported", "") == "" then
   local F = "FTC.AdaptiveGrid"
   local map = {
     zoom_div = "zoom_div", min_limit = "min_limit", max_limit = "max_limit",
-    min_limit_str = "min_limit_str", max_limit_str = "max_limit_str", custom_spacing = "custom_spacing",
+    min_limit_str = "min_limit_str", max_limit_str = "max_limit_str",
     midi_zoom_div = "me_zoom_div", midi_min_limit = "me_min_limit", midi_max_limit = "me_max_limit",
     midi_min_limit_str = "me_min_limit_str", midi_max_limit_str = "me_max_limit_str",
-    midi_custom_spacing = "me_custom_spacing", preserve_grid_type = "preserve_grid_type",
+preserve_grid_type = "preserve_grid_type",
     show_quintuplets = "show_quint", show_septuplets = "show_sept",
     show_frame = "show_frame", show_measure = "show_measure",
   }
@@ -172,14 +166,10 @@ function GB.leave_special()
   if r.GetToggleCommandState(A.MEASURE) == 1 then r.Main_OnCommand(A.MEASURE, 0) end
 end
 function GB.set_frame()
-  GB.cset("arrange", "mult", 0)
   if r.GetToggleCommandState(A.FRAME) ~= 1 then r.Main_OnCommand(A.FRAME, 0) end
-  GB.refresh_toggles("arrange")
 end
 function GB.set_measure()
-  GB.cset("arrange", "mult", 0)
   if r.GetToggleCommandState(A.MEASURE) ~= 1 then r.Main_OnCommand(A.MEASURE, 0) end
-  GB.refresh_toggles("arrange")
 end
 
 function GB.show_grid_lines()
@@ -191,7 +181,11 @@ function GB.rel_snap_on() return r.GetToggleCommandState(A.REL_SNAP) == 1 end
 function GB.toggle_snap() r.Main_OnCommand(A.SNAP, 0) end
 function GB.toggle_rel_snap() r.Main_OnCommand(A.REL_SNAP, 0) end
 function GB.snap_settings() r.Main_OnCommand(A.SNAP_SET, 0) end
+-- "Link MIDI editor" = REAPER's option "Use the same grid division in arrange view and MIDI editor"
 function GB.synced() return r.GetToggleCommandState(A.SYNC) == 1 end
+function GB.toggle_link() r.Main_OnCommand(A.SYNC, 0) end
+-- linked: the MIDI editor uses the arrange grid, so its context is "arrange"
+function GB.eff(c) if c == "midi" and GB.synced() then return "arrange" end return c end
 
 -- "Preserve grid type per size": the project remembers the type / swing used for
 -- every straight size (project ExtState)
@@ -283,6 +277,7 @@ end
 
 ---------------------------------------------------------------- types and sizes (both contexts)
 function GB.current(c)
+  c = GB.eff(c)
   if c == "midi" then
     local d, sw = GB.midi_grid()
     return d, (sw and sw ~= 0) and 1 or 0, sw or 0
@@ -291,6 +286,7 @@ function GB.current(c)
 end
 
 function GB.is_type(c, t)
+  c = GB.eff(c)
   if c == "arrange" and (GB.is_frame() or GB.is_measure()) then return false end
   local d, sw = GB.current(c)
   if not d then return false end
@@ -303,6 +299,7 @@ function GB.is_type(c, t)
 end
 
 function GB.set_type(c, t)
+  c = GB.eff(c)
   if c == "midi" then
     local d, sw = GB.midi_grid()
     if not d then return GB.no_midi() end
@@ -337,10 +334,10 @@ GB.SIZES = {
 
 -- size: straight value (1/16 = 0.0625); the current type is kept
 function GB.set_fixed(c, size)
-  GB.cset(c, "mult", 0)
+  c = GB.eff(c)
   if c == "midi" then
     local d = GB.midi_grid()
-    if not d then GB.refresh_toggles(c) return GB.no_midi() end
+    if not d then return GB.no_midi() end
     local t = GB.grid_type(d) or "straight"
     r.SetMIDIEditorGrid(0, size / GB.TO_STRAIGHT[t])
   else
@@ -352,11 +349,10 @@ function GB.set_fixed(c, size)
       r.GetSetProjectGrid(0, true, size / GB.TO_STRAIGHT[t], sw, amt)
     end
   end
-  GB.refresh_toggles(c)
 end
 
 function GB.is_fixed(c, size)
-  if GB.mult(c) ~= 0 then return false end
+  c = GB.eff(c)
   if c == "arrange" and (GB.is_frame() or GB.is_measure()) then return false end
   local d = GB.current(c)
   if not d then return false end
@@ -417,6 +413,7 @@ end
 
 -- dir > 0 : wider grid (multiply), dir < 0 : narrower grid (divide)
 function GB.step_fixed(c, dir)
+  c = GB.eff(c)
   local f = GB.divisor(c)
   local d, sw, amt = GB.current(c)
   if not d then if c == "midi" then GB.no_midi() end return false end
@@ -429,17 +426,7 @@ function GB.step_fixed(c, dir)
   return true
 end
 
----------------------------------------------------------------- adaptive modes
--- multiplier: 0 = fixed, 1 narrowest, 2 narrow, 3 medium, 4 wide, 6 widest, -1 custom
-GB.MODES = {
-  { "Narrowest", 1 }, { "Narrow", 2 }, { "Medium", 3 }, { "Wide", 4 }, { "Widest", 6 }, { "Custom", -1 },
-}
-GB.MODE_NAME = { [0] = "Fixed", [1] = "Narrowest", [2] = "Narrow", [3] = "Medium", [4] = "Wide",
-  [6] = "Widest", [-1] = "Custom" }
-
-function GB.mult(c) return tonumber(GB.cget(c, "mult", 0)) or 0 end
-function GB.is_adaptive(c) return GB.mult(c) ~= 0 end
-
+---------------------------------------------------------------- spacing (visible grid)
 function GB.min_spacing()
   local ok, v = r.get_config_var_string("projgridmin")
   if ok then return tonumber(v) or 8 end
@@ -459,232 +446,6 @@ function GB.min_spacing()
   return val
 end
 
-function GB.custom_spacing(c) return tonumber(GB.cget(c, "custom_spacing", "")) end
-
--- returns a message for the user when the value is suspicious, or nil
-function GB.set_custom_spacing(c, px)
-  px = tonumber(px)
-  if not px or px <= 0 then return nil, "Value not permitted" end
-  GB.cset(c, "custom_spacing", px)
-  local min = c == "midi" and 15 or GB.min_spacing()
-  if px < min then
-    return true, string.format("Smaller than the minimum grid line spacing (%d px): this might have side effects.", min)
-  end
-  return true
-end
-
--- modal dialog: only call it outside an ImGui frame
-function GB.ask_custom_spacing(c)
-  local cur = GB.custom_spacing(c) or ""
-  local ok, s = r.GetUserInputs("Grid Buddy - " .. (c == "midi" and "MIDI editor" or "Arrange view"),
-    1, "Minimum grid spacing (pixels):", tostring(cur))
-  if not ok then return false end
-  local done, msg = GB.set_custom_spacing(c, s)
-  if not done then r.MB(msg, "Grid Buddy", 0) return false end
-  if msg then r.MB(msg, "Grid Buddy", 0) end
-  return true
-end
-
--- sets the mode (no toggle). m ~= 0 : adapts now and starts the service
-function GB.apply_mult(c, m)
-  if m == -1 and not GB.custom_spacing(c) then
-    if not GB.ask_custom_spacing(c) then return false end
-  end
-  GB.cset(c, "mult", m)
-  if m ~= 0 then
-    GB.ensure_startup_hook() -- start-up: service again, or grids back to fixed
-    if c == "arrange" then GB.leave_special() GB.show_grid_lines() else GB.show_midi_grid() end
-    GB.adapt(c)
-    GB.start_service()
-  end
-  GB.refresh_toggles(c)
-  return true
-end
-
--- choosing the mode that is already active switches back to fixed
-function GB.toggle_mult(c, m)
-  if m ~= 0 and GB.mult(c) == m then m = 0 end
-  return GB.apply_mult(c, m)
-end
-
--- dir > 0 : wider (Narrowest -> Widest)
-function GB.step_adaptive(c, dir)
-  local m = GB.mult(c)
-  if m == -1 then m = 3 end
-  if m <= 0 then return false end
-  if m == 6 then m = 5 end
-  m = GB.clamp(m + (dir > 0 and 1 or -1), 1, 5)
-  if m == 5 then m = 6 end
-  GB.apply_mult(c, m)
-  return true
-end
-
-function GB.step(c, dir)
-  if GB.is_adaptive(c) then return GB.step_adaptive(c, dir) end
-  return GB.step_fixed(c, dir)
-end
-
----------------------------------------------------------------- adapting the grid to the zoom
-local function spacing_for(c)
-  local m = GB.mult(c)
-  local sp = c == "midi" and 15 or GB.min_spacing() -- MIDI editor: fixed 15 px
-  if m == -1 then
-    return (GB.custom_spacing(c) or sp) + 1        -- grid line of 1 px
-  end
-  return sp * m + m
-end
-
-local function adapt_division(c, measure_px, grid_div)
-  local max_grid = measure_px / spacing_for(c)
-  local grid = 1 / grid_div
-  local f = GB.divisor(c)
-  local exp = math.log(max_grid / grid, f)
-  local new_div = 1 / (grid * f ^ math.floor(exp))
-  local mn, mx = GB.limits(c)
-  if new_div < mn and new_div < grid_div then return nil end
-  if new_div > mx and new_div > grid_div then return nil end
-  if new_div ~= new_div or new_div == math.huge or new_div <= 0 then return nil end
-  return new_div
-end
-
-local function adapt_arrange()
-  local zoom = r.GetHZoomLevel()
-  local t0, t1 = r.GetSet_ArrangeView2(0, false, 0, 0)
-  local _, _, _, b0 = r.TimeMap2_timeToBeats(0, t0)
-  local _, _, _, b1 = r.TimeMap2_timeToBeats(0, t1)
-  local measures = (b1 - b0) / 4
-  if measures <= 0 then return end
-  local measure_px = (t1 - t0) * zoom / measures
-  local d, sw, amt = GB.get_grid()
-  local nd = adapt_division("arrange", measure_px, d)
-  if nd then GB.set_arrange_div(nd, sw, amt) end
-end
-
-local function take_chunk(take, chunk)
-  if not chunk then
-    local item = r.GetMediaItemTake_Item(take)
-    chunk = select(2, r.GetItemStateChunk(item, "", false))
-  end
-  local tk = r.GetMediaItemTakeInfo_Value(take, "IP_TAKENUMBER")
-  local s, e = 0, 0
-  for _ = 0, tk do
-    s = e
-    e = chunk:find("\nTAKE[%s\n]", s + 1)
-  end
-  return chunk:sub(s, e)
-end
-GB.take_chunk = take_chunk
-
-function GB.chunk_hzoom(chunk) return chunk:match("CFGEDITVIEW (.-) (.-) ") end
-
-local function chunk_timebase(chunk)
-  return tonumber(chunk:match("CFGEDIT " .. (".- "):rep(18) .. "(.-) "))
-end
-
-local function midi_view(hwnd)
-  local take = r.MIDIEditor_GetTake(hwnd)
-  if not take or not r.ValidatePtr(take, "MediaItem_Take*") then return end
-  local ppq2time = r.MIDI_GetProjTimeFromPPQPos
-  local chunk = take_chunk(take)
-  local start_ppq, hz = GB.chunk_hzoom(chunk)
-  start_ppq, hz = tonumber(start_ppq), tonumber(hz)
-  if not start_ppq or not hz then return end
-  local tb = chunk_timebase(chunk) or 0 -- 0 beats (proj), 1 synced, 2 time, 4 beats (source)
-  local end_ppq, t0, t1
-
-  if r.JS_Window_FindChildByID then
-    local view = r.JS_Window_FindChildByID(hwnd, 0x3E9)
-    local _, w = r.JS_Window_GetClientSize(view)
-    if tb == 0 or tb == 4 then end_ppq = start_ppq + w / hz
-    else
-      t0 = ppq2time(take, start_ppq)
-      t1 = t0 + w / hz
-    end
-  else
-    -- without js_ReaScriptAPI: scroll right and back to measure the view
-    r.PreventUIRefresh(1)
-    if tb == 1 then r.MIDIEditor_OnCommand(hwnd, 40640) end
-    r.MIDIEditor_OnCommand(hwnd, 40141)
-    end_ppq = tonumber((GB.chunk_hzoom(take_chunk(take))))
-    if start_ppq > 0 then
-      r.MIDIEditor_OnCommand(hwnd, 40140)
-    elseif end_ppq then
-      local p0, p1 = ppq2time(take, start_ppq), ppq2time(take, end_ppq)
-      local f = tb == 2 and 0.97087377 or 0.943396226415
-      local area = (p1 - p0) * f
-      local center = p0 + (p1 - p0) / 2
-      local s0, s1 = r.GetSet_LoopTimeRange(false, true, 0, 0, false)
-      r.GetSet_LoopTimeRange(true, true, center - area / 2, center + area / 2, false)
-      r.MIDIEditor_OnCommand(hwnd, 40726)
-      r.GetSet_LoopTimeRange(true, true, s0, s1, false)
-    end
-    if tb == 1 then r.MIDIEditor_OnCommand(hwnd, 40640) end
-    r.PreventUIRefresh(-1)
-    if not end_ppq then return end
-  end
-
-  t0 = t0 or ppq2time(take, start_ppq)
-  t1 = t1 or ppq2time(take, end_ppq)
-  if t1 <= t0 then return end
-  if tb == 0 or tb == 4 then
-    hz = (end_ppq - start_ppq) * hz / (t1 - t0)
-  end
-  return t0, t1, hz
-end
-
-local NOTE_LEN = {
-  { id = 41081, div = 1 }, { id = 41079, div = 1 / 2 }, { id = 41076, div = 1 / 4 },
-  { id = 41073, div = 1 / 8 }, { id = 41070, div = 1 / 16 }, { id = 41068, div = 1 / 32 },
-  { id = 41064, div = 1 / 64 }, { id = 41062, div = 1 / 128 },
-}
-
-local function adapt_midi()
-  local hwnd = r.MIDIEditor_GetActive()
-  if not hwnd then return end
-  local t0, t1, hz = midi_view(hwnd)
-  if not t0 then return end
-  local _, _, _, b0 = r.TimeMap2_timeToBeats(0, t0)
-  local _, _, _, b1 = r.TimeMap2_timeToBeats(0, t1)
-  local measures = (b1 - b0) / 4
-  if measures <= 0 then return end
-  local measure_px = (t1 - t0) * hz / measures
-  local take = r.MIDIEditor_GetTake(hwnd)
-  local qn, swing, note_len = r.MIDI_GetGrid(take)
-  local nd = adapt_division("midi", measure_px, qn)
-  if not nd then return end
-  r.SetMIDIEditorGrid(0, nd)
-  if swing ~= 0 then r.MIDIEditor_OnCommand(hwnd, M.SWING) end
-
-  -- keep the length of the next inserted note when it follows the grid
-  if note_len == 0 and nd ~= qn / 4 and r.GetToggleCommandStateEx(32060, 40479) == 1 then
-    local straight = qn / 4
-    local found
-    for _, cmd in ipairs(NOTE_LEN) do
-      if cmd.div == straight or cmd.div == straight * 3 / 2 or cmd.div == straight * 2 / 3 then found = cmd end
-    end
-    if not found then return end
-    r.MIDIEditor_OnCommand(hwnd, found.id)
-    if r.GetToggleCommandStateEx(32060, M.TRIPLET) == 1 then r.MIDIEditor_OnCommand(hwnd, 41713)
-    elseif r.GetToggleCommandStateEx(32060, M.DOTTED) == 1 then r.MIDIEditor_OnCommand(hwnd, 41712)
-    else r.MIDIEditor_OnCommand(hwnd, 41711) end
-  end
-end
-
--- adapts the grid of a context to its current zoom (nothing when fixed / hidden)
-function GB.adapt(c)
-  local m = GB.mult(c)
-  if m == 0 then return end
-  if c == "midi" then
-    if r.GetToggleCommandStateEx(32060, M.GRID) == 0 then return end
-    adapt_midi()
-  else
-    if GB.mult("midi") ~= 0 and GB.synced() and r.MIDIEditor_GetActive() then return end
-    if r.GetToggleCommandState(A.GRID_LINES) == 0 then return end
-    if GB.is_frame() or GB.is_measure() then return end
-    adapt_arrange()
-  end
-end
-
 ---------------------------------------------------------------- visible grid (Display option)
 -- the grid REAPER really draws when the straight grid is too dense for the zoom
 function GB.visible_div(d)
@@ -699,147 +460,6 @@ function GB.visible_div(d)
   local maxd = GB.min_spacing() / measure_px
   if d < maxd then return d * 2 ^ math.ceil(math.log(maxd / d, 2)) end
   return d
-end
-
----------------------------------------------------------------- background service
-function GB.service_alive()
-  local t = tonumber(r.GetExtState(GB.RT, "svc_hb"))
-  return t ~= nil and r.time_precise() - t < 1.0
-end
-
-function GB.any_adaptive() return GB.mult("arrange") ~= 0 or GB.mult("midi") ~= 0 end
-
-function GB.start_service()
-  if not GB.any_adaptive() or GB.service_alive() then return end
-  -- launched less than 2 s ago: do not launch it twice
-  local t = tonumber(r.GetExtState(GB.RT, "svc_launch"))
-  if t and r.time_precise() - t < 2 then return end
-  r.SetExtState(GB.RT, "svc_launch", tostring(r.time_precise()), false)
-  GB.launch("service")
-end
-
--- state kept by the service between two cycles
-function GB.service_new()
-  local S = {}
-  local is_win = r.GetOS():match("Win") ~= nil
-  local has_js = r.JS_Window_FromPoint ~= nil
-  local tip_delay = 0
-  if is_win then
-    tip_delay = select(2, r.get_config_var_string("tooltipdelay"))
-    tip_delay = (tonumber(tip_delay) or 200) / 1000 * (has_js and 2 or 5)
-  end
-
-  local function arrange()
-    if r.GetToggleCommandState(A.GRID_LINES) ~= 1 then return end
-    if GB.is_frame() or GB.is_measure() then return end
-    local z = r.GetHZoomLevel()
-    if S.hz ~= z or S.force then
-      S.hz = z
-      GB.adapt("arrange")
-    end
-  end
-
-  local function midi()
-    local now = r.time_precise()
-    local hwnd = S.hwnd
-    if not S.hwnd_t or now > S.hwnd_t + 0.2 then
-      S.hwnd_t = now
-      hwnd = r.MIDIEditor_GetActive()
-    elseif hwnd and not r.ValidatePtr(hwnd, "HWND*") then
-      hwnd = r.MIDIEditor_GetActive()
-    end
-    if not hwnd then S.hwnd = nil return end
-    S.hwnd = hwnd
-
-    local take = S.take
-    if not take or now > (S.take_t or 0) + 0.2 or not r.ValidatePtr(take, "MediaItem_Take*") then
-      S.take_t = now
-      take = r.MIDIEditor_GetTake(hwnd)
-      if take and not r.ValidatePtr(take, "MediaItem_Take*") then take = nil end
-    end
-    if not take then S.take = nil return end
-    S.take = take
-    local item = r.GetMediaItemTake_Item(take)
-    if not item then return end
-
-    -- Windows: reading the item chunk too often blocks the channel combobox and tooltips
-    if is_win then
-      local x, y = r.GetMousePosition()
-      local combo, hover_hwnd, hover_id = false, nil, nil
-      if has_js then
-        hover_hwnd = r.JS_Window_FromPoint(x, y)
-        hover_id = r.ValidatePtr(hover_hwnd, "HWND*") and r.JS_Window_GetLong(hover_hwnd, "ID")
-        if hover_id == 1000 then
-          local fh = r.JS_Window_GetFocus()
-          local fid = r.ValidatePtr(fh, "HWND*") and r.JS_Window_GetLong(fh, "ID")
-          if fid == 1006 and r.JS_Window_IsChild(hwnd, fh) then combo = true end
-        end
-      end
-      if combo then
-        S.t = now - 0.05
-      elseif x ~= S.mx or y ~= S.my then
-        S.mx, S.my, S.t = x, y, nil
-      elseif has_js then
-        local tip = r.JS_Window_GetTitle(r.GetTooltipWindow())
-        if tip ~= "" then S.t = now - 0.05
-        elseif hover_id == 1001 and r.JS_Window_IsChild(hwnd, hover_hwnd) then S.t = nil end
-      end
-    end
-    if S.t and now < S.t + tip_delay then return end
-    S.t = now
-
-    local _, chunk = r.GetItemStateChunk(item, "", false)
-    if chunk == S.chunk and not S.force then return end
-    S.chunk = chunk
-    local _, mhz = GB.chunk_hzoom(take_chunk(take, chunk))
-    if S.mhz ~= mhz or S.force then
-      S.mhz = mhz
-      GB.adapt("midi")
-    end
-  end
-
-  -- returns false when the service is not needed any more
-  return function()
-    local ma, mm = GB.mult("arrange"), GB.mult("midi")
-    if ma == 0 and mm == 0 then return false end
-    -- a mode change made elsewhere forces a new adaptation
-    local key = ma .. "|" .. mm
-    S.force = S.key ~= key
-    S.key = key
-    if ma ~= 0 then arrange() end
-    if mm ~= 0 then midi() end
-    return true
-  end
-end
-
----------------------------------------------------------------- toolbar states of the adaptive actions
-GB.ACTION_MULT = {
-  ["Adaptive off (fixed)"] = 0, ["Adaptive narrowest"] = 1, ["Adaptive narrow"] = 2,
-  ["Adaptive medium"] = 3, ["Adaptive wide"] = 4, ["Adaptive widest"] = 6, ["Adaptive custom"] = -1,
-}
-
-function GB.register_toggle(c, m)
-  local _, _, _, cmd = r.get_action_context()
-  if not cmd or cmd <= 0 then return end
-  local n = r.ReverseNamedCommandLookup(cmd)
-  local id = (n and n ~= "") and ("_" .. n) or tostring(cmd)
-  local k = "tb_" .. c .. "_" .. m
-  if r.GetExtState(GB.S, k) ~= id then GB.set(k, id) end
-end
-
-function GB.refresh_toggles(c)
-  local m = GB.mult(c)
-  local sec = c == "midi" and 32060 or 0
-  for _, v in pairs(GB.ACTION_MULT) do
-    local id = r.GetExtState(GB.S, "tb_" .. c .. "_" .. v)
-    if id ~= "" then
-      local cmd = tonumber(id) or r.NamedCommandLookup(id)
-      if cmd and cmd > 0 then
-        r.SetToggleCommandState(sec, cmd, v == m and 1 or 0)
-        r.RefreshToolbar2(sec, cmd)
-      end
-    end
-  end
 end
 
 ---------------------------------------------------------------- launching the other scripts
@@ -883,7 +503,7 @@ end
 function GB.ensure_startup_hook()
   local sp = r.GetResourcePath() .. "/Scripts/__startup.lua"
   local target = GB.ROOT .. "GB_startup.lua"
-  local block = "-- >>> ReNo Mellow Grid Buddy (adaptive service and Display)\n"
+  local block = "-- >>> ReNo Mellow Grid Buddy (reopens the Display)\n"
     .. "do local f = [[" .. target .. "]]; if reaper.file_exists(f) then dofile(f) end end\n"
     .. "-- <<< ReNo Mellow Grid Buddy\n"
   local cur = ""
@@ -909,36 +529,21 @@ function GB.run_action(path)
   local name = (path:match("([^/\\]+)%.lua$") or ""):match("Grid Buddy[^%-]*%- (.+)$")
   if not name then return end
   r.defer(function() end) -- no undo point
-
-  local m = GB.ACTION_MULT[name]
-  if m ~= nil then
-    GB.register_toggle(c, m)
-    if c == "midi" and not GB.midi_editor() then GB.refresh_toggles(c) return GB.no_midi() end
-    GB.toggle_mult(c, m)
-    return
-  end
-
   -- one-shot actions: toolbar icon always off
   if cmd and cmd > 0 then r.SetToggleCommandState(sec, cmd, 0) r.RefreshToolbar2(sec, cmd) end
   if c == "midi" and not GB.midi_editor() then return GB.no_midi() end
-  local rev = GB.flag("wheel_rev", false) and -1 or 1
-  local wider = (val or 0) * rev < 0
-  if name == "Adjust grid (mousewheel)" then GB.step(c, wider and 1 or -1)
-  elseif name == "Adjust fixed grid (mousewheel)" then
-    if GB.is_adaptive(c) then GB.cset(c, "mult", 0) GB.refresh_toggles(c) end
-    GB.step_fixed(c, wider and 1 or -1)
-  elseif name == "Wider grid" then
-    if GB.is_adaptive(c) then GB.step_adaptive(c, 1) else GB.step_fixed(c, 1) end
-  elseif name == "Narrower grid" then
-    if GB.is_adaptive(c) then GB.step_adaptive(c, -1) else GB.step_fixed(c, -1) end
-  elseif name == "Adapt grid to zoom" then
-    if GB.is_adaptive(c) then GB.adapt(c)
-    else
-      -- one-shot: adapts with the medium size and stays fixed
-      GB.cset(c, "mult", 3) GB.adapt(c) GB.cset(c, "mult", 0)
-    end
+  if name == "Adjust grid (mousewheel)" then
+    local rev = GB.flag("wheel_rev", false) and -1 or 1
+    GB.step_fixed(c, (val or 0) * rev < 0 and 1 or -1)
+  elseif name == "Wider grid" then GB.step_fixed(c, 1)
+  elseif name == "Narrower grid" then GB.step_fixed(c, -1)
   elseif name == "Toggle swing" then GB.set_type(c, "swing")
   end
+end
+
+-- version 1.1: the adaptive grid is gone; switch off a mode left by 1.0 (its service stops itself)
+if (tonumber(GB.get("mult", 0)) or 0) ~= 0 or (tonumber(GB.get("me_mult", 0)) or 0) ~= 0 then
+  GB.set("mult", 0) GB.set("me_mult", 0)
 end
 
 return GB

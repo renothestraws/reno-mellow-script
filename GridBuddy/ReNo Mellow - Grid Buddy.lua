@@ -1,38 +1,19 @@
 -- @description ReNo Mellow - Grid Buddy
 -- @author ReNo Mellow
--- @version 1.0
--- @about Grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles fixes, grille adaptative au zoom (5 tailles + taille perso, service de fond), limites et diviseur, snap, mini Display et actions isolées (molette, plus large / plus étroite, modes adaptatifs). D'après Adaptive Grid et Gridbox de FeedTheCat. Nécessite ReaImGui.
--- @changelog Première version
+-- @version 1.1
+-- @about Grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles de 1/128 à 4, diviseur et limites, snap, lien avec l'éditeur MIDI (option « Use the same grid division »), mini Display (molette = taille) et actions isolées. D'après Gridbox de FeedTheCat. Nécessite ReaImGui.
+-- @changelog Version simplifiée : grille adaptative retirée (service et actions Adaptive), menu du Display réduit aux types de grille + « Link MIDI editor », option Link MIDI editor dans la fenêtre
 -- @provides
 --   GB_lib.lua
 --   GB_startup.lua
 --   [main] ReNo Mellow - Grid Buddy - Display.lua
---   [main] ReNo Mellow - Grid Buddy - Service.lua
---   [main] ReNo Mellow - Grid Buddy - Adaptive off (fixed).lua
---   [main] ReNo Mellow - Grid Buddy - Adaptive narrowest.lua
---   [main] ReNo Mellow - Grid Buddy - Adaptive narrow.lua
---   [main] ReNo Mellow - Grid Buddy - Adaptive medium.lua
---   [main] ReNo Mellow - Grid Buddy - Adaptive wide.lua
---   [main] ReNo Mellow - Grid Buddy - Adaptive widest.lua
---   [main] ReNo Mellow - Grid Buddy - Adaptive custom.lua
 --   [main] ReNo Mellow - Grid Buddy - Adjust grid (mousewheel).lua
---   [main] ReNo Mellow - Grid Buddy - Adjust fixed grid (mousewheel).lua
 --   [main] ReNo Mellow - Grid Buddy - Wider grid.lua
 --   [main] ReNo Mellow - Grid Buddy - Narrower grid.lua
---   [main] ReNo Mellow - Grid Buddy - Adapt grid to zoom.lua
 --   [main] ReNo Mellow - Grid Buddy - Toggle swing.lua
---   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive off (fixed).lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive off (fixed).lua
---   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive narrowest.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive narrowest.lua
---   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive narrow.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive narrow.lua
---   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive medium.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive medium.lua
---   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive wide.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive wide.lua
---   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive widest.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive widest.lua
---   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive custom.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adaptive custom.lua
 --   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adjust grid (mousewheel).lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adjust grid (mousewheel).lua
---   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adjust fixed grid (mousewheel).lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adjust fixed grid (mousewheel).lua
 --   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Wider grid.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Wider grid.lua
 --   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Narrower grid.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Narrower grid.lua
---   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Adapt grid to zoom.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Adapt grid to zoom.lua
 --   [midi_editor] MIDI/ReNo Mellow - Grid Buddy MIDI - Toggle swing.lua > MIDI/ReNo Mellow - Grid Buddy MIDI - Toggle swing.lua
 --   [data] Data/toolbar_icons/ReNo_GridBuddy.png > toolbar_icons/ReNo_GridBuddy.png
 --   [data] Data/toolbar_icons/150/ReNo_GridBuddy.png > toolbar_icons/150/ReNo_GridBuddy.png
@@ -64,7 +45,7 @@ GB.register_self("cmd_main")
 -- first launch (manual install or .ReaperPkg): adds the other actions to the action list
 if reaper.GetExtState(GB.S, "reg_v") ~= GB.VERSION then
   local todo = {}
-  for _, n in ipairs({ "Display", "Service" }) do
+  for _, n in ipairs({ "Display" }) do
     todo[#todo + 1] = { 0, dir .. "ReNo Mellow - Grid Buddy - " .. n .. ".lua" }
   end
   for _, n in ipairs(GB.ACTIONS) do
@@ -99,7 +80,6 @@ local BIG_SIZES = { 16, 20, 24, 28, 32, 40, 48 }
 local fonts, big = {}, {}
 local post = nil -- modal dialogs / launches run after ImGui.End
 local function later(fn) post = fn end
-local last_svc_check = 0
 
 local function opt(k, d) return tonumber(GB.get(k, d)) or d end
 local function text_size() return math.floor(GB.clamp(opt("font", 14), FONT_MIN, FONT_MAX)) end
@@ -144,8 +124,8 @@ local function section(c)
   local is_midi = c == "midi"
   ImGui.SeparatorText(ctx, is_midi and "MIDI editor" or "Arrange view")
 
+  local linked = is_midi and GB.synced()
   local d, sw, amt = GB.current(c)
-  local m = GB.mult(c)
   local txt
   if not is_midi and GB.is_frame() then txt = "Frame"
   elseif not is_midi and GB.is_measure() then txt = "Measure"
@@ -155,21 +135,23 @@ local function section(c)
   ImGui.PushFont(ctx, big_font(text_size() * 2))
   ImGui.TextColored(ctx, d and COL_TEXT or COL_GREY, txt)
   ImGui.PopFont(ctx)
-  if m ~= 0 then
+  if linked then
     ImGui.SameLine(ctx, 0, 16)
     ImGui.AlignTextToFramePadding(ctx)
-    ImGui.TextColored(ctx, COL_ADAPT, "ADAPTIVE  " .. GB.MODE_NAME[m])
+    ImGui.TextColored(ctx, COL_ADAPT, "LINKED to the arrange grid")
   end
   if d and sw == 1 then
     ImGui.SameLine(ctx, 0, 16)
-    if is_midi then ImGui.TextColored(ctx, COL_GREY, "Swing")
+    if is_midi and not linked then ImGui.TextColored(ctx, COL_GREY, "Swing")
     else ImGui.TextColored(ctx, COL_GREY, string.format("Swing %d %%", math.floor(amt * 100 + 0.5))) end
   end
-  if is_midi and GB.synced() then
-    ImGui.TextColored(ctx, COL_WARN, "\"Use the same grid division in arrange view and MIDI editor\" is on.")
+  if is_midi then
+    local ch, v = ImGui.Checkbox(ctx, "Link MIDI editor to the arrange grid", GB.synced())
+    if ch and v ~= GB.synced() then later(GB.toggle_link) end
+    tip("REAPER option \"Use the same grid division in arrange view and MIDI editor\"")
   end
 
-  ImGui.BeginDisabled(ctx, d == nil)
+  ImGui.BeginDisabled(ctx, d == nil or linked)
   -- type
   row_label("Type")
   for _, t in ipairs(visible_types()) do
@@ -189,7 +171,7 @@ local function section(c)
   end
 
   -- fixed sizes
-  row_label("Fixed")
+  row_label("Size")
   if not is_midi then
     if GB.flag("show_frame", false) then
       if sel_button("Frame", GB.is_frame()) then later(GB.set_frame) end
@@ -205,30 +187,12 @@ local function section(c)
     ImGui.SameLine(ctx)
   end
   ImGui.Dummy(ctx, 8, 0) ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, "-##n" .. c) then
-    later(function() if GB.is_adaptive(c) then GB.step_adaptive(c, -1) else GB.step_fixed(c, -1) end end)
-  end
-  tip("Narrower grid (divided by the grid divisor, or the next adaptive size)")
+  if ImGui.Button(ctx, "-##n" .. c) then later(function() GB.step_fixed(c, -1) end) end
+  tip("Narrower grid (divided by the grid divisor)")
   ImGui.SameLine(ctx)
-  if ImGui.Button(ctx, "+##w" .. c) then
-    later(function() if GB.is_adaptive(c) then GB.step_adaptive(c, 1) else GB.step_fixed(c, 1) end end)
-  end
-  tip("Wider grid (multiplied by the grid divisor, or the next adaptive size)")
+  if ImGui.Button(ctx, "+##w" .. c) then later(function() GB.step_fixed(c, 1) end) end
+  tip("Wider grid (multiplied by the grid divisor)")
   ImGui.EndDisabled(ctx)
-
-  -- adaptive modes (can be set without an open MIDI editor)
-  row_label("Adaptive")
-  if sel_button("Off##a" .. c, m == 0) then later(function() GB.apply_mult(c, 0) end) end
-  tip("Fixed grid: the grid does not follow the zoom")
-  for _, md in ipairs(GB.MODES) do
-    ImGui.SameLine(ctx)
-    if sel_button(md[1] .. "##a" .. c, m == md[2]) then later(function() GB.toggle_mult(c, md[2]) end) end
-    if md[2] == -1 then
-      local sp = GB.custom_spacing(c)
-      tip(sp and string.format("Custom: grid lines at least %s px apart (Set up tab)", sp)
-        or "Custom: you will be asked for the spacing in pixels")
-    end
-  end
 
   -- snap
   row_label("Snap")
@@ -258,9 +222,7 @@ local note = {}
 
 local function init_buf(c)
   if buf[c] then return end
-  local sp = GB.custom_spacing(c)
   buf[c] = {
-    sp = sp and tostring(sp) or "",
     div = tostring(GB.divisor(c)),
     mn = tostring(GB.cget(c, "min_limit_str", "")),
     mx = tostring(GB.cget(c, "max_limit_str", "")),
@@ -279,13 +241,6 @@ local function setup_ctx(c)
   ImGui.SeparatorText(ctx, c == "midi" and "MIDI editor" or "Arrange view")
   local w = text_size() * 6
 
-  if input("Custom size (px)", c, "sp", w, "e.g. 30") then
-    local ok, msg = GB.set_custom_spacing(c, buf[c].sp)
-    note[c] = msg and { msg, ok and COL_WARN or COL_ERR } or nil
-    if ok and GB.mult(c) == -1 then GB.adapt(c) end
-  end
-  tip("Adaptive Custom mode: smallest distance between two grid lines, in pixels")
-  ImGui.SameLine(ctx, 0, 20)
   if input("Grid divisor", c, "div", w, "2") then
     local f = tonumber(buf[c].div)
     if buf[c].div == "" then f = 2 end
@@ -297,7 +252,7 @@ local function setup_ctx(c)
   local a = input("Min size", c, "mn", w, "e.g. 1/128")
   ImGui.SameLine(ctx, 0, 20)
   local b = input("Max size", c, "mx", w, "e.g. 1")
-  tip("Limits for the adaptive grid and the mouse wheel: 1/128, 1/8T, 1D, 2... Empty = no limit")
+  tip("Limits for the mouse wheel and - / +: 1/128, 1/8T, 1D, 2... Empty = no limit")
   if a or b then
     local ok, err = GB.set_limits(c, buf[c].mn, buf[c].mx)
     note[c] = (not ok) and { err, COL_ERR } or nil
@@ -329,14 +284,6 @@ local function tab_setup()
   ImGui.SameLine(ctx) checkbox("Measure", "show_measure", false)
   checkbox("Reverse mouse wheel", "wheel_rev", false, "For the Display and the mousewheel actions")
 
-  ImGui.SeparatorText(ctx, "Adaptive service")
-  local alive = GB.service_alive()
-  ImGui.TextColored(ctx, alive and COL_ADAPT or COL_GREY,
-    alive and "Running (follows the zoom)" or "Stopped (starts when an adaptive mode is chosen)")
-  local ch = checkbox("Keep the adaptive mode when REAPER restarts", "svc_startup", false,
-    "Starts the service with REAPER. Off: the grids are set back to fixed at start-up")
-  if ch then GB.ensure_startup_hook() end
-
   ImGui.SeparatorText(ctx, "Display")
   if ImGui.Button(ctx, GB.alive("display") and "Hide Display" or "Show Display") then
     later(function() GB.launch("display") end)
@@ -357,14 +304,12 @@ local function tab_setup()
   local c3, val3 = ImGui.SliderInt(ctx, "Text size", text_size(), FONT_MIN, FONT_MAX)
   if c3 then GB.set("font", val3) end
   ImGui.Dummy(ctx, 0, 4)
-  ImGui.TextColored(ctx, COL_GREY, "Based on Adaptive Grid and Gridbox by FeedTheCat. Do not run both at the same time.")
+  ImGui.TextColored(ctx, COL_GREY, "Based on Gridbox by FeedTheCat. Do not run both at the same time.")
 end
 
 ---------------------------------------------------------------- main loop
 local function loop()
   reaper.SetExtState(GB.RT, "alive_main", tostring(reaper.time_precise()), false)
-  local now = reaper.time_precise()
-  if now - last_svc_check > 1 then last_svc_check = now GB.start_service() end
 
   local want = reaper.GetExtState(GB.RT, "want_tab")
   local goto_tab = nil
@@ -402,9 +347,6 @@ reaper.atexit(function()
   set_self_toggle(false)
   reaper.DeleteExtState(GB.RT, "alive_main", false)
 end)
-
-GB.refresh_toggles("arrange")
-GB.refresh_toggles("midi")
 
 reaper.defer(function()
   ctx = ImGui.CreateContext("ReNo Mellow - Grid Buddy")
