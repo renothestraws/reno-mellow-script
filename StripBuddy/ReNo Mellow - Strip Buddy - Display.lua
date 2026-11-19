@@ -245,8 +245,16 @@ local current = nil -- nil = All
 
 local function rgba(c, a) return ((c & 0xFFFFFF) << 8) | (a or 0xFF) end
 
+local ICON_FILE = reaper.GetResourcePath() .. "/Data/toolbar_icons/ReNo_StripBuddy.png"
+local icon
+
 local function make_ctx()
   ctx = ImGui.CreateContext(TITLE)
+  icon = nil
+  if reaper.file_exists(ICON_FILE) then
+    local ok, img = pcall(ImGui.CreateImage, ICON_FILE)
+    if ok and img then icon = img; ImGui.Attach(ctx, icon) end
+  end
   fonts = {}
   for _, s in ipairs(FONT_SIZES) do
     fonts[s] = ImGui.CreateFont("sans-serif", s)
@@ -254,16 +262,30 @@ local function make_ctx()
   end
 end
 
--- open the Strip Buddy window (or bring it to the front if it is already open)
+-- open / close the Strip Buddy window (toolbar-style toggle)
 local MAIN_FILE = (SCRIPT_FILE:match("^(.*[/\\])") or "") .. "ReNo Mellow - Strip Buddy.lua"
-local open_main_queued = false
-local function open_main()
-  if not reaper.file_exists(MAIN_FILE) then message = "Strip Buddy not found next to the Display." return end
-  local id = reaper.AddRemoveReaScript(true, 0, MAIN_FILE, true)
-  if not id or id == 0 then return end
-  if reaper.GetToggleCommandStateEx(0, id) == 1 then
-    reaper.SetExtState(EXT, "main_focus", "1", false) -- already open: ask it to come to the front
+local main_id
+local toggle_main_queued = false
+
+local function main_cmd()
+  if main_id == nil then
+    main_id = reaper.file_exists(MAIN_FILE) and reaper.AddRemoveReaScript(true, 0, MAIN_FILE, true) or 0
+  end
+  return main_id
+end
+
+local function main_is_open()
+  local id = main_cmd()
+  return id ~= 0 and reaper.GetToggleCommandStateEx(0, id) == 1
+end
+
+local function toggle_main()
+  local id = main_cmd()
+  if id == 0 then message = "Strip Buddy not found next to the Display." return end
+  if main_is_open() then
+    reaper.SetExtState(EXT, "main_close", "1", false) -- the window closes itself (and saves)
   else
+    reaper.SetExtState(EXT, "main_close", "0", false)
     reaper.Main_OnCommand(id, 0)
   end
 end
@@ -292,13 +314,28 @@ local function draw()
   if not visible then return open end
   ImGui.PushFont(ctx, fonts[font_size] or fonts[16])
 
-  -- Strip Buddy button (opens the main window)
-  ImGui.PushStyleColor(ctx, ImGui.Col_Button, 0x8E3B2FFF)
-  ImGui.PushStyleColor(ctx, ImGui.Col_ButtonHovered, 0xB04A3AFF)
-  ImGui.PushStyleColor(ctx, ImGui.Col_ButtonActive, 0x6E2C22FF)
-  if ImGui.Button(ctx, "Strip Buddy##open") then open_main_queued = true end
-  ImGui.PopStyleColor(ctx, 3)
-  if ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal) then ImGui.SetTooltip(ctx, "Open the Strip Buddy window") end
+  -- Strip Buddy button: the toolbar icon (normal / hover / on), click = open or close the window
+  local is_open = main_is_open()
+  local sz = math.floor(font_size * 1.8)
+  if icon then
+    ImGui.InvisibleButton(ctx, "##sbtoggle", sz, sz)
+    local hovered = ImGui.IsItemHovered(ctx)
+    if ImGui.IsItemClicked(ctx, 0) then toggle_main_queued = true end
+    local x0, y0 = ImGui.GetItemRectMin(ctx)
+    local x1, y1 = ImGui.GetItemRectMax(ctx)
+    local st = is_open and 2 or (hovered and 1 or 0)
+    ImGui.DrawList_AddImage(ImGui.GetWindowDrawList(ctx), icon, x0, y0, x1, y1, st / 3, 0, (st + 1) / 3, 1)
+  else
+    -- no icon file: a plain toolbar-like button
+    ImGui.PushStyleColor(ctx, ImGui.Col_Button, is_open and 0x5A5A5AFF or 0x3C3C3CFF)
+    ImGui.PushStyleColor(ctx, ImGui.Col_ButtonHovered, 0x4A4A4AFF)
+    ImGui.PushStyleColor(ctx, ImGui.Col_ButtonActive, 0x2E2E2EFF)
+    if ImGui.Button(ctx, "Strip Buddy##sbtoggle") then toggle_main_queued = true end
+    ImGui.PopStyleColor(ctx, 3)
+  end
+  if ImGui.IsItemHovered(ctx, ImGui.HoveredFlags_DelayNormal) then
+    ImGui.SetTooltip(ctx, is_open and "Close Strip Buddy" or "Open Strip Buddy")
+  end
   ImGui.SameLine(ctx, 0, 10)
   ImGui.TextDisabled(ctx, "|")
   ImGui.SameLine(ctx, 0, 10)
@@ -367,7 +404,7 @@ local function draw()
       if not st then ensure_startup_block() end
     end
     ImGui.Separator(ctx)
-    if ImGui.MenuItem(ctx, "Open Strip Buddy") then open_main_queued = true end
+    if ImGui.MenuItem(ctx, main_is_open() and "Close Strip Buddy" or "Open Strip Buddy") then toggle_main_queued = true end
     if ImGui.MenuItem(ctx, "Close") then open = false end
     ImGui.EndPopup(ctx)
   end
@@ -399,7 +436,7 @@ local function loop()
   scan_tags()
   if current and not tag_info[current] then current = nil end
   local keep = draw()
-  if open_main_queued then open_main_queued = false; open_main() end -- after the frame
+  if toggle_main_queued then toggle_main_queued = false; toggle_main() end -- after the frame
   if keep then reaper.defer(loop) end
 end
 
