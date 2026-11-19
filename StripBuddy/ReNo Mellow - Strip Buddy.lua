@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.16
+-- @version 1.17
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Display : bouton « Strip Buddy » (et clic droit > Open Strip Buddy) pour ouvrir la fenêtre principale ou la ramener au premier plan
+-- @changelog Display : le bouton Strip Buddy prend l'icône de barre d'outils (états normal / survol / allumé) et ouvre ou ferme la fenêtre ; relancer l'action ferme aussi la fenêtre
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -74,7 +74,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.16"
+local VERSION = "1.17"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -1819,6 +1819,8 @@ end
 -- Main loop
 --------------------------------------------------------------------------------
 local _, _, SEC, CMD = reaper.get_action_context()
+if reaper.set_action_options then reaper.set_action_options(1 | 4) end -- re-run = close (toolbar toggle)
+reaper.SetExtState(EXT, "main_close", "0", false)
 reaper.SetToggleCommandState(SEC, CMD, 1)
 reaper.RefreshToolbar2(SEC, CMD)
 
@@ -1830,9 +1832,9 @@ end)
 
 local function loop()
   ImGui.SetNextWindowSize(ctx, 900, 480, ImGui.Cond_FirstUseEver)
-  if reaper.GetExtState(EXT, "main_focus") == "1" then -- asked by the Display
-    reaper.SetExtState(EXT, "main_focus", "0", false)
-    ImGui.SetNextWindowFocus(ctx)
+  if reaper.GetExtState(EXT, "main_close") == "1" then -- asked by the Display
+    reaper.SetExtState(EXT, "main_close", "0", false)
+    return -- atexit saves the strips and turns the toolbar state off
   end
   local visible, open = ImGui.Begin(ctx, SCRIPT_TITLE .. " " .. VERSION, true)
   if visible then
