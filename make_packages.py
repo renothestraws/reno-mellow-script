@@ -91,3 +91,10 @@ build("ReNo Mellow - Swiss Army Knife", "ReNo_Mellow_SwissArmyKnife", header(mai
       header(main, "changelog"), files,
       no_reg=[BASE + "/SwissArmyKnife/SAK_lib.lua", BASE + "/SwissArmyKnife/SAK_toolbox.lua", BASE + "/SwissArmyKnife/SAK_display.lua", BASE + "/SwissArmyKnife/SAK_startup.lua",
               BASE + "/SwissArmyKnife/MIDI/*"])
+
+# --- Recording Buddy -------------------------------------------------------------
+d = os.path.join(ROOT, "RecordingBuddy")
+main = os.path.join(d, "ReNo Mellow - Recording Buddy.lua")
+build("ReNo Mellow - Recording Buddy", "ReNo_Mellow_Recording_Buddy", header(main, "version"),
+      header(main, "changelog"), walk(d, BASE + "/RecordingBuddy"),
+      no_reg=[BASE + "/RecordingBuddy/RecBuddy_lib.lua", BASE + "/RecordingBuddy/RecBuddy_startup.lua"])
