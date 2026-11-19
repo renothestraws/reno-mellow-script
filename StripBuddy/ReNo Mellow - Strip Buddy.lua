@@ -1,31 +1,57 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.19
+-- @version 1.20
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Normalisation désactivée par défaut sur tous les strips (case non cochée) ; la normalisation -15 dBFS peak ensemble est décochée une fois sur les strips existants
+-- @changelog 71 nouvelles icônes de tags (RID, CRS, PNO, SYN, VLN, TPT, REV, CMT, 808, 909…), 42 nouveaux strips de base dont les dossiers Mix et Live, et nouveaux tags pour 32 strips existants (mis à jour une fois s'ils n'ont pas été modifiés)
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
 --   [data] Data/toolbar_icons/150/ReNo_StripBuddy.png > toolbar_icons/150/ReNo_StripBuddy.png
 --   [data] Data/toolbar_icons/200/ReNo_StripBuddy.png > toolbar_icons/200/ReNo_StripBuddy.png
+--   [data] Data/track_icons/cs_tags_808.png > track_icons/cs_tags_808.png
+--   [data] Data/track_icons/cs_tags_909.png > track_icons/cs_tags_909.png
+--   [data] Data/track_icons/cs_tags_ACC.png > track_icons/cs_tags_ACC.png
 --   [data] Data/track_icons/cs_tags_ACG.png > track_icons/cs_tags_ACG.png
+--   [data] Data/track_icons/cs_tags_ADL.png > track_icons/cs_tags_ADL.png
+--   [data] Data/track_icons/cs_tags_ALT.png > track_icons/cs_tags_ALT.png
 --   [data] Data/track_icons/cs_tags_AMB.png > track_icons/cs_tags_AMB.png
+--   [data] Data/track_icons/cs_tags_AMP.png > track_icons/cs_tags_AMP.png
+--   [data] Data/track_icons/cs_tags_ARP.png > track_icons/cs_tags_ARP.png
 --   [data] Data/track_icons/cs_tags_AUX.png > track_icons/cs_tags_AUX.png
 --   [data] Data/track_icons/cs_tags_BGV.png > track_icons/cs_tags_BGV.png
+--   [data] Data/track_icons/cs_tags_BJO.png > track_icons/cs_tags_BJO.png
+--   [data] Data/track_icons/cs_tags_BKG.png > track_icons/cs_tags_BKG.png
+--   [data] Data/track_icons/cs_tags_BNG.png > track_icons/cs_tags_BNG.png
 --   [data] Data/track_icons/cs_tags_BOX.png > track_icons/cs_tags_BOX.png
 --   [data] Data/track_icons/cs_tags_BRA.png > track_icons/cs_tags_BRA.png
 --   [data] Data/track_icons/cs_tags_BSS.png > track_icons/cs_tags_BSS.png
 --   [data] Data/track_icons/cs_tags_BUS.png > track_icons/cs_tags_BUS.png
+--   [data] Data/track_icons/cs_tags_CAJ.png > track_icons/cs_tags_CAJ.png
 --   [data] Data/track_icons/cs_tags_CHD.png > track_icons/cs_tags_CHD.png
+--   [data] Data/track_icons/cs_tags_CHN.png > track_icons/cs_tags_CHN.png
 --   [data] Data/track_icons/cs_tags_CHO.png > track_icons/cs_tags_CHO.png
+--   [data] Data/track_icons/cs_tags_CHR.png > track_icons/cs_tags_CHR.png
 --   [data] Data/track_icons/cs_tags_CLK.png > track_icons/cs_tags_CLK.png
+--   [data] Data/track_icons/cs_tags_CLO.png > track_icons/cs_tags_CLO.png
+--   [data] Data/track_icons/cs_tags_CMT.png > track_icons/cs_tags_CMT.png
+--   [data] Data/track_icons/cs_tags_CNG.png > track_icons/cs_tags_CNG.png
+--   [data] Data/track_icons/cs_tags_CRS.png > track_icons/cs_tags_CRS.png
+--   [data] Data/track_icons/cs_tags_CTB.png > track_icons/cs_tags_CTB.png
 --   [data] Data/track_icons/cs_tags_CUE.png > track_icons/cs_tags_CUE.png
 --   [data] Data/track_icons/cs_tags_CYM.png > track_icons/cs_tags_CYM.png
+--   [data] Data/track_icons/cs_tags_DBL.png > track_icons/cs_tags_DBL.png
 --   [data] Data/track_icons/cs_tags_DCA.png > track_icons/cs_tags_DCA.png
+--   [data] Data/track_icons/cs_tags_DI.png > track_icons/cs_tags_DI.png
 --   [data] Data/track_icons/cs_tags_DIA.png > track_icons/cs_tags_DIA.png
+--   [data] Data/track_icons/cs_tags_DLY.png > track_icons/cs_tags_DLY.png
 --   [data] Data/track_icons/cs_tags_DMX.png > track_icons/cs_tags_DMX.png
 --   [data] Data/track_icons/cs_tags_DRM.png > track_icons/cs_tags_DRM.png
+--   [data] Data/track_icons/cs_tags_ELG.png > track_icons/cs_tags_ELG.png
+--   [data] Data/track_icons/cs_tags_FLT.png > track_icons/cs_tags_FLT.png
 --   [data] Data/track_icons/cs_tags_FOK.png > track_icons/cs_tags_FOK.png
+--   [data] Data/track_icons/cs_tags_FOL.png > track_icons/cs_tags_FOL.png
+--   [data] Data/track_icons/cs_tags_FX.png > track_icons/cs_tags_FX.png
+--   [data] Data/track_icons/cs_tags_GHO.png > track_icons/cs_tags_GHO.png
 --   [data] Data/track_icons/cs_tags_GLJ.png > track_icons/cs_tags_GLJ.png
 --   [data] Data/track_icons/cs_tags_GNG.png > track_icons/cs_tags_GNG.png
 --   [data] Data/track_icons/cs_tags_GON.png > track_icons/cs_tags_GON.png
@@ -33,49 +59,94 @@
 --   [data] Data/track_icons/cs_tags_GTR.png > track_icons/cs_tags_GTR.png
 --   [data] Data/track_icons/cs_tags_HAR.png > track_icons/cs_tags_HAR.png
 --   [data] Data/track_icons/cs_tags_HH.png > track_icons/cs_tags_HH.png
+--   [data] Data/track_icons/cs_tags_HRM.png > track_icons/cs_tags_HRM.png
+--   [data] Data/track_icons/cs_tags_HRN.png > track_icons/cs_tags_HRN.png
+--   [data] Data/track_icons/cs_tags_IEM.png > track_icons/cs_tags_IEM.png
 --   [data] Data/track_icons/cs_tags_IMG.png > track_icons/cs_tags_IMG.png
 --   [data] Data/track_icons/cs_tags_KEY.png > track_icons/cs_tags_KEY.png
 --   [data] Data/track_icons/cs_tags_KIK.png > track_icons/cs_tags_KIK.png
 --   [data] Data/track_icons/cs_tags_LDV.png > track_icons/cs_tags_LDV.png
+--   [data] Data/track_icons/cs_tags_LED.png > track_icons/cs_tags_LED.png
 --   [data] Data/track_icons/cs_tags_LIS.png > track_icons/cs_tags_LIS.png
+--   [data] Data/track_icons/cs_tags_LOP.png > track_icons/cs_tags_LOP.png
+--   [data] Data/track_icons/cs_tags_LTC.png > track_icons/cs_tags_LTC.png
 --   [data] Data/track_icons/cs_tags_LYR.png > track_icons/cs_tags_LYR.png
 --   [data] Data/track_icons/cs_tags_MC.png > track_icons/cs_tags_MC.png
 --   [data] Data/track_icons/cs_tags_MID.png > track_icons/cs_tags_MID.png
+--   [data] Data/track_icons/cs_tags_MIX.png > track_icons/cs_tags_MIX.png
 --   [data] Data/track_icons/cs_tags_MLR.png > track_icons/cs_tags_MLR.png
+--   [data] Data/track_icons/cs_tags_MND.png > track_icons/cs_tags_MND.png
+--   [data] Data/track_icons/cs_tags_MON.png > track_icons/cs_tags_MON.png
 --   [data] Data/track_icons/cs_tags_MSC.png > track_icons/cs_tags_MSC.png
+--   [data] Data/track_icons/cs_tags_MST.png > track_icons/cs_tags_MST.png
+--   [data] Data/track_icons/cs_tags_MTC.png > track_icons/cs_tags_MTC.png
 --   [data] Data/track_icons/cs_tags_MTX.png > track_icons/cs_tags_MTX.png
+--   [data] Data/track_icons/cs_tags_MUS.png > track_icons/cs_tags_MUS.png
+--   [data] Data/track_icons/cs_tags_NOI.png > track_icons/cs_tags_NOI.png
 --   [data] Data/track_icons/cs_tags_NY.png > track_icons/cs_tags_NY.png
 --   [data] Data/track_icons/cs_tags_OCT.png > track_icons/cs_tags_OCT.png
 --   [data] Data/track_icons/cs_tags_OHS.png > track_icons/cs_tags_OHS.png
 --   [data] Data/track_icons/cs_tags_ORC.png > track_icons/cs_tags_ORC.png
+--   [data] Data/track_icons/cs_tags_ORG.png > track_icons/cs_tags_ORG.png
 --   [data] Data/track_icons/cs_tags_PAD.png > track_icons/cs_tags_PAD.png
 --   [data] Data/track_icons/cs_tags_PAR.png > track_icons/cs_tags_PAR.png
 --   [data] Data/track_icons/cs_tags_PLB.png > track_icons/cs_tags_PLB.png
+--   [data] Data/track_icons/cs_tags_PNO.png > track_icons/cs_tags_PNO.png
 --   [data] Data/track_icons/cs_tags_PRC.png > track_icons/cs_tags_PRC.png
 --   [data] Data/track_icons/cs_tags_PRD.png > track_icons/cs_tags_PRD.png
+--   [data] Data/track_icons/cs_tags_RAP.png > track_icons/cs_tags_RAP.png
+--   [data] Data/track_icons/cs_tags_REF.png > track_icons/cs_tags_REF.png
+--   [data] Data/track_icons/cs_tags_REV.png > track_icons/cs_tags_REV.png
+--   [data] Data/track_icons/cs_tags_RHD.png > track_icons/cs_tags_RHD.png
+--   [data] Data/track_icons/cs_tags_RHY.png > track_icons/cs_tags_RHY.png
+--   [data] Data/track_icons/cs_tags_RID.png > track_icons/cs_tags_RID.png
 --   [data] Data/track_icons/cs_tags_ROO.png > track_icons/cs_tags_ROO.png
 --   [data] Data/track_icons/cs_tags_ROT.png > track_icons/cs_tags_ROT.png
+--   [data] Data/track_icons/cs_tags_RSP.png > track_icons/cs_tags_RSP.png
+--   [data] Data/track_icons/cs_tags_SAX.png > track_icons/cs_tags_SAX.png
+--   [data] Data/track_icons/cs_tags_SC.png > track_icons/cs_tags_SC.png
 --   [data] Data/track_icons/cs_tags_SCR.png > track_icons/cs_tags_SCR.png
+--   [data] Data/track_icons/cs_tags_SEQ.png > track_icons/cs_tags_SEQ.png
 --   [data] Data/track_icons/cs_tags_SFX.png > track_icons/cs_tags_SFX.png
+--   [data] Data/track_icons/cs_tags_SHK.png > track_icons/cs_tags_SHK.png
+--   [data] Data/track_icons/cs_tags_SMP.png > track_icons/cs_tags_SMP.png
 --   [data] Data/track_icons/cs_tags_SNR.png > track_icons/cs_tags_SNR.png
---   [data] Data/track_icons/cs_tags_SPD.png > track_icons/cs_tags_SPD.png
 --   [data] Data/track_icons/cs_tags_SNS.png > track_icons/cs_tags_SNS.png
+--   [data] Data/track_icons/cs_tags_SOL.png > track_icons/cs_tags_SOL.png
+--   [data] Data/track_icons/cs_tags_SPD.png > track_icons/cs_tags_SPD.png
+--   [data] Data/track_icons/cs_tags_SPL.png > track_icons/cs_tags_SPL.png
+--   [data] Data/track_icons/cs_tags_STM.png > track_icons/cs_tags_STM.png
 --   [data] Data/track_icons/cs_tags_STR.png > track_icons/cs_tags_STR.png
 --   [data] Data/track_icons/cs_tags_SUB.png > track_icons/cs_tags_SUB.png
+--   [data] Data/track_icons/cs_tags_SYB.png > track_icons/cs_tags_SYB.png
+--   [data] Data/track_icons/cs_tags_SYN.png > track_icons/cs_tags_SYN.png
+--   [data] Data/track_icons/cs_tags_TAM.png > track_icons/cs_tags_TAM.png
+--   [data] Data/track_icons/cs_tags_TBK.png > track_icons/cs_tags_TBK.png
+--   [data] Data/track_icons/cs_tags_TBN.png > track_icons/cs_tags_TBN.png
+--   [data] Data/track_icons/cs_tags_TBX.png > track_icons/cs_tags_TBX.png
+--   [data] Data/track_icons/cs_tags_TC.png > track_icons/cs_tags_TC.png
 --   [data] Data/track_icons/cs_tags_TLK.png > track_icons/cs_tags_TLK.png
 --   [data] Data/track_icons/cs_tags_TMC.png > track_icons/cs_tags_TMC.png
+--   [data] Data/track_icons/cs_tags_TMP.png > track_icons/cs_tags_TMP.png
 --   [data] Data/track_icons/cs_tags_TOM.png > track_icons/cs_tags_TOM.png
+--   [data] Data/track_icons/cs_tags_TPT.png > track_icons/cs_tags_TPT.png
+--   [data] Data/track_icons/cs_tags_TRI.png > track_icons/cs_tags_TRI.png
 --   [data] Data/track_icons/cs_tags_UHS.png > track_icons/cs_tags_UHS.png
+--   [data] Data/track_icons/cs_tags_UKE.png > track_icons/cs_tags_UKE.png
 --   [data] Data/track_icons/cs_tags_VCA.png > track_icons/cs_tags_VCA.png
 --   [data] Data/track_icons/cs_tags_VID.png > track_icons/cs_tags_VID.png
+--   [data] Data/track_icons/cs_tags_VLA.png > track_icons/cs_tags_VLA.png
+--   [data] Data/track_icons/cs_tags_VLN.png > track_icons/cs_tags_VLN.png
 --   [data] Data/track_icons/cs_tags_VOC.png > track_icons/cs_tags_VOC.png
+--   [data] Data/track_icons/cs_tags_VOX.png > track_icons/cs_tags_VOX.png
 --   [data] Data/track_icons/cs_tags_WOO.png > track_icons/cs_tags_WOO.png
+--   [data] Data/track_icons/cs_tags_WRL.png > track_icons/cs_tags_WRL.png
 
 --------------------------------------------------------------------------------
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.19"
+local VERSION = "1.20"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -173,20 +244,22 @@ local GROUP_FLAGS = {
 }
 -- default strips: { folder, { { strip name, tag } } } (track name = strip name)
 local DEFAULT_STRIPS = {
-  { "Drums", { { "Drums", "DRM" }, { "Kick", "KIK" }, { "Kick in", "KIK" }, { "Kick out", "KIK" }, { "Kick sub", "KIK" }, { "Kick trig", "KIK" }, { "Snare", "SNR" }, { "Snare top", "SNR" }, { "Snare bottom", "SNR" }, { "Snare even", "SNR" }, { "Snare trig", "SNR" }, { "Piccolo", "SNR" }, { "Toms", "TOM" }, { "Tom high", "TOM" }, { "Tom mid", "TOM" }, { "Tom low", "TOM" }, { "Tom trig", "TOM" }, { "Octobans", "OCT" }, { "Rototoms", "ROT" }, { "Gong", "GON" }, { "Overheads", "OHS" }, { "Underheads", "UHS" }, { "Glyn Johns", "GLJ" }, { "Front of kit", "FOK" }, { "Sensor mic", "SNS" }, { "Cymbals", "CYM" }, { "Hi-hat", "HH" }, { "Ride", "CYM" }, { "Crash", "CYM" }, { "Splash", "CYM" }, { "China", "CYM" }, { "Stack", "CYM" }, { "Clap cymbal", "CYM" }, { "FX cymbal", "CYM" }, { "Ambiance", "AMB" }, { "Room", "ROO" }, { "Talkback mic", "TLK" }, { "New-York", "NY" }, { "Parallel buss", "PAR" } } },
-  { "Drum pad", { { "Drum pad", "PAD" }, { "Drum machine", "DRM" }, { "Drum module", "DRM" }, { "Drum replacer", "DRM" }, { "Drum bank", "DRM" }, { "E-drums", "DRM" }, { "SPD", "SPD" }, { "Groovebox", "BOX" }, { "Beat box", "BOX" } } },
-  { "Percussion", { { "Percussion", "PRC" }, { "Clap", "PRC" }, { "Conga", "PRC" }, { "Bongo", "PRC" }, { "Djembe", "PRC" }, { "Cajon", "PRC" }, { "Frame drum", "PRC" }, { "Hand pan", "PRC" }, { "Steel tongue", "PRC" }, { "Claves", "PRC" }, { "Shaker", "PRC" }, { "Cabasas", "PRC" }, { "Caxixi", "PRC" }, { "Chimes", "PRC" }, { "Tambourine", "PRC" }, { "Bloc", "PRC" }, { "Guiros", "PRC" }, { "Maracas", "PRC" }, { "Vibraslap", "PRC" }, { "Timbales", "PRC" }, { "World percussion", "PRC" } } },
-  { "Bass", { { "Bass", "BSS" }, { "Bass DI", "BSS" }, { "Bass amp", "BSS" }, { "Bass pedal", "BSS" }, { "Bass 808", "BSS" }, { "Sub Bass", "BSS" } } },
-  { "Acoustic guitar", { { "Acoustic guitar", "ACG" }, { "Nylon guitar", "ACG" }, { "Classic guitar", "ACG" }, { "Ukulele", "ACG" }, { "Banjo", "ACG" }, { "Mandolin", "ACG" }, { "Lap steel", "ACG" } } },
-  { "Guitar", { { "Guitar", "GTR" }, { "Guitar DI", "GTR" }, { "Guitar amp", "GTR" }, { "Guitar pedal", "GTR" } } },
-  { "Keyboard", { { "Keyboard", "KEY" }, { "Synth", "KEY" }, { "Pad", "KEY" }, { "Piano", "KEY" }, { "Electric piano", "KEY" }, { "Organ", "KEY" }, { "Low keys", "KEY" }, { "Leads", "KEY" }, { "Soundscape", "KEY" } } },
-  { "Sound FX", { { "Sound FX", "SFX" }, { "Foley", "SFX" }, { "Noise", "SFX" }, { "Risers", "SFX" }, { "Woosh", "SFX" }, { "Sample", "SFX" }, { "Impact", "SFX" } } },
-  { "Strings", { { "Strings", "STR" }, { "Violin", "STR" }, { "Viola", "STR" }, { "Cello", "STR" }, { "Double bass", "STR" }, { "Harp", "STR" } } },
-  { "Woodwinds", { { "Woodwinds", "WOO" }, { "Flute", "WOO" }, { "Piccolo", "WOO" }, { "Oboe", "WOO" }, { "Horn", "WOO" }, { "Clarinet", "WOO" }, { "Bassoon", "WOO" } } },
-  { "Brass", { { "Brass", "BRA" }, { "Trumpet", "BRA" }, { "French Horn", "BRA" }, { "Trombone", "BRA" }, { "Tuba", "BRA" }, { "Euphonium", "BRA" }, { "Sax", "BRA" } } },
+  { "Drums", { { "Drums", "DRM" }, { "Kick", "KIK" }, { "Kick in", "KIK" }, { "Kick out", "KIK" }, { "Kick sub", "KIK" }, { "Kick trig", "KIK" }, { "Snare", "SNR" }, { "Snare top", "SNR" }, { "Snare bottom", "SNR" }, { "Snare even", "SNR" }, { "Snare trig", "SNR" }, { "Piccolo", "SNR" }, { "Toms", "TOM" }, { "Tom high", "TOM" }, { "Tom mid", "TOM" }, { "Tom low", "TOM" }, { "Tom trig", "TOM" }, { "Octobans", "OCT" }, { "Rototoms", "ROT" }, { "Gong", "GON" }, { "Overheads", "OHS" }, { "Underheads", "UHS" }, { "Glyn Johns", "GLJ" }, { "Front of kit", "FOK" }, { "Sensor mic", "SNS" }, { "Cymbals", "CYM" }, { "Hi-hat", "HH" }, { "Ride", "RID" }, { "Crash", "CRS" }, { "Splash", "SPL" }, { "China", "CHN" }, { "Stack", "CYM" }, { "Clap cymbal", "CYM" }, { "FX cymbal", "CYM" }, { "Ambiance", "AMB" }, { "Room", "ROO" }, { "Talkback mic", "TLK" }, { "New-York", "NY" }, { "Parallel buss", "PAR" }, { "Trigger", "TRI" } } },
+  { "Drum pad", { { "Drum pad", "PAD" }, { "Drum machine", "DRM" }, { "Drum module", "DRM" }, { "Drum replacer", "DRM" }, { "Drum bank", "DRM" }, { "E-drums", "DRM" }, { "SPD", "SPD" }, { "Groovebox", "BOX" }, { "Beat box", "BOX" }, { "808", "808" }, { "909", "909" } } },
+  { "Percussion", { { "Percussion", "PRC" }, { "Clap", "PRC" }, { "Conga", "CNG" }, { "Bongo", "BNG" }, { "Djembe", "PRC" }, { "Cajon", "CAJ" }, { "Frame drum", "PRC" }, { "Hand pan", "PRC" }, { "Steel tongue", "PRC" }, { "Claves", "PRC" }, { "Shaker", "SHK" }, { "Cabasas", "PRC" }, { "Caxixi", "PRC" }, { "Chimes", "PRC" }, { "Tambourine", "TAM" }, { "Bloc", "PRC" }, { "Guiros", "PRC" }, { "Maracas", "PRC" }, { "Vibraslap", "PRC" }, { "Timbales", "PRC" }, { "World percussion", "PRC" } } },
+  { "Bass", { { "Bass", "BSS" }, { "Bass DI", "DI" }, { "Bass amp", "AMP" }, { "Bass pedal", "BSS" }, { "Bass 808", "808" }, { "Sub Bass", "BSS" }, { "Synth bass", "SYB" } } },
+  { "Acoustic guitar", { { "Acoustic guitar", "ACG" }, { "Nylon guitar", "ACG" }, { "Classic guitar", "ACG" }, { "Ukulele", "UKE" }, { "Banjo", "BJO" }, { "Mandolin", "MND" }, { "Lap steel", "ACG" } } },
+  { "Guitar", { { "Guitar", "GTR" }, { "Guitar DI", "DI" }, { "Guitar amp", "AMP" }, { "Guitar pedal", "GTR" }, { "Electric guitar", "ELG" }, { "Rhythm guitar", "RHY" }, { "Guitar solo", "SOL" } } },
+  { "Keyboard", { { "Keyboard", "KEY" }, { "Synth", "SYN" }, { "Pad", "KEY" }, { "Piano", "PNO" }, { "Electric piano", "KEY" }, { "Organ", "ORG" }, { "Low keys", "KEY" }, { "Leads", "LED" }, { "Soundscape", "KEY" }, { "Rhodes", "RHD" }, { "Wurlitzer", "WRL" }, { "Arpeggio", "ARP" }, { "Sequence", "SEQ" } } },
+  { "Sound FX", { { "Sound FX", "SFX" }, { "Foley", "FOL" }, { "Noise", "NOI" }, { "Risers", "SFX" }, { "Woosh", "SFX" }, { "Sample", "SFX" }, { "Impact", "SFX" } } },
+  { "Strings", { { "Strings", "STR" }, { "Violin", "VLN" }, { "Viola", "VLA" }, { "Cello", "CLO" }, { "Double bass", "CTB" }, { "Harp", "STR" } } },
+  { "Woodwinds", { { "Woodwinds", "WOO" }, { "Flute", "FLT" }, { "Piccolo", "WOO" }, { "Oboe", "WOO" }, { "Horn", "WOO" }, { "Clarinet", "WOO" }, { "Bassoon", "WOO" }, { "Harmonica", "HRM" }, { "Accordion", "ACC" } } },
+  { "Brass", { { "Brass", "BRA" }, { "Trumpet", "TPT" }, { "French Horn", "HRN" }, { "Trombone", "TBN" }, { "Tuba", "BRA" }, { "Euphonium", "BRA" }, { "Sax", "SAX" } } },
   { "Orchestral percussion", { { "Orchestral percussion", "ORC" }, { "Xylophone", "ORC" }, { "Glockenspiel", "ORC" }, { "Tubular Bells", "ORC" }, { "Celesta", "ORC" }, { "Vibraphone", "ORC" } } },
   { "Choir", { { "Choir", "CHO" }, { "Sopranos", "CHO" }, { "Alto", "CHO" }, { "Tenors", "CHO" }, { "Baritone", "CHO" }, { "Basses", "CHO" } } },
-  { "Vocals", { { "Vocals", "VOC" }, { "Lead vocals", "LDV" }, { "Background vocals", "BGV" }, { "Harmonies", "HAR" }, { "Gang", "GNG" }, { "Screams", "SCR" }, { "Dialogue", "DIA" }, { "Master of ceremonies", "MC" }, { "Talkback", "TLK" }, { "Listenback", "LIS" } } },
+  { "Vocals", { { "Vocals", "VOC" }, { "Lead vocals", "LDV" }, { "Background vocals", "BGV" }, { "Harmonies", "HAR" }, { "Gang", "GNG" }, { "Screams", "SCR" }, { "Dialogue", "DIA" }, { "Master of ceremonies", "MC" }, { "Talkback", "TLK" }, { "Listenback", "LIS" }, { "Doubles", "DBL" }, { "Ad-libs", "ADL" }, { "Rap", "RAP" }, { "Chorus vocals", "CHR" }, { "Talkbox", "TBX" }, { "Vocal bus", "VOX" } } },
+  { "Mix", { { "Reverb", "REV" }, { "Delay", "DLY" }, { "Effects", "FX" }, { "Sidechain", "SC" }, { "Master bus", "MST" }, { "Stems", "STM" }, { "Reference", "REF" }, { "Music", "MUS" }, { "Background", "BKG" }, { "Alternate take", "ALT" }, { "Temporary", "TMP" }, { "Spare", "RSP" }, { "Comment", "CMT" } } },
+  { "Live", { { "Monitor mix", "MIX" }, { "In-ears", "IEM" }, { "Monitors", "MON" }, { "Talkback return", "TBK" }, { "Timecode track", "TC" }, { "LTC", "LTC" }, { "MTC", "MTC" }, { "Sampler", "SMP" }, { "Loop", "LOP" }, { "Ghost track", "GHO" } } },
   { "Miscellaneous", { { "Miscellaneous", "MSC" }, { "Playback", "PLB" }, { "Production", "PRD" }, { "Click", "CLK" }, { "Metronome", "CLK" }, { "Cues", "CUE" }, { "Timecode", "TMC" }, { "MIDI", "MID" }, { "DMX", "DMX" }, { "Video", "VID" }, { "Image", "IMG" }, { "Lyrics", "LYR" }, { "Chords", "CHD" }, { "Auxiliary", "AUX" }, { "Busses", "BUS" }, { "Dca", "DCA" }, { "Vca", "VCA" }, { "Group", "GRP" }, { "Subgroup", "SUB" }, { "Matrix", "MTX" }, { "Master", "MLR" } } },
 }
 
@@ -848,6 +921,57 @@ if reaper.GetExtState(EXT, "norm_default_off") ~= "1" then
     end
   end
   reaper.SetExtState(EXT, "norm_default_off", "1", true)
+end
+
+-- 1.20 : new tags for some default strips. One-time update of the strips still on
+-- their old default tag (and old default icon or no icon); edited ones are kept.
+local RETAG_120 = {
+  { "Ride", "CYM", "RID" },
+  { "Crash", "CYM", "CRS" },
+  { "Splash", "CYM", "SPL" },
+  { "China", "CYM", "CHN" },
+  { "Conga", "PRC", "CNG" },
+  { "Bongo", "PRC", "BNG" },
+  { "Cajon", "PRC", "CAJ" },
+  { "Shaker", "PRC", "SHK" },
+  { "Tambourine", "PRC", "TAM" },
+  { "Bass DI", "BSS", "DI" },
+  { "Bass amp", "BSS", "AMP" },
+  { "Bass 808", "BSS", "808" },
+  { "Ukulele", "ACG", "UKE" },
+  { "Banjo", "ACG", "BJO" },
+  { "Mandolin", "ACG", "MND" },
+  { "Guitar DI", "GTR", "DI" },
+  { "Guitar amp", "GTR", "AMP" },
+  { "Synth", "KEY", "SYN" },
+  { "Piano", "KEY", "PNO" },
+  { "Organ", "KEY", "ORG" },
+  { "Leads", "KEY", "LED" },
+  { "Foley", "SFX", "FOL" },
+  { "Noise", "SFX", "NOI" },
+  { "Violin", "STR", "VLN" },
+  { "Viola", "STR", "VLA" },
+  { "Cello", "STR", "CLO" },
+  { "Double bass", "STR", "CTB" },
+  { "Flute", "WOO", "FLT" },
+  { "Trumpet", "BRA", "TPT" },
+  { "French Horn", "BRA", "HRN" },
+  { "Trombone", "BRA", "TBN" },
+  { "Sax", "BRA", "SAX" },
+}
+if reaper.GetExtState(EXT, "retag_120") ~= "1" then
+  local map = {}
+  for _, r in ipairs(RETAG_120) do map[r[1] .. "\0" .. r[2]] = r[3] end
+  for _, s in ipairs(strips) do
+    local new = s.name and s.tag and map[s.name .. "\0" .. s.tag]
+    if new and (s.icon == nil or s.icon == "cs_tags_" .. s.tag .. ".png") then
+      local icon = "cs_tags_" .. new .. ".png"
+      s.tag = new
+      if reaper.file_exists(ICON_DIR .. "/" .. icon) then s.icon = icon end
+      dirty = true
+    end
+  end
+  reaper.SetExtState(EXT, "retag_120", "1", true)
 end
 
 local function set_status(msg, kind)
