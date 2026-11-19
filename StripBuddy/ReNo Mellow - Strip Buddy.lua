@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.20
+-- @version 1.21
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog 71 nouvelles icônes de tags (RID, CRS, PNO, SYN, VLN, TPT, REV, CMT, 808, 909…), 42 nouveaux strips de base dont les dossiers Mix et Live, et nouveaux tags pour 32 strips existants (mis à jour une fois s'ils n'ont pas été modifiés) ; nouvelle colonne Tag 2 (Kick in [KIK][DRM]) : le Display liste la piste sous ses deux tags, les strips de base reçoivent le tag de leur dossier ; nouvelle colonne Output (master / parent, sorties hardware audio et MIDI)
+-- @changelog Onglet Setup : filtre pour cacher des lignes (dossier, lié à l'onglet Strips, et texte sur le nom, le nom de piste et les tags)
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -146,7 +146,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.20"
+local VERSION = "1.21"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -965,6 +965,7 @@ local LAYOUTS = { tcp = list_layouts("tcp"), mcp = list_layouts("mcp") }
 local open_rename, rename_idx, rename_buf = false, nil, ""
 local open_delete, delete_idx = false, nil
 local goto_setup, scroll_row = false, nil
+local setup_filter = "" -- text filter of the Setup tab
 local pending -- structural change (move / duplicate) run after drawing the list
 
 -- adds the default strips that are missing (folders matched by name)
@@ -1125,7 +1126,7 @@ end
 local function strip_menu_items(i)
   if ImGui.MenuItem(ctx, "Apply to selected tracks") then do_apply(i) end
   if ImGui.MenuItem(ctx, "Rename...") then open_rename, rename_idx, rename_buf = true, i, strips[i].name or "" end
-  if ImGui.MenuItem(ctx, "Edit in Setup") then goto_setup, scroll_row = true, i end
+  if ImGui.MenuItem(ctx, "Edit in Setup") then goto_setup, scroll_row, setup_filter = true, i, "" end
   if ImGui.MenuItem(ctx, "Duplicate") then
     pending = function()
       local c = copy(strips[i]); c.name = (c.name or "") .. " copy"
@@ -1151,6 +1152,19 @@ local function strip_in_view(s)
   if sel_folder == FOLDER_NONE then return s.folder == nil or not folder_by_id(s.folder) end
   return s.folder == sel_folder
 end
+
+-- Setup filter: folder (shared with the Strips tab) + text on name, track name and tags
+
+local function strip_matches_text(s)
+  if setup_filter == "" then return true end
+  local q = setup_filter:lower()
+  for _, v in ipairs({ s.name, s.track_name, s.tag, s.tag2 }) do
+    if v and v:lower():find(q, 1, true) then return true end
+  end
+  return false
+end
+
+local function row_visible(s) return strip_in_view(s) and strip_matches_text(s) end
 
 local function select_folder(id)
   sel_folder = id
@@ -1225,7 +1239,7 @@ local function draw_strip_buttons()
   if #shown == 0 then
     if #strips == 0 then
       ImGui.TextWrapped(ctx, "No strips yet. Create them in the Setup tab.")
-      if ImGui.Button(ctx, "Create a strip") then new_strip(); goto_setup, scroll_row = true, #strips end
+      if ImGui.Button(ctx, "Create a strip") then setup_filter = ""; new_strip(); goto_setup, scroll_row = true, #strips end
     else
       ImGui.TextDisabled(ctx, "This folder is empty.")
       ImGui.TextWrapped(ctx, "Drag strips from \"All strips\" onto the folder name to file them here.")
@@ -1422,7 +1436,9 @@ local function row_select_click(i)
     for j, st in ipairs(strips) do if st == sel_anchor then a = j end end
     if a then
       if not ctrl then sel_rows = {} end
-      for j = math.min(a, i), math.max(a, i) do sel_rows[strips[j]] = true end
+      for j = math.min(a, i), math.max(a, i) do
+        if row_visible(strips[j]) then sel_rows[strips[j]] = true end
+      end
       return
     end
   end
@@ -1944,7 +1960,7 @@ local function draw_export_import_buttons()
 end
 
 local function draw_setup_tab()
-  if ImGui.Button(ctx, "+ Add strip") then new_strip(); scroll_row = #strips; goto_setup = "scroll" end
+  if ImGui.Button(ctx, "+ Add strip") then setup_filter = ""; new_strip(); scroll_row = #strips; goto_setup = "scroll" end
   ImGui.SameLine(ctx)
   if ImGui.Button(ctx, "Load default strips") then
     local n = load_default_strips()
@@ -1965,6 +1981,42 @@ local function draw_setup_tab()
     ImGui.TextDisabled(ctx, "Click # to select, Ctrl / Shift for several. An empty cell is ignored. Only the name is required.")
   end
 
+  -- filter bar
+  local fchanged = false
+  ImGui.AlignTextToFramePadding(ctx)
+  ImGui.Text(ctx, "Show")
+  ImGui.SameLine(ctx)
+  ImGui.SetNextItemWidth(ctx, 180)
+  local fprev = (sel_folder == FOLDER_ALL and "All strips") or (sel_folder == FOLDER_NONE and "No folder")
+                or ((folder_by_id(sel_folder) or {}).name or "All strips")
+  if ImGui.BeginCombo(ctx, "##sfolder", fprev .. "  (" .. count_in(sel_folder) .. ")", ImGui.ComboFlags_HeightLarge) then
+    local function item(id, label)
+      if ImGui.Selectable(ctx, label .. "  (" .. count_in(id) .. ")##sf" .. id, sel_folder == id) then
+        select_folder(id); fchanged = true
+      end
+    end
+    item(FOLDER_ALL, "All strips")
+    for _, fo in ipairs(folders) do item(fo.id, fo.name) end
+    item(FOLDER_NONE, "No folder")
+    ImGui.EndCombo(ctx)
+  end
+  if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, "Same folder as in the Strips tab.") end
+  ImGui.SameLine(ctx)
+  ImGui.SetNextItemWidth(ctx, 220)
+  local rvf, fv = ImGui.InputTextWithHint(ctx, "##sfilter", "Filter: name, track name, tag...", setup_filter)
+  if rvf then setup_filter = fv; fchanged = true end
+  if setup_filter ~= "" then
+    ImGui.SameLine(ctx)
+    if ImGui.SmallButton(ctx, "x##sfclear") then setup_filter = ""; fchanged = true end
+  end
+  local nvis = 0
+  for _, st in ipairs(strips) do if row_visible(st) then nvis = nvis + 1 end end
+  ImGui.SameLine(ctx)
+  ImGui.TextDisabled(ctx, nvis .. " / " .. #strips .. " strips shown")
+  if fchanged then -- hidden rows leave the selection
+    for st in pairs(sel_rows) do if not row_visible(st) then sel_rows[st] = nil end end
+  end
+
   local flags = ImGui.TableFlags_Borders | ImGui.TableFlags_RowBg | ImGui.TableFlags_ScrollX |
                 ImGui.TableFlags_ScrollY | ImGui.TableFlags_Resizable | ImGui.TableFlags_SizingFixedFit
   local _, h = ImGui.GetContentRegionAvail(ctx)
@@ -1975,11 +2027,13 @@ local function draw_setup_tab()
     for _, c in ipairs(COLUMNS) do ImGui.TableSetupColumn(ctx, c[1], ImGui.TableColumnFlags_WidthFixed, c[2]) end
     ImGui.TableHeadersRow(ctx)
     for i, s in ipairs(strips) do
-      ImGui.PushID(ctx, i)
-      local before = sel_rows[s] and copy(s) or nil
-      draw_row(i, s)
-      if before then spread_changes(i, before) end
-      ImGui.PopID(ctx)
+      if row_visible(s) then
+        ImGui.PushID(ctx, i)
+        local before = sel_rows[s] and copy(s) or nil
+        draw_row(i, s)
+        if before then spread_changes(i, before) end
+        ImGui.PopID(ctx)
+      end
     end
     ImGui.EndTable(ctx)
   end
