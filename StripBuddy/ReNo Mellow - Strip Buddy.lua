@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.17
+-- @version 1.18
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Display : le bouton Strip Buddy prend l'icône de barre d'outils (états normal / survol / allumé) et ouvre ou ferme la fenêtre ; relancer l'action ferme aussi la fenêtre
+-- @changelog Nouvelle icône de piste cs_tags_SPD.png et strip de base « SPD » (sampleur à pads Roland) dans le dossier Drum pad
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -58,6 +58,7 @@
 --   [data] Data/track_icons/cs_tags_SCR.png > track_icons/cs_tags_SCR.png
 --   [data] Data/track_icons/cs_tags_SFX.png > track_icons/cs_tags_SFX.png
 --   [data] Data/track_icons/cs_tags_SNR.png > track_icons/cs_tags_SNR.png
+--   [data] Data/track_icons/cs_tags_SPD.png > track_icons/cs_tags_SPD.png
 --   [data] Data/track_icons/cs_tags_SNS.png > track_icons/cs_tags_SNS.png
 --   [data] Data/track_icons/cs_tags_STR.png > track_icons/cs_tags_STR.png
 --   [data] Data/track_icons/cs_tags_SUB.png > track_icons/cs_tags_SUB.png
@@ -74,7 +75,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.17"
+local VERSION = "1.18"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -173,7 +174,7 @@ local GROUP_FLAGS = {
 -- default strips: { folder, { { strip name, tag } } } (track name = strip name)
 local DEFAULT_STRIPS = {
   { "Drums", { { "Drums", "DRM" }, { "Kick", "KIK" }, { "Kick in", "KIK" }, { "Kick out", "KIK" }, { "Kick sub", "KIK" }, { "Kick trig", "KIK" }, { "Snare", "SNR" }, { "Snare top", "SNR" }, { "Snare bottom", "SNR" }, { "Snare even", "SNR" }, { "Snare trig", "SNR" }, { "Piccolo", "SNR" }, { "Toms", "TOM" }, { "Tom high", "TOM" }, { "Tom mid", "TOM" }, { "Tom low", "TOM" }, { "Tom trig", "TOM" }, { "Octobans", "OCT" }, { "Rototoms", "ROT" }, { "Gong", "GON" }, { "Overheads", "OHS" }, { "Underheads", "UHS" }, { "Glyn Johns", "GLJ" }, { "Front of kit", "FOK" }, { "Sensor mic", "SNS" }, { "Cymbals", "CYM" }, { "Hi-hat", "HH" }, { "Ride", "CYM" }, { "Crash", "CYM" }, { "Splash", "CYM" }, { "China", "CYM" }, { "Stack", "CYM" }, { "Clap cymbal", "CYM" }, { "FX cymbal", "CYM" }, { "Ambiance", "AMB" }, { "Room", "ROO" }, { "Talkback mic", "TLK" }, { "New-York", "NY" }, { "Parallel buss", "PAR" } } },
-  { "Drum pad", { { "Drum pad", "PAD" }, { "Drum machine", "DRM" }, { "Drum module", "DRM" }, { "Drum replacer", "DRM" }, { "Drum bank", "DRM" }, { "E-drums", "DRM" }, { "Groovebox", "BOX" }, { "Beat box", "BOX" } } },
+  { "Drum pad", { { "Drum pad", "PAD" }, { "Drum machine", "DRM" }, { "Drum module", "DRM" }, { "Drum replacer", "DRM" }, { "Drum bank", "DRM" }, { "E-drums", "DRM" }, { "SPD", "SPD" }, { "Groovebox", "BOX" }, { "Beat box", "BOX" } } },
   { "Percussion", { { "Percussion", "PRC" }, { "Clap", "PRC" }, { "Conga", "PRC" }, { "Bongo", "PRC" }, { "Djembe", "PRC" }, { "Cajon", "PRC" }, { "Frame drum", "PRC" }, { "Hand pan", "PRC" }, { "Steel tongue", "PRC" }, { "Claves", "PRC" }, { "Shaker", "PRC" }, { "Cabasas", "PRC" }, { "Caxixi", "PRC" }, { "Chimes", "PRC" }, { "Tambourine", "PRC" }, { "Bloc", "PRC" }, { "Guiros", "PRC" }, { "Maracas", "PRC" }, { "Vibraslap", "PRC" }, { "Timbales", "PRC" }, { "World percussion", "PRC" } } },
   { "Bass", { { "Bass", "BSS" }, { "Bass DI", "BSS" }, { "Bass amp", "BSS" }, { "Bass pedal", "BSS" }, { "Bass 808", "BSS" }, { "Sub Bass", "BSS" } } },
   { "Acoustic guitar", { { "Acoustic guitar", "ACG" }, { "Nylon guitar", "ACG" }, { "Classic guitar", "ACG" }, { "Ukulele", "ACG" }, { "Banjo", "ACG" }, { "Mandolin", "ACG" }, { "Lap steel", "ACG" } } },
