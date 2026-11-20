@@ -1,7 +1,8 @@
 -- @noindex
 -- ReNo Mellow - Grid Buddy : Display window, shared by the two Display actions.
 --   GB_DISP = "arrange" (Main section) or "midi" (MIDI editor section, own window and settings)
--- Wheel: grid size | Click: grid menu | Alt+click: swing on/off | Alt+wheel: swing amount (arrange)
+-- Wheel: grid size | Shift+wheel: straight / triplet / dotted | Click: grid menu
+-- Alt+click: swing on/off | Alt+wheel: swing amount (arrange)
 -- Snap icon: click = snap (Alt+click = relative snap, arrange), right-click = snap/grid settings
 -- Right-click on the grid: Grid Buddy window. Launching the action again closes the window.
 -- The MIDI Display is hidden while no MIDI editor is open.
@@ -80,6 +81,20 @@ local function opt(k, d) return GB.flag(P .. k, d) end
 
 local function alt_down() return (ImGui.GetKeyMods(ctx) & ImGui.Mod_Alt) ~= 0 end
 local function ctrl_down() return (ImGui.GetKeyMods(ctx) & ImGui.Mod_Ctrl) ~= 0 end
+local function shift_down() return (ImGui.GetKeyMods(ctx) & ImGui.Mod_Shift) ~= 0 end
+
+-- Shift+wheel: straight -> triplet -> dotted (and back)
+local TYPE_CYCLE = { "straight", "triplet", "dotted" }
+local function cycle_type(dir)
+  if GB.grid_hidden(C) then GB.toggle_grid_lines(C) end
+  if not IS_MIDI then GB.leave_special() end
+  local d = GB.current(C)
+  local cur = d and GB.grid_type(d) or "straight"
+  local i = 1
+  for k, t in ipairs(TYPE_CYCLE) do if t == cur then i = k end end
+  i = GB.clamp(i + dir, 1, #TYPE_CYCLE)
+  GB.set_type(C, TYPE_CYCLE[i])
+end
 
 -- a click is a release without drag (dragging moves the window)
 local function clicked(btn)
@@ -198,9 +213,15 @@ end
 
 local function handle_grid(hovered)
   if not hovered then return end
-  local wheel = ImGui.GetMouseWheel(ctx)
+  local wheel, wheel_h = ImGui.GetMouseWheel(ctx)
+  -- some systems turn Shift+wheel into a horizontal wheel
+  if shift_down() and wheel == 0 then wheel = wheel_h or 0 end
   if wheel ~= 0 then
-    if not IS_MIDI and alt_down() then
+    if shift_down() then
+      local dir = wheel > 0 and 1 or -1 -- wheel up = straight -> triplet -> dotted
+      if GB.flag("wheel_rev", false) then dir = -dir end
+      later(function() cycle_type(dir) end)
+    elseif not IS_MIDI and alt_down() then
       local _, _, amt = GB.get_grid()
       local step = (ctrl_down() and 0.01 or 0.03) * (wheel > 0 and 1 or -1)
       later(function() GB.set_swing((amt or 0) + step) end)
@@ -299,10 +320,10 @@ local function loop()
       hover_since = hover_since or reaper.time_precise()
       if reaper.time_precise() - hover_since > 1.5 then
         if IS_MIDI then
-          ImGui.SetTooltip(ctx, "MIDI editor grid\nWheel: grid size\nClick: grid menu (type, hide, link, sync)\n"
+          ImGui.SetTooltip(ctx, "MIDI editor grid\nWheel: grid size\nShift+wheel: straight / triplet / dotted\nClick: grid menu (type, hide, link, sync)\n"
             .. "Snap icon: click = snap, right-click = snap/grid settings\nRight-click: Grid Buddy window\nDrag: move")
         else
-          ImGui.SetTooltip(ctx, "Wheel: grid size\nClick: grid menu (type, frame, measure, hide, link)\n"
+          ImGui.SetTooltip(ctx, "Wheel: grid size\nShift+wheel: straight / triplet / dotted\nClick: grid menu (type, frame, measure, hide, link)\n"
             .. "Alt+click: swing on/off\nAlt+wheel: swing amount (Ctrl: finer)\n"
             .. "Snap icon: click = snap, Alt+click = relative,\n  right-click = snap/grid settings\n"
             .. "Right-click: Grid Buddy window\nDrag: move")
