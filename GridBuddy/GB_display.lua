@@ -206,9 +206,29 @@ local function grid_line()
   return ImGui.IsItemHovered(ctx)
 end
 
+-- Wheel smoothing: the wheel movement is added up and one step is taken per
+-- "wheel_notches" notches (Set up > Wheel sensitivity), with at least WHEEL_GAP s
+-- between two steps, so a fast or smooth-scrolling wheel does not skip sizes.
+local WHEEL_GAP = 0.09
+local wheel_acc, wheel_last, wheel_step_t = 0, 0, 0
+local function wheel_steps(raw)
+  local now = reaper.time_precise()
+  if now - wheel_last > 0.35 then wheel_acc = 0 end -- the wheel stopped: start again
+  wheel_last = now
+  if (raw > 0) ~= (wheel_acc > 0) and wheel_acc ~= 0 then wheel_acc = 0 end -- direction changed
+  wheel_acc = wheel_acc + raw
+  local need = GB.clamp(tonumber(GB.get("wheel_notches", 1.5)) or 1.5, 1, 4)
+  if math.abs(wheel_acc) < need or now - wheel_step_t < WHEEL_GAP then return 0 end
+  local n = wheel_acc > 0 and 1 or -1
+  wheel_acc = wheel_acc - n * need -- keep the rest: 1.5 = 2 steps for 3 notches
+  wheel_step_t = now
+  return n
+end
+
 local function handle_grid(hovered)
   if not hovered then return end
-  local wheel = ImGui.GetMouseWheel(ctx)
+  local raw = ImGui.GetMouseWheel(ctx)
+  local wheel = raw ~= 0 and wheel_steps(raw) or 0
   if wheel ~= 0 then
     if not IS_MIDI and alt_down() then
       local _, _, amt = GB.get_grid()

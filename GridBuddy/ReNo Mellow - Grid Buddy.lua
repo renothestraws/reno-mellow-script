@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Grid Buddy
 -- @author ReNo Mellow
--- @version 1.4
+-- @version 1.5
 -- @about Grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles de 1/128 à 4, diviseur et limites, snap, lien avec l'éditeur MIDI (option « Use the same grid division »), deux mini Displays indépendants, arrangement et éditeur MIDI (molette = taille), et actions isolées. D'après Gridbox de FeedTheCat. Nécessite ReaImGui.
--- @changelog Molette des Displays et action Adjust grid : après la taille la plus fine viennent 1/8T, 1/16T, 1/32T, après la plus large 1/2D, 1/4D, 1/8D, 1/16D, 1/32D ; Shift+molette retiré ; Alt / Ctrl lus même sans focus (js_ReaScriptAPI)
+-- @changelog Molette des Displays moins sensible (lissage + réglage Wheel sensitivity dans Set up, 1,5 cran par pas par défaut)
 -- @provides
 --   GB_lib.lua
 --   GB_startup.lua
@@ -284,6 +284,12 @@ local function tab_setup()
   ImGui.SameLine(ctx) checkbox("Frame", "show_frame", false)
   ImGui.SameLine(ctx) checkbox("Measure", "show_measure", false)
   checkbox("Reverse mouse wheel", "wheel_rev", false, "For the Display and the mousewheel actions")
+  ImGui.SameLine(ctx, 0, 20)
+  ImGui.SetNextItemWidth(ctx, 140)
+  local cw, vw = ImGui.SliderDouble(ctx, "Wheel sensitivity##wn", tonumber(GB.get("wheel_notches", 1.5)) or 1.5, 1, 4,
+    "%.1f notches / step")
+  if cw then GB.set("wheel_notches", string.format("%.1f", vw)) end
+  tip("Displays: how much the wheel must turn to change the grid by one step (higher = slower)")
 
   ImGui.SeparatorText(ctx, "Displays")
   for _, d in ipairs({ { "display", "", "Arrange Display" }, { "display_midi", "me_", "MIDI Display" } }) do
