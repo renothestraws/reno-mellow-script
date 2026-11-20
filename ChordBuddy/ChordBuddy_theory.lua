@@ -17,6 +17,15 @@ T.FIFTHS = { [0] = 0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5 }
 T.POS_OF_PC = {}
 for pos = 0, 11 do T.POS_OF_PC[T.FIFTHS[pos]] = pos end
 
+-- Key signature of the major key at a wheel position (relative minor: same):
+-- "0" for C, "1#" ... "6#" (G to F#), "5b" ... "1b" (Db to F)
+function T.KeySignature(pos)
+  pos = pos % 12
+  if pos == 0 then return "0" end
+  if pos <= 6 then return pos .. "#" end
+  return (12 - pos) .. "b"
+end
+
 -- Name of the major key (tonic) for each pitch class
 local KEY_NAME = { [0] = "C", [7] = "G", [2] = "D", [9] = "A", [4] = "E", [11] = "B",
                    [6] = "F#", [1] = "Db", [8] = "Ab", [3] = "Eb", [10] = "Bb", [5] = "F" }
