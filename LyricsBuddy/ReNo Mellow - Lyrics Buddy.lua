@@ -87,6 +87,8 @@ local cfg = {
   track    = opt("track", "Lyrics"),
   replace  = opt("replace", true),
   skip_ns  = opt("skip_ns", true),
+  trim     = opt("trim", true),
+  trim_db  = opt("trim_db", -40),
   font     = opt("font", 14),
 }
 local function save(k, v) cfg[k] = v; set(k, v) end
@@ -265,6 +267,7 @@ local function render_step(job)
     job.total = math.max(0, math.floor((job.t1 - job.t0) * SR))
     job.done = 0
     job.buf = r.new_array(BLOCK * job.nch)
+    job.env, job.e_acc, job.e_cnt = {}, 0, 0 -- 10 ms RMS envelope, used to trim items to the voice
     job.fh = io.open(job.base .. ".wav", "wb")
     if not job.fh then return false, "Cannot write in " .. TMP end
     job.fh:write(wav_header(0))
@@ -277,13 +280,18 @@ local function render_step(job)
     r.GetAudioAccessorSamples(job.acc, SR, nch, job.t0 + job.done / SR, n, buf)
     local t = buf.table(1, n * nch)
     local vals = {}
+    local env, e_acc, e_cnt = job.env, job.e_acc, job.e_cnt
     for i = 1, n do
       local v
       if nch == 2 then v = (t[2 * i - 1] + t[2 * i]) * 0.5 else v = t[i] end
+      e_acc = e_acc + v * v
+      e_cnt = e_cnt + 1
+      if e_cnt == 160 then env[#env + 1] = math.sqrt(e_acc / 160); e_acc, e_cnt = 0, 0 end
       v = math.floor(v * 32767 + 0.5)
       if v > 32767 then v = 32767 elseif v < -32768 then v = -32768 end
       vals[i] = v
     end
+    job.e_acc, job.e_cnt = e_acc, e_cnt
     job.fh:write(string.pack(fmt_for(n), table.unpack(vals, 1, n)))
     job.done = job.done + n
     budget = budget - n
@@ -350,6 +358,42 @@ local function parse_srt(txt)
   return segs
 end
 
+-- whisper timestamps are loose (a phrase after a silence often starts at the
+-- end of the previous one): pull start and end in to where the voice really is
+local FR = 0.01
+local function trim_to_voice(job, segs)
+  local env = job.env
+  if not cfg.trim or not env or #env == 0 then return end
+  local peak = 0
+  for i = 1, #env do if env[i] > peak then peak = env[i] end end
+  if peak <= 0 then return end
+  local thr = peak * 10 ^ (cfg.trim_db / 20)
+  local need = 8 -- 80 ms above the threshold = voice (ignores clicks and short noises)
+  for _, sg in ipairs(segs) do
+    local i0 = math.max(1, math.floor(sg.a / FR) + 1)
+    local i1 = math.min(#env, math.ceil(sg.b / FR))
+    local first, run = nil, 0
+    for i = i0, i1 do
+      if env[i] >= thr then
+        run = run + 1
+        if run >= need then first = i - need + 1 break end
+      else run = 0 end
+    end
+    if first then
+      local last, run2 = nil, 0
+      for i = i1, first, -1 do
+        if env[i] >= thr then
+          run2 = run2 + 1
+          if run2 >= 3 then last = i + run2 - 1 break end
+        else run2 = 0 end
+      end
+      local na = math.max(sg.a, (first - 1) * FR - 0.05)
+      local nb = last and math.min(sg.b, last * FR + 0.15) or sg.b
+      if nb > na + 0.1 then sg.a, sg.b = na, nb end
+    end
+  end
+end
+
 local function non_speech(text)
   local s = text:gsub("%b[]", ""):gsub("%b()", ""):gsub("%b**", "")
   s = s:gsub("\226\153[\170\171\172]", "") -- ♪ ♫ ♬
@@ -390,6 +434,7 @@ local function create_items(job, segs)
     if not (cfg.skip_ns and non_speech(s.text)) then list[#list + 1] = s end
   end
   if #list == 0 then return 0 end
+  trim_to_voice(job, list)
 
   r.Undo_BeginBlock()
   r.PreventUIRefresh(1)
@@ -646,6 +691,13 @@ local function tab_setup()
   if ch then save("maxlen", v) end
   ch, v = ImGui.Checkbox(ctx, "Skip non-speech ([Music], (applause), notes...)", cfg.skip_ns)
   if ch then save("skip_ns", v) end
+  ch, v = ImGui.Checkbox(ctx, "Trim items to the voice (removes silences)", cfg.trim)
+  if ch then save("trim", v) end
+  if cfg.trim then
+    ImGui.SetNextItemWidth(ctx, 160)
+    ch, v = ImGui.SliderInt(ctx, "Trim threshold (dB under the loudest part)", math.floor(cfg.trim_db), -60, -15)
+    if ch then save("trim_db", v) end
+  end
   ch, v = ImGui.Checkbox(ctx, "Replace the lyrics already under the item", cfg.replace)
   if ch then save("replace", v) end
   ImGui.SetNextItemWidth(ctx, 160)
