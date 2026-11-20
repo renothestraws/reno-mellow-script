@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Chord Buddy
 -- @author ReNo Mellow
--- @version 1.0
+-- @version 1.1
 -- @about Roue des quintes pour créer des accords dans l'éditeur MIDI (inversions, voicings, auto voice leading) + Display du nom de l'accord et export
--- @changelog Première version
+-- @changelog Armure de chaque tonalité affichée sur la roue (1#, 3b...) et au centre à côté de la tonalité active
 -- @provides
 --   [main] ReNo Mellow - Chord Buddy - Display.lua
 --   ChordBuddy_theory.lua
@@ -12,7 +12,7 @@
 -- Requires ReaImGui (0.9 or later)
 
 local r = reaper
-local VERSION = "1.0"
+local VERSION = "1.1"
 local EXT = "ReNo_ChordBuddy"
 local TITLE = "Chord Buddy"
 
@@ -360,8 +360,14 @@ local function draw_wheel(size)
       ImGui.DrawList_AddTextEx(dl, f, isz, tx - iw / 2, ty + gap - ih / 2,
         on_inv and 0x000000FF or tcol, itxt)
 
-      if label then
-        centered_text(dl, tx, ty - gap, label, tcol, 9 * fs, false)
+      -- top line: degree, and on the major ring the key signature (1#, 3b...)
+      local top = label
+      if ring == 1 then
+        local sig = T.KeySignature(pos)
+        top = label and (label .. "  " .. sig) or sig
+      end
+      if top then
+        centered_text(dl, tx, ty - gap, top, tcol, 9 * fs, false)
       end
     end
   end
@@ -384,7 +390,8 @@ local function draw_wheel(size)
   else
     key_txt = spell[key_pc()] .. " major"
   end
-  centered_text(dl, cx, cy - R_DIM * rad * 0.58, key_txt, COL_TXT_IN, 13 * fs, true)
+  key_txt = key_txt .. "  " .. T.KeySignature(S.key_pos)
+  centered_text(dl, cx, cy - R_DIM * rad * 0.58, key_txt, COL_TXT_IN, (#key_txt > 12 and 11 or 13) * fs, true)
   local up_col = (hover and hover.center == "up") and 0x000000FF or COL_TXT_OUT
   local dn_col = (hover and hover.center == "down") and 0x000000FF or COL_TXT_OUT
   local tr = 6 * fs
