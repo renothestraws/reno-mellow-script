@@ -118,3 +118,9 @@ build("ReNo Mellow - Chord Buddy", "ReNo_Mellow_Chord_Buddy", header(main, "vers
       header(main, "changelog"), walk(d, BASE + "/ChordBuddy"),
       no_reg=[BASE + "/ChordBuddy/ChordBuddy_theory.lua", BASE + "/ChordBuddy/ChordBuddy_midi.lua",
               BASE + "/ChordBuddy/ChordBuddy_export.lua"])
+
+# --- Drum Buddy (fenêtre + Display) -------------------------------------------------
+d = os.path.join(ROOT, "DrumBuddy")
+main = os.path.join(d, "ReNo Mellow - Drum Buddy.lua")
+build("ReNo Mellow - Drum Buddy", "ReNo_Mellow_Drum_Buddy", header(main, "version"),
+      header(main, "changelog"), walk(d, BASE + "/DrumBuddy"))

@@ -13,6 +13,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 | **ReNo Mellow - Tool Buddy** (ex Swiss Army Knife) | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et trois raccourcis au choix (ex. W / Shift+W / Ctrl+W) lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, sa bulle Display qui affiche l'outil actif, 24 outils, Next / Previous tool. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Grid Buddy** | La grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles de 1/128 à 4, diviseur et limites, snap, et **Link MIDI editor** (même grille dans l'arrangement et l'éditeur MIDI). Deux mini Displays flottants indépendants, arrangement et éditeur MIDI (molette = taille, clic = menu, Alt = swing) et actions isolées pour les raccourcis (molette, plus large / plus étroite, swing), en double pour l'éditeur MIDI. D'après Gridbox de FeedTheCat. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/GridBuddy/GridBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/GridBuddy/GridBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Chord Buddy** | Roue des quintes pour écrire des accords dans l'éditeur MIDI : un clic pose l'accord au curseur (longueur de la grille ×1 / ×2 / ×4 ou 1 mesure) et le curseur passe à la fin pour enchaîner. Roue qui pivote (la tonalité en haut est active, ses accords en couleur avec leurs degrés, majeur / mineur), inversion de −3 à +3 par case, octave au centre, types 7 / maj7 / 6 / sus2 / sus4 / add9, inversion **Auto** (voice leading), basse ajoutée, voicings Close / Open / Drop 2, strum et humanize, mini clavier. **Display** : nom de l'accord sous le curseur et export des accords sélectionnés (item sur une piste « Chords », take marker, text event, notation event). Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ChordBuddy/ChordBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ChordBuddy/ChordBuddy_manual_EN.pdf) |
+| **ReNo Mellow - Drum Buddy** | Fills de batterie dans l'éditeur MIDI, pensés comme un batteur. Chaque projet a son **batteur** : sa drum map, sa façon de jouer (vélocités, flas et drags, humanize, Rush / Laid back, densité) et ses **16 chops** sur des pads (un clic = chop inséré au curseur). Les chops ne contiennent que les groupes et le sticking : un coup = un pas de la grille de l'éditeur MIDI. **Editor** : presets de rudiments et de découpages (3+3+2, 5+5+6…), groupes, sticking (R / L / K / fla / drag, accents, ghost notes) et orchestration coup par coup ou par groupe. **Again**, **Vary** (nouvelle orchestration), **Random** (nouveau fill dans le style du batteur), **Display** flottant. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/DrumBuddy/DrumBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/DrumBuddy/DrumBuddy_manual_EN.pdf) |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
@@ -45,6 +46,20 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
 - Relancer une action ferme sa fenêtre. Nécessite **ReaImGui**.
 
 **Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ChordBuddy/ChordBuddy_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ChordBuddy/ChordBuddy_manual_EN.pdf)
+
+### ReNo Mellow - Drum Buddy
+
+- Lancer **ReNo Mellow - Drum Buddy** avec un item MIDI de batterie ouvert dans l'éditeur MIDI. Au premier lancement, un **Demo drummer** est créé (drum map General MIDI et 16 chops classiques).
+- **Un batteur par projet** : il est enregistré dans le projet et revient à l'ouverture de la session. Chaque batteur est un fichier de `Data/ReNo_DrumBuddy/drummers` (drum map, jeu, 16 chops), facile à sauvegarder ou partager.
+- Onglet **Drummer** : choix du batteur (New, Duplicate, Delete) et ses **16 pads** : clic = chop inséré au curseur d'édition, pad vide = enregistrer le fill de l'Editor, clic droit = éditer, remplacer, renommer, vider. **Again** (dernier fill, nouvel humanize), **Vary** (même sticking, nouvelle orchestration), **Random** (nouveau fill dans le style du batteur, longueur 1 temps à 2 mesures).
+- Un coup = un pas de la **grille de l'éditeur MIDI** (1/16, 1/32, triolets…) : un chop de 8 coups dure 2 temps en 1/16, 1 temps en 1/32.
+- Onglet **Editor** : presets (rudiments et découpages 3+3+2, 5+5+6, Custom), groupes (en-tête : motif suivant, clic droit : taille, couper, fusionner, copier, inverser R/L), **sticking** (clic : normal > accent > ghost > kick > fla ; clic droit : main, drag) et **orchestration** (molette ou clic droit, élément par coup ou par groupe, coup silencieux). Outils **Sticking** (Random, Accent first / odd / even / beat, Ghost odd / even / offbeat) et **Orchestration** (All snare, All HH, Toms down / up, R ride / L HH, MP, Shuffle), Repeat, Insert, Save to a pad.
+- Onglet **Profile** : vélocités accent / normal / ghost, flas et drags (ms), humanize, Rush / Laid back, densité (ghost notes et kicks de Random et Vary), fin de fill (kick + crash, china…), remplacement des notes, ouverture du Display au démarrage.
+- Onglet **Kit** : drum map du batteur, 29 éléments (6 toms, articulations de caisse claire, charley, ride, crashes, percussions, 2 grosses caisses) : **Detect from note names** (noms de notes chargés dans l'éditeur MIDI), **Load GM**, **Learn** (touche du clavier de l'éditeur MIDI, note sélectionnée ou pad d'un contrôleur).
+- **Display** : petite barre sans titre (cachée sans éditeur MIDI) : batteur, chop choisi à la molette (clic = insérer, clic droit = les 16 pads), Again, Vary, Random, Open.
+- Relancer une action ferme sa fenêtre. Nécessite **ReaImGui**.
+
+**Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/DrumBuddy/DrumBuddy_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/DrumBuddy/DrumBuddy_manual_EN.pdf)
 
 ### ReNo Mellow - Grid Buddy
 
@@ -160,7 +175,7 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation en un fichier (REAPER 7.86 et plus)
 
-Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy, Grid Buddy, Chord Buddy).
+Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy, Grid Buddy, Chord Buddy, Drum Buddy).
 Télécharger le fichier, puis l'ouvrir avec REAPER : les scripts sont installés et ajoutés à la liste d'actions,
 et le paquet peut être désinstallé proprement. Pas de mises à jour automatiques : pour cela, préférer ReaPack.
 
@@ -181,6 +196,9 @@ Grid Buddy en téléchargement direct :
 Chord Buddy en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Chord_Buddy.ReaperPkg>
 
+Drum Buddy en téléchargement direct :
+<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Drum_Buddy.ReaperPkg>
+
 ## Installation manuelle
 
 **REABACK** : télécharger le dossier `REABACK`, puis charger et lancer `REABACK_Install.lua` depuis la liste d'actions
@@ -199,6 +217,9 @@ Chord Buddy en téléchargement direct :
 
 **Chord Buddy** : copier le dossier `ChordBuddy` dans le dossier `Scripts` de REAPER, puis charger
 `ReNo Mellow - Chord Buddy.lua` et `ReNo Mellow - Chord Buddy - Display.lua` dans la liste d'actions.
+
+**Drum Buddy** : copier le dossier `DrumBuddy` dans le dossier `Scripts` de REAPER, puis charger
+`ReNo Mellow - Drum Buddy.lua` et `ReNo Mellow - Drum Buddy - Display.lua` dans la liste d'actions.
 
 **Strip Buddy** : copier `StripBuddy/ReNo Mellow - Strip Buddy.lua` dans le dossier `Scripts` de REAPER, puis le charger dans la liste d'actions.
 
