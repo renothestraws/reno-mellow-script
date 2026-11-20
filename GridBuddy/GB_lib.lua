@@ -443,6 +443,77 @@ function GB.step_fixed(c, dir)
   return true
 end
 
+---------------------------------------------------------------- wheel ladder
+-- The mouse wheel walks one ladder (dir > 0 = wider):
+--   1/32T 1/16T 1/8T | straight sizes, finest -> widest | 1/2D 1/4D 1/8D 1/16D 1/32D
+-- Past the finest straight size come the triplets, past the widest the dotted sizes.
+-- The straight part goes from Min size to Max size (Set up), 1/128 to 4 when empty.
+GB.LADDER_T = { 1 / 32, 1 / 16, 1 / 8 }              -- shown as 1/32T 1/16T 1/8T
+GB.LADDER_D = { 1 / 2, 1 / 4, 1 / 8, 1 / 16, 1 / 32 } -- shown as 1/2D ... 1/32D
+
+function GB.ladder(c)
+  c = GB.eff(c)
+  local mn = tonumber(GB.cget(c, "min_limit", 0)) or 0
+  local mx = tonumber(GB.cget(c, "max_limit", 0)) or 0
+  if mn <= 0 then mn = 1 / 128 end
+  if mx <= 0 then mx = 4 end
+  local L = {}
+  for _, v in ipairs(GB.LADDER_T) do L[#L + 1] = { div = v * 2 / 3, t = "triplet" } end
+  for k = -12, 12 do
+    local v = 2 ^ k
+    if v >= mn - 1e-12 and v <= mx + 1e-12 then L[#L + 1] = { div = v, t = "straight" } end
+  end
+  for _, v in ipairs(GB.LADDER_D) do L[#L + 1] = { div = v * 3 / 2, t = "dotted" } end
+  return L
+end
+
+local function ladder_index(L, d)
+  if not d then return nil end
+  for i, e in ipairs(L) do
+    if math.abs(e.div - d) < 1e-9 then return i end
+  end
+  -- not on the ladder (1/4T, 1/64D, quintuplet...): start from its straight size
+  local s = GB.straight_of(d) or GB.closest_straight(d)
+  local best, best_i = math.huge, nil
+  for i, e in ipairs(L) do
+    if e.t == "straight" then
+      local dist = math.abs(math.log(e.div / s, 2))
+      if dist < best then best, best_i = dist, i end
+    end
+  end
+  return best_i
+end
+
+-- sets a division with its type (straight keeps the swing of the arrange view)
+function GB.set_div_typed(c, v, t)
+  c = GB.eff(c)
+  if c == "midi" then
+    local h = r.MIDIEditor_GetActive()
+    if not h then return GB.no_midi() end
+    local id = t == "triplet" and 41004 or t == "dotted" and 41005 or 41003
+    if r.GetToggleCommandStateEx(32060, id) ~= 1 then r.MIDIEditor_OnCommand(h, id) end
+    r.SetMIDIEditorGrid(0, v)
+    return true
+  end
+  GB.leave_special()
+  local _, sw, amt = GB.get_grid()
+  if t ~= "straight" then sw = 0 end
+  r.GetSetProjectGrid(0, true, v, sw, amt)
+  return true
+end
+
+function GB.step_ladder(c, dir)
+  local d = GB.current(c)
+  if not d then if GB.eff(c) == "midi" then GB.no_midi() end return false end
+  local L = GB.ladder(c)
+  local i = ladder_index(L, d)
+  if not i then return false end
+  -- on the ladder: next rung; off the ladder (1/4T, 1/64D...): first its straight size
+  local j = math.abs(L[i].div - d) < 1e-9 and i + dir or i
+  if j < 1 or j > #L then return false end
+  return GB.set_div_typed(c, L[j].div, L[j].t)
+end
+
 ---------------------------------------------------------------- spacing (visible grid)
 function GB.min_spacing()
   local ok, v = r.get_config_var_string("projgridmin")
@@ -559,7 +630,7 @@ function GB.run_action(path)
   if c == "midi" and not GB.midi_editor() then return GB.no_midi() end
   if name == "Adjust grid (mousewheel)" then
     local rev = GB.flag("wheel_rev", false) and -1 or 1
-    GB.step_fixed(c, (val or 0) * rev < 0 and 1 or -1)
+    GB.step_ladder(c, (val or 0) * rev < 0 and 1 or -1)
   elseif name == "Wider grid" then GB.step_fixed(c, 1)
   elseif name == "Narrower grid" then GB.step_fixed(c, -1)
   elseif name == "Toggle swing" then GB.set_type(c, "swing")
