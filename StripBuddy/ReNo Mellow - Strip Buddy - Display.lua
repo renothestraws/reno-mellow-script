@@ -1,7 +1,7 @@
 -- @noindex
 -- ReNo Mellow - Strip Buddy - Display
 -- Small floating bar: Zoom / View / Scroll / Select on the left, the project's tags on the right.
--- Settings (View in TCP / MCP / both, Scroll in TCP / MCP / both, reopen at startup) are in the
+-- Settings (View in TCP / MCP / both, Scroll in TCP / MCP / both, size, opacity, reopen at startup) are in the
 -- Strip Buddy window, tab "Display". Run the action again to close the Display.
 
 local TITLE = "Strip Buddy Display"
@@ -41,7 +41,18 @@ local opt = {
   scroll = get("disp_opt_scroll", "1") == "1",
   select = get("disp_opt_select", "0") == "1",
 }
-local font_size = tonumber(get("disp_font", "16")) or 16
+-- size (text size in px, the whole bar follows) and background opacity, also set from
+-- the Display tab of the main window: read again on every frame
+local SIZE_MIN, SIZE_MAX = 10, 36
+local function read_size()
+  local v = math.floor(tonumber(get("disp_font", "16")) or 16)
+  return math.max(SIZE_MIN, math.min(SIZE_MAX, v))
+end
+local function read_opacity()
+  local v = tonumber(get("disp_opacity", "1")) or 1
+  return math.max(0.2, math.min(1, v))
+end
+local font_size, opacity = read_size(), read_opacity()
 
 --------------------------------------------------------------------------------
 -- Startup block (Scripts/__startup.lua)
@@ -250,7 +261,8 @@ end
 package.path = reaper.ImGui_GetBuiltinPath() .. "/?.lua"
 local ImGui = require "imgui" "0.9"
 
-local FONT_SIZES = { 12, 14, 16, 18, 20, 24, 28 }
+local FONT_SIZES = {}
+for sz = SIZE_MIN, SIZE_MAX do FONT_SIZES[#FONT_SIZES + 1] = sz end
 local ctx, fonts
 local current = nil -- nil = All
 
@@ -321,6 +333,8 @@ end
 local function draw()
   local flags = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoDocking | ImGui.WindowFlags_AlwaysAutoResize |
                 ImGui.WindowFlags_NoScrollbar | ImGui.WindowFlags_NoCollapse
+  font_size, opacity = read_size(), read_opacity()
+  ImGui.SetNextWindowBgAlpha(ctx, opacity)
   local visible, open = ImGui.Begin(ctx, TITLE, true, flags)
   if not visible then return open end
   ImGui.PushFont(ctx, fonts[font_size] or fonts[16])
@@ -404,10 +418,12 @@ local function draw()
 
   -- right-click menu
   if ImGui.BeginPopupContextWindow(ctx, "dispmenu", ImGui.PopupFlags_MouseButtonRight | ImGui.PopupFlags_NoOpenOverItems) then
-    ImGui.TextDisabled(ctx, "Text size")
-    for _, s in ipairs(FONT_SIZES) do
-      if ImGui.MenuItem(ctx, tostring(s) .. "##fs", nil, s == font_size) then font_size = s; set("disp_font", s) end
-    end
+    ImGui.SetNextItemWidth(ctx, 160)
+    local rvs, vs = ImGui.SliderInt(ctx, "Size##dsize", font_size, SIZE_MIN, SIZE_MAX)
+    if rvs then set("disp_font", vs) end
+    ImGui.SetNextItemWidth(ctx, 160)
+    local rvo, vo = ImGui.SliderInt(ctx, "Opacity##dop", math.floor(opacity * 100 + 0.5), 20, 100, "%d %%")
+    if rvo then set("disp_opacity", vo / 100) end
     ImGui.Separator(ctx)
     local st = get("disp_startup", "1") ~= "0"
     if ImGui.MenuItem(ctx, "Reopen when REAPER starts", nil, st) then
