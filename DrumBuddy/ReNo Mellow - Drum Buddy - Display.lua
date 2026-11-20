@@ -77,6 +77,29 @@ end)
 ---------------------------------------------------------------------------
 local pad = tonumber(reaper.GetExtState(EXT, "disp_pad")) or 1
 local ctx, ctx_wait = nil, 0
+
+-- Size and opacity (also set in Drum Buddy > Profile)
+local FONT_SIZES = { 10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28 }
+local fonts = {}
+local function disp_size()
+  local v = tonumber(reaper.GetExtState(EXT, "disp_size")) or 13
+  local best = FONT_SIZES[1]
+  for _, sz in ipairs(FONT_SIZES) do if math.abs(sz - v) < math.abs(best - v) then best = sz end end
+  return best
+end
+local function disp_alpha()
+  local v = tonumber(reaper.GetExtState(EXT, "disp_alpha")) or 90
+  return math.max(15, math.min(100, v))
+end
+local function make_ctx()
+  ctx = ImGui.CreateContext(SCRIPT_NAME)   -- same name: ReaImGui keeps the position
+  fonts = {}
+  for _, sz in ipairs(FONT_SIZES) do
+    local f = ImGui.CreateFont("sans-serif", sz)
+    ImGui.Attach(ctx, f)
+    fonts[sz] = f
+  end
+end
 local pending = nil
 local msg, msg_err, msg_time = "", false, 0
 
@@ -128,6 +151,7 @@ end
 -- Interface
 ---------------------------------------------------------------------------
 local function draw()
+  local k = disp_size() / 13   -- widths follow the text size
   local d = DB.drummer()
   if not d.chops[pad] then
     local f = filled()
@@ -141,7 +165,7 @@ local function draw()
   if ImGui.ArrowButton(ctx, "##prev", ImGui.Dir_Left) then step_pad(-1) end
   ImGui.SameLine(ctx, 0, 2)
   local label = c and (pad .. ". " .. c.name) or "No chop yet"
-  if ImGui.Button(ctx, label .. "##chop", 200, 0) and c then
+  if ImGui.Button(ctx, label .. "##chop", math.floor(200 * k), 0) and c then
     local i = pad
     pending = function() DB.insert_chop(i); after() end
   end
@@ -189,7 +213,7 @@ local function draw()
       local ci = d.chops[i]
       local short = ci and ci.name or "-"
       if #short > 12 then short = short:sub(1, 11) .. "." end
-      if ImGui.Button(ctx, i .. " " .. short .. "##p" .. i, 120, 34) and ci then
+      if ImGui.Button(ctx, i .. " " .. short .. "##p" .. i, math.floor(120 * k), math.floor(34 * k)) and ci then
         pad = i
         reaper.SetExtState(EXT, "disp_pad", tostring(i), true)
         pending = function() DB.insert_chop(i); after() end
@@ -209,6 +233,17 @@ local function draw()
   end
 
   if ImGui.BeginPopup(ctx, "##dispmenu") then
+    ImGui.SetNextItemWidth(ctx, math.floor(160 * k))
+    local c1, v1 = ImGui.SliderInt(ctx, "##dsize", disp_size(), 10, 28, "Text size %d")
+    if c1 then reaper.SetExtState(EXT, "disp_size", tostring(v1), true) end
+    ImGui.SetNextItemWidth(ctx, math.floor(160 * k))
+    local c2, v2 = ImGui.SliderInt(ctx, "##dalpha", disp_alpha(), 15, 100, "Opacity %d %%")
+    if c2 then reaper.SetExtState(EXT, "disp_alpha", tostring(v2), true) end
+    local on = reaper.GetExtState(EXT, "display_open") == "1"
+    if ImGui.MenuItem(ctx, "Open with REAPER", nil, on) then
+      reaper.SetExtState(EXT, "display_open", on and "0" or "1", true)
+    end
+    ImGui.Separator(ctx)
     if ImGui.MenuItem(ctx, "Open / close Drum Buddy") then pending = toggle_main end
     ImGui.Separator(ctx)
     if ImGui.MenuItem(ctx, "Close the Display") then close_display() end
@@ -239,14 +274,17 @@ local function frame()
   end
   if not ctx then
     if now < ctx_wait then reaper.defer(frame); return end
-    ctx = ImGui.CreateContext(SCRIPT_NAME)   -- same name: ReaImGui keeps the position
+    make_ctx()
   end
 
   DB.sync()
 
+  ImGui.SetNextWindowBgAlpha(ctx, disp_alpha() / 100)
   local visible = ImGui.Begin(ctx, "Drum Buddy Display###ReNoDrumBuddyDisplay", nil, WFLAGS)
   if visible then
+    ImGui.PushFont(ctx, fonts[disp_size()])
     draw()
+    ImGui.PopFont(ctx)
     ImGui.End(ctx)
   end
   if pending then

@@ -1,15 +1,15 @@
 -- @description ReNo Mellow - Drum Buddy
 -- @author ReNo Mellow
--- @version 1.1.2
+-- @version 1.2
 -- @about Fills de batterie par profils de batteurs : 16 chops par batteur (sticking par groupes), insertion à la grille de l'éditeur MIDI
--- @changelog Première version publique : profils de batteurs liés au projet (drum map, jeu, 16 chops), éditeur de chops par groupes (sticking et orchestration), insertion à la grille, Again / Vary / Random, Display
+-- @changelog Trois batteurs de base (Charlie rock-pop, Mike metal, Buddie jazz-gospel) ; le Demo drummer est supprimé ; Export et Import de batteurs ; Display : taille du texte et opacité réglables, ouverture au démarrage de REAPER (option)
 -- @provides
 --   [main] ReNo Mellow - Drum Buddy - Display.lua
 
 -- Requires ReaImGui (0.9 or later)
 
 local SCRIPT_NAME = "ReNo Mellow - Drum Buddy"
-local VERSION = "1.1.2"
+local VERSION = "1.2"
 local EXT = "ReNo_DrumBuddy"
 
 if not reaper.ImGui_GetBuiltinPath then
@@ -766,43 +766,209 @@ local function sync_drummer()
 end
 
 ---------------------------------------------------------------------------
--- Demo drummer (created on the first run)
+-- Factory drummers (created once; a deleted one does not come back)
+-- chop = { name, { { sticking, piece of the group, pieces per stroke (optional) }, ... } }
+-- pieces per stroke use the short names (S, T1, H, HO, R, RB, C1, CH...), K / K2 for kick strokes
 ---------------------------------------------------------------------------
-local DEMO = {
-  { "Paradiddle",       { { "R> L R R", "snare" }, { "L> R L L", "snare" } } },
-  { "Paradiddle toms",  { { "R> L R R", "tom1" }, { "L> R L L", "tom3" } } },
-  { "Six stroke roll",  { { "R> L L R R L>", "snare" } } },
-  { "Double paradiddle", { { "R> L R L R R", "snare" }, { "L> R L R L L", "tom2" } } },
-  { "RLK around",       { { "R> L K", "snare" }, { "R> L K", "tom1" }, { "R> L K", "tom2" }, { "R> L K", "tom3" } } },
-  { "3+3+2 toms",       { { "R> L L", "snare" }, { "R> L L", "tom1" }, { "R> L", "tom3" } } },
-  { "Singles down",     { { "R> L R L", "snare" }, { "R> L R L", "tom1" }, { "R> L R L", "tom2" }, { "R> L R L", "tom3" } } },
-  { "Doubles",          { { "R R L L", "snare" }, { "R R L L", "tom3" } } },
-  { "Flam taps",        { { "fR R", "snare" }, { "fL L", "snare" } } },
-  { "Swiss triplets",   { { "fR R L", "snare" }, { "fR R L", "tom1" } } },
-  { "Linear RLKK",      { { "R> L K K", "snare" }, { "R> L K K", "tom1" } } },
-  { "Ghost paradiddle", { { "R> L- R- R-", "snare" }, { "L> R- L- L-", "snare" } } },
-  { "Five stroke",      { { "R R L L R>", "snare" }, { "L L R R L>", "tom3" } } },
-  { "Drag taps",        { { "dR L>", "snare" }, { "dL R>", "snare" } } },
-  { "5+5+6",            { { "R> L R L K", "snare" }, { "R> L R L K", "tom1" }, { "R> L R L R L", "tom3" } } },
-  { "Ratamacue",        { { "dR L R L>", "snare" }, { "dL R L R>", "tom1" } } },
+local create_factory_drummer, FACTORY
+do
+FACTORY = {
+  { name = "Charlie", style = "rock-pop",
+    profile = { vacc = 115, vnorm = 90, vghost = 40, flam_ms = 25, drag_ms = 30, hum_vel = 8, hum_time = 5,
+                feel = 0, density = 30, crash = true, crash_piece = "crash1", rand_cym = false },
+    chops = {
+      { "Snare 8",          { { "R> L R L R> L R L", "snare" } } },
+      { "Snare to toms",    { { "R> L R L", "snare" }, { "R> L R L", "tom1" }, { "R> L R L", "tom2" }, { "R> L R L", "tom3" } } },
+      { "Full HH accents",  { { "R> L- R L- R> L- R L-", "hh_closed", "HO H H H HO H H H" } } },
+      { "Full HH kick",     { { "R L K L R L K L", "hh_closed", "H H K H H H K H" } } },
+      { "Fours down",       { { "R> L R L", "tom1" }, { "R> L R L", "tom3" } } },
+      { "Triplets around",  { { "R> L L", "snare" }, { "R> L L", "tom1" }, { "R> L L", "tom2" }, { "R> L L", "tom3" } } },
+      { "Flam fill",        { { "fR L R L", "snare" }, { "fR L R L", "tom3" } } },
+      { "RLRLKK",           { { "R> L R L K K", "snare" }, { "R> L R L K K", "tom3" } } },
+      { "Snare build",      { { "R> L R L R> L R L", "snare" }, { "R> L R L R> L R L", "snare" } } },
+      { "Paradiddle toms",  { { "R> L R R", "tom1" }, { "L> R L L", "tom3" } } },
+      { "Doubles",          { { "R R L L", "snare" }, { "R R L L", "tom1" } } },
+      { "Ride bell lift",   { { "R> L R> L R> L R> L", "snare", "RB S RB S RB S RB S" } } },
+      { "3+3+2 toms",       { { "R> L L", "snare" }, { "R> L L", "tom1" }, { "R> L", "tom3" } } },
+      { "HH open lift",     { { "R L R L R L R> L", "hh_closed", "H H H H H H HO H" } } },
+      { "RLKK",             { { "R> L K K", "snare" }, { "R> L K K", "tom3" } } },
+      { "Big ending",       { { "R> L R L", "tom1" }, { "R> L R L", "tom2" }, { "R> L R L", "tom3" }, { "R> L R L", "snare" } } },
+    } },
+  { name = "Mike", style = "metal",
+    profile = { vacc = 127, vnorm = 110, vghost = 55, flam_ms = 15, drag_ms = 20, hum_vel = 4, hum_time = 2,
+                feel = 0, density = 60, crash = true, crash_piece = "china", rand_cym = false },
+    chops = {
+      { "SSKK x4",          { { "R L K K", "snare" }, { "R L K K", "snare" }, { "R L K K", "snare" }, { "R L K K", "snare" } } },
+      { "SSSSKK",           { { "R L R L K K", "snare" }, { "R L R L K K", "snare" }, { "R L R L", "snare" } } },
+      { "Blast",            { { "R K L K R K L K", "snare", "S K S K S K S K" } } },
+      { "Double kick run",  { { "K K K K K K K K", "snare", "K K2 K K2 K K2 K K2" } } },
+      { "RLK toms",         { { "R> L K", "tom1" }, { "R> L K", "tom2" }, { "R> L K", "tom3" }, { "R> L K", "tom4" } } },
+      { "Six stroke toms",  { { "R> L L R R L>", "tom1" }, { "R> L L R R L>", "tom3" } } },
+      { "Linear RLKK",      { { "R> L K K", "snare" }, { "R> L K K", "tom1" }, { "R> L K K", "tom2" }, { "R> L K K", "tom3" } } },
+      { "China accents",    { { "R> L R L", "snare", "CH S S S" }, { "R> L R L", "snare", "CH S S S" } } },
+      { "Sextuplets down",  { { "R> L R L R L", "snare" }, { "R> L R L R L", "tom1" }, { "R> L R L R L", "tom3" } } },
+      { "5+5+6 kicks",      { { "R> L R L K", "snare" }, { "R> L R L K", "tom1" }, { "R> L R L K K", "tom3" } } },
+      { "Paradiddle kicks", { { "R> L R K", "snare" }, { "L> R L K", "tom1" } } },
+      { "Doubles toms",     { { "R R L L", "tom1" }, { "R R L L", "tom2" }, { "R R L L", "tom3" }, { "R R L L", "tom4" } } },
+      { "Cymbal kicks",     { { "R K L K", "snare", "C1 K CH K" }, { "R K L K", "snare", "C1 K CH K" } } },
+      { "Gallop",           { { "R K K", "snare" }, { "R K K", "snare" }, { "R K K", "tom1" }, { "R K K", "tom3" } } },
+      { "Swiss toms",       { { "fR R L", "tom1" }, { "fR R L", "tom3" } } },
+      { "Stop ending",      { { "R> L> R> L>", "snare", "S S T1 T1" }, { "K K K K", "snare", "K K2 K K2" } } },
+    } },
+  { name = "Buddie", style = "jazz-gospel",
+    profile = { vacc = 105, vnorm = 75, vghost = 30, flam_ms = 30, drag_ms = 35, hum_vel = 15, hum_time = 10,
+                feel = 6, density = 70, crash = true, crash_piece = "crash2", rand_cym = true },
+    chops = {
+      { "Swing triplets",   { { "R- L- R>", "snare" }, { "R- L- R>", "snare" }, { "R- L- R>", "snare" }, { "R- L- R>", "snare" } } },
+      { "Comping ghosts",   { { "R- L- R- L> R- L-", "snare" } } },
+      { "Ride and snare",   { { "R L- R", "ride", "R S R" }, { "R L- R", "ride", "R S R" }, { "R L> R", "ride", "R S R" } } },
+      { "Gospel RLLK",      { { "R> L L K", "snare" }, { "R> L L K", "tom1" }, { "R> L L K", "tom2" }, { "R> L L K", "tom3" } } },
+      { "Gospel RLK",       { { "R> L K R L K", "snare" }, { "R> L K R L K", "tom1" } } },
+      { "Paradiddle-diddle", { { "R> L R R L L", "snare" }, { "R> L R R L L", "tom1" } } },
+      { "Ratamacue",        { { "dR L R L>", "snare" }, { "dL R L R>", "tom1" } } },
+      { "Flam drags",       { { "fR L L", "snare" }, { "fR L L", "tom3" } } },
+      { "Pataflafla",       { { "fR L R fL", "snare" }, { "fR L R fL", "tom1" } } },
+      { "Swiss triplets",   { { "fR R L", "snare" }, { "fR R L", "tom1" } } },
+      { "Single drag tap",  { { "dR L>", "snare" }, { "dL R>", "snare" } } },
+      { "Six stroke roll",  { { "R> L L R R L>", "snare" } } },
+      { "Soft doubles",     { { "R- R- L- L-", "snare" }, { "R- R- L> L-", "snare" } } },
+      { "Gospel run",       { { "R L K K", "snare" }, { "R L K K", "tom1" }, { "R L K K", "tom2" }, { "R> L K K", "tom3" } } },
+      { "Bebop kicks",      { { "R- L- K", "snare", "R S K" }, { "R- L- K", "snare", "R S K" }, { "R L> K", "snare", "R S K" } } },
+      { "Ride bell gospel", { { "R> L K", "snare", "RB S K" }, { "R> L K", "snare", "RB S K" }, { "R> L K", "snare", "RB S K" } } },
+    } },
 }
 
-local function create_demo()
+local AB_KEY = { ["-"] = REST }
+for _, p in ipairs(PIECES) do AB_KEY[p.ab] = p.key end
+
+local function factory_groups(spec)
+  local list = {}
+  for _, gspec in ipairs(spec) do
+    local g = new_group(gspec[1], 0)
+    set_group_piece(g, gspec[2], true)
+    if gspec[3] then
+      local codes = {}
+      for c in gspec[3]:gmatch("%S+") do codes[#codes + 1] = c end
+      for i, st in ipairs(g.strokes) do
+        local key = AB_KEY[codes[i] or ""]
+        if key then
+          if st.h == "K" then
+            st.piece = (key == "kick2") and "kick2" or "kick"
+          elseif key ~= "kick" and key ~= "kick2" then
+            st.piece = key
+          end
+        end
+      end
+    end
+    list[#list + 1] = g
+  end
+  return list
+end
+
+function create_factory_drummer(f)
   reaper.RecursiveCreateDirectory(DRUM_DIR, 0)
   for k, v in pairs(PROFILE_DEFAULT) do S[k] = v end
+  for k, v in pairs(f.profile) do S[k] = v end
   map = gm_map()
-  drummer = { name = "Demo drummer", file = unique_file("Demo drummer"), chops = {} }
-  for i, c in ipairs(DEMO) do
-    local gs = {}
-    for _, spec in ipairs(c[2]) do
-      local g = new_group(spec[1], 0)
-      set_group_piece(g, spec[2], true)
-      gs[#gs + 1] = g
-    end
-    drummer.chops[i] = { name = c[1], data = serialize_groups(gs) }
+  drummer = { name = f.name, file = unique_file(f.name), chops = {} }
+  for i, c in ipairs(f.chops) do
+    drummer.chops[i] = { name = c[1], data = serialize_groups(factory_groups(c[2])) }
   end
   save_drummer()
-  reaper.SetExtState(EXT, "last_drummer", drummer.file, true)
+end
+
+end
+
+-- The "Demo drummer" of 1.0-1.1 is replaced by the factory drummers: removed once
+local function remove_demo()
+  if reaper.GetExtState(EXT, "demo_removed") == "1" then return end
+  scan_drummers()
+  local last = reaper.GetExtState(EXT, "last_drummer")
+  for _, d in ipairs(drummers) do
+    if d.name == "Demo drummer" then
+      os.remove(DRUM_DIR .. "/" .. d.file)
+      if last == d.file then reaper.SetExtState(EXT, "last_drummer", "", true) end
+    end
+  end
+  reaper.SetExtState(EXT, "demo_removed", "1", true)
+  scan_drummers()
+end
+
+-- force = true: create them even if they were created before (no drummer left)
+local function create_factory(force)
+  if not force and reaper.GetExtState(EXT, "factory") == "1" then return end
+  scan_drummers()
+  local have = {}
+  for _, d in ipairs(drummers) do have[d.name] = true end
+  for _, f in ipairs(FACTORY) do
+    if not have[f.name] then create_factory_drummer(f) end
+  end
+  reaper.SetExtState(EXT, "factory", "1", true)
+  scan_drummers()
+  if reaper.GetExtState(EXT, "last_drummer") == "" or force then
+    for _, d in ipairs(drummers) do
+      if d.name == "Charlie" then reaper.SetExtState(EXT, "last_drummer", d.file, true) end
+    end
+  end
+end
+
+---------------------------------------------------------------------------
+-- Export / import a drummer (one text file: name, drum map, profile, 16 chops)
+---------------------------------------------------------------------------
+local EXPORT_DIR = DATA_DIR .. "/exports"
+
+local function export_drummer()
+  if profile_dirty then save_drummer() end
+  local src = DRUM_DIR .. "/" .. drummer.file
+  local fn = file_safe(drummer.name) .. ".txt"
+  local dest
+  if reaper.JS_Dialog_BrowseForSaveFile then
+    local ok, path = reaper.JS_Dialog_BrowseForSaveFile("Export drummer", EXPORT_DIR, fn, "Drummer (*.txt)\0*.txt\0\0")
+    if ok ~= 1 or not path or path == "" then return end
+    if not path:lower():match("%.txt$") then path = path .. ".txt" end
+    dest = path
+  else
+    reaper.RecursiveCreateDirectory(EXPORT_DIR, 0)
+    dest = EXPORT_DIR .. "/" .. fn
+  end
+  local i, o = io.open(src, "rb"), io.open(dest, "wb")
+  if not i or not o then
+    if i then i:close() end
+    if o then o:close() end
+    set_status("Cannot export to " .. dest, true); return
+  end
+  o:write(i:read("*a")); i:close(); o:close()
+  set_status("Drummer exported: " .. dest)
+  if not reaper.JS_Dialog_BrowseForSaveFile and reaper.CF_LocateInExplorer then reaper.CF_LocateInExplorer(dest) end
+end
+
+local function import_drummer()
+  local ok, path = reaper.GetUserFileNameForRead(EXPORT_DIR .. "/", "Import drummer", "txt")
+  if not ok or not path or path == "" then return end
+  local h = io.open(path, "rb")
+  if not h then set_status("Cannot read " .. path, true); return end
+  local data = h:read("*a"); h:close()
+  local name = data:match("^name=([^\r\n]*)") or data:match("\nname=([^\r\n]*)")
+  if not name or not data:find("\nmap=", 1, true) then
+    set_status("This file is not a Drum Buddy drummer.", true); return
+  end
+  scan_drummers()
+  local base, n = name, 2
+  local taken = {}
+  for _, d in ipairs(drummers) do taken[d.name] = true end
+  while taken[name] do name = base .. " " .. n; n = n + 1 end
+  if name ~= base then data = data:gsub("name=[^\r\n]*", "name=" .. name:gsub("%%", "%%%%"), 1) end
+  local file = unique_file(name)
+  reaper.RecursiveCreateDirectory(DRUM_DIR, 0)
+  local o = io.open(DRUM_DIR .. "/" .. file, "wb")
+  if not o then set_status("Cannot write the drummer file.", true); return end
+  o:write(data); o:close()
+  scan_drummers()
+  if profile_dirty then save_drummer() end
+  if load_drummer(file) then
+    link_project(file)
+    set_status("Drummer imported: " .. name .. " (saved in this project)")
+  end
 end
 
 local function new_drummer(name, copy)
@@ -840,7 +1006,7 @@ local function delete_drummer()
   os.remove(DRUM_DIR .. "/" .. drummer.file)
   profile_dirty = false
   scan_drummers()
-  if #drummers == 0 then create_demo(); scan_drummers() end
+  if #drummers == 0 then create_factory(true) end
   select_drummer(drummers[1].file)
   set_status("Drummer deleted: " .. gone)
 end
@@ -1455,7 +1621,7 @@ local function draw_drummer()
   local avail = ImGui.GetContentRegionAvail(ctx)
 
   -- drummer of the project
-  ImGui.SetNextItemWidth(ctx, math.max(140, avail - 230))
+  ImGui.SetNextItemWidth(ctx, math.max(120, avail - 360))
   if ImGui.BeginCombo(ctx, "##drummer", drummer.name) then
     if ImGui.IsWindowAppearing(ctx) then scan_drummers() end
     for i, d in ipairs(drummers) do
@@ -1470,6 +1636,12 @@ local function draw_drummer()
   if ImGui.Button(ctx, "Duplicate") then dr_name_buf = drummer.name .. " copy"; dr_copy = true; open_new = true end
   ImGui.SameLine(ctx)
   if ImGui.Button(ctx, "Delete") then open_del = true end
+  ImGui.SameLine(ctx)
+  if ImGui.Button(ctx, "Export") then pending = export_drummer end
+  if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, "Save this drummer in a file (drum map, profile, 16 chops)") end
+  ImGui.SameLine(ctx)
+  if ImGui.Button(ctx, "Import") then pending = import_drummer end
+  if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, "Load a drummer from a file and use it in this project") end
 
   if project_drummer() == drummer.file then
     ImGui.TextDisabled(ctx, "Drummer of this project")
@@ -1863,8 +2035,43 @@ local function draw_profile()
   if c3 then G.replace = v3; save_global() end
   local dopen = reaper.GetExtState(EXT, "display_open") == "1"
   local c4, v4 = ImGui.Checkbox(ctx, "Open the Display when REAPER starts", dopen)
-  if c4 then reaper.SetExtState(EXT, "display_open", v4 and "1" or "0", true) end
-  if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, "Run the Display action once so that it can add itself to REAPER startup") end
+  if c4 then
+    reaper.SetExtState(EXT, "display_open", v4 and "1" or "0", true)
+    if v4 then
+      -- add the startup block once (Scripts/__startup.lua); it opens the Display only while this box is ticked
+      local _, me = reaper.get_action_context()
+      local disp = (me:match("^(.*)[/\\]") or "") .. "/ReNo Mellow - Drum Buddy - Display.lua"
+      local path = reaper.GetResourcePath() .. "/Scripts/__startup.lua"
+      local f = io.open(path, "r")
+      local content = f and f:read("*a") or ""
+      if f then f:close() end
+      if not content:find("ReNo Mellow Drum Buddy Display", 1, true) and reaper.file_exists(disp) then
+        local w = io.open(path, "a")
+        if w then
+          w:write("\n-- >>> ReNo Mellow Drum Buddy Display (added by the script)\n"
+            .. "do\n"
+            .. "  local p = " .. string.format("%q", disp) .. "\n"
+            .. "  if reaper.GetExtState(\"ReNo_DrumBuddy\", \"display_open\") == \"1\" and reaper.file_exists(p) then\n"
+            .. "    local c = reaper.AddRemoveReaScript(true, 0, p, true)\n"
+            .. "    if c and c ~= 0 then reaper.Main_OnCommand(c, 0) end\n"
+            .. "  end\n"
+            .. "end\n"
+            .. "-- <<< ReNo Mellow Drum Buddy Display\n")
+          w:close()
+        end
+      end
+    end
+  end
+  if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, "The Display opens by itself each time REAPER starts") end
+  local dsize = tonumber(reaper.GetExtState(EXT, "disp_size")) or 13
+  local dalpha = tonumber(reaper.GetExtState(EXT, "disp_alpha")) or 90
+  ImGui.SetNextItemWidth(ctx, half)
+  local c5, v5 = ImGui.SliderInt(ctx, "##dsize", dsize, 10, 28, "Display text size %d")
+  if c5 then reaper.SetExtState(EXT, "disp_size", tostring(v5), true) end
+  ImGui.SameLine(ctx)
+  ImGui.SetNextItemWidth(ctx, half)
+  local c6, v6 = ImGui.SliderInt(ctx, "##dalpha", dalpha, 15, 100, "Display opacity %d %%")
+  if c6 then reaper.SetExtState(EXT, "disp_alpha", tostring(v6), true) end
 end
 
 ---------------------------------------------------------------------------
@@ -1966,12 +2173,14 @@ end
 
 
 ---------------------------------------------------------------------------
--- Start: first run = demo drummer
+-- Start: factory drummers on the first run
 ---------------------------------------------------------------------------
 load_global()
 reaper.RecursiveCreateDirectory(DRUM_DIR, 0)
 scan_drummers()
-if #drummers == 0 then create_demo(); scan_drummers() end
+remove_demo()
+create_factory(false)
+if #drummers == 0 then create_factory(true) end
 sync_drummer()
 build_groups()
 
