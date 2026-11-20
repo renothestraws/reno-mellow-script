@@ -79,9 +79,17 @@ local function text_size()
 end
 local function opt(k, d) return GB.flag(P .. k, d) end
 
-local function alt_down() return (ImGui.GetKeyMods(ctx) & ImGui.Mod_Alt) ~= 0 end
-local function ctrl_down() return (ImGui.GetKeyMods(ctx) & ImGui.Mod_Ctrl) ~= 0 end
-local function shift_down() return (ImGui.GetKeyMods(ctx) & ImGui.Mod_Shift) ~= 0 end
+-- Modifier keys: ImGui only sees them when the Display has the keyboard focus, which is
+-- rarely the case (the focus stays in the arrange view). js_ReaScriptAPI reads the real
+-- keyboard state (4 = Ctrl, 8 = Shift, 16 = Alt), whatever window has the focus.
+local function mod_down(imgui_mod, js_bit)
+  if (ImGui.GetKeyMods(ctx) & imgui_mod) ~= 0 then return true end
+  if reaper.JS_Mouse_GetState then return reaper.JS_Mouse_GetState(js_bit) & js_bit ~= 0 end
+  return false
+end
+local function alt_down() return mod_down(ImGui.Mod_Alt, 16) end
+local function ctrl_down() return mod_down(ImGui.Mod_Ctrl, 4) end
+local function shift_down() return mod_down(ImGui.Mod_Shift, 8) end
 
 -- Shift+wheel: straight -> triplet -> dotted (and back)
 local TYPE_CYCLE = { "straight", "triplet", "dotted" }
@@ -214,10 +222,12 @@ end
 local function handle_grid(hovered)
   if not hovered then return end
   local wheel, wheel_h = ImGui.GetMouseWheel(ctx)
-  -- some systems turn Shift+wheel into a horizontal wheel
-  if shift_down() and wheel == 0 then wheel = wheel_h or 0 end
+  local shift = shift_down()
+  -- macOS (and some mice) turn Shift+wheel into a horizontal wheel: a horizontal wheel
+  -- always changes the type, with or without Shift seen
+  if wheel == 0 and (wheel_h or 0) ~= 0 then wheel = wheel_h shift = true end
   if wheel ~= 0 then
-    if shift_down() then
+    if shift then
       local dir = wheel > 0 and 1 or -1 -- wheel up = straight -> triplet -> dotted
       if GB.flag("wheel_rev", false) then dir = -dir end
       later(function() cycle_type(dir) end)

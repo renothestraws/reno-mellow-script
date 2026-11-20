@@ -56,7 +56,7 @@ Durée pour un morceau de 4 min : 20 s à 1 min avec une carte NVIDIA ou un Mac 
   - Chacun garde sa place et sa taille de texte, se rouvre au démarrage de REAPER s'il était ouvert ; relancer son action le ferme.
 - **Actions isolées** (section Main, et dans la section MIDI Editor sous le nom « Grid Buddy MIDI ») : Adjust grid (mousewheel), Wider grid, Narrower grid, Toggle swing. L'action « mousewheel » est à associer à une molette (ex. Ctrl+molette) dans la liste d'actions.
 - Les réglages d'Adaptive Grid / Gridbox (FeedTheCat) sont repris au premier lancement. Ne pas les faire tourner en même temps que Grid Buddy.
-- Nécessite **ReaImGui**.
+- Nécessite **ReaImGui** ; **js_ReaScriptAPI** est conseillée : sans elle, Shift / Alt / Ctrl + molette sur un Display ne sont vus que si le Display a le focus (cliquer dessus d'abord).
 
 **Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/GridBuddy/GridBuddy_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/GridBuddy/GridBuddy_manual_EN.pdf)
 

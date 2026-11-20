@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Grid Buddy
 -- @author ReNo Mellow
--- @version 1.3
+-- @version 1.4
 -- @about Grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles de 1/128 à 4, diviseur et limites, snap, lien avec l'éditeur MIDI (option « Use the same grid division »), deux mini Displays indépendants, arrangement et éditeur MIDI (molette = taille), et actions isolées. D'après Gridbox de FeedTheCat. Nécessite ReaImGui.
--- @changelog Displays : Shift+molette sur la grille = straight -> triplet -> dotted
+-- @changelog Displays : Shift+molette (et Alt / Ctrl) fonctionne même quand le Display n'a pas le focus (js_ReaScriptAPI) ; molette horizontale = type de grille
 -- @provides
 --   GB_lib.lua
 --   GB_startup.lua
