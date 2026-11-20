@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Chord Buddy
 -- @author ReNo Mellow
--- @version 1.1
+-- @version 1.2
 -- @about Roue des quintes pour créer des accords dans l'éditeur MIDI (inversions, voicings, auto voice leading) + Display du nom de l'accord et export
--- @changelog Armure de chaque tonalité affichée sur la roue (1#, 3b...) et au centre à côté de la tonalité active
+-- @changelog Inversion réglée avec des boutons - / + sur chaque case (clic sur le chiffre = 0) au lieu de la molette
 -- @provides
 --   [main] ReNo Mellow - Chord Buddy - Display.lua
 --   ChordBuddy_theory.lua
@@ -12,7 +12,7 @@
 -- Requires ReaImGui (0.9 or later)
 
 local r = reaper
-local VERSION = "1.1"
+local VERSION = "1.2"
 local EXT = "ReNo_ChordBuddy"
 local TITLE = "Chord Buddy"
 
@@ -244,7 +244,8 @@ end
 
 local R_OUT, R_MAJ, R_MIN, R_DIM = 1.00, 0.76, 0.55, 0.34  -- fractions of radius
 
--- Rectangles of the "inv" texts drawn this frame: INV_RECT[ring][pos] = {x1,y1,x2,y2}
+-- Inversion buttons drawn this frame:
+-- INV_RECT[ring][pos] = { minus = {x1,y1,x2,y2}, val = {...}, plus = {...} }
 local INV_RECT = { {}, {}, {} }
 
 
@@ -291,16 +292,29 @@ local function hit(mx, my, cx, cy, rad, rot)
   local ang = math.deg(math.atan(dy, dx)) + 90       -- 0 = top, clockwise
   local pos = math.floor((ang / 30) + rot + 0.5) % 12
   local ring = (d >= R_MAJ) and 1 or ((d >= R_MIN) and 2 or 3)
+  local inv_zone = false
   local rc = INV_RECT[ring][pos]
-  local inv_zone = rc and mx >= rc[1] and mx <= rc[3] and my >= rc[2] and my <= rc[4] or false
+  if rc and not S.auto then
+    for _, part in ipairs({ "minus", "val", "plus" }) do
+      local b = rc[part]
+      if mx >= b[1] and mx <= b[3] and my >= b[2] and my <= b[4] then inv_zone = part end
+    end
+  end
   return { ring = ring, pos = pos, inv_zone = inv_zone }
 end
 
-local function inv_text(ring, pos)
-  if S.auto then return "inv A" end
+local function inv_value_text(ring, pos)
+  local v = cell_opts(ring, pos).inv
+  return v > 0 and ("+" .. v) or tostring(v)
+end
+
+-- Change the inversion of a cell by one step (or reset it with step = nil)
+local function step_inv(ring, pos, step)
   local o = cell_opts(ring, pos)
-  local v = o.inv
-  return "inv " .. (v > 0 and ("+" .. v) or tostring(v))
+  local n = T.ToneCount(o.quality, S.ctype)
+  INV[ring][pos] = step and math.max(-n, math.min(n, o.inv + step)) or 0
+  save_invs()
+  preview_key = nil
 end
 
 local function draw_wheel(size)
@@ -344,21 +358,37 @@ local function draw_wheel(size)
       local gap = name_size * 0.55 + 5 * fs
       centered_text(dl, tx, ty, name, tcol, name_size, true)
 
-      local itxt = inv_text(ring, pos)
+      -- inversion: [-] value [+] buttons ("inv A" when Auto is on)
       local f, isz = font(9 * fs, false)
-      ImGui.PushFont(ctx, f)
-      local iw, ih = ImGui.CalcTextSize(ctx, itxt)
-      ImGui.PopFont(ctx)
-      local pad = 3
-      INV_RECT[ring][pos] = { tx - iw / 2 - pad, ty + gap - ih / 2 - pad,
-                              tx + iw / 2 + pad, ty + gap + ih / 2 + pad }
-      local on_inv = is_hover and hover.inv_zone and not S.auto
-      if on_inv then
-        local rc = INV_RECT[ring][pos]
-        ImGui.DrawList_AddRectFilled(dl, rc[1], rc[2], rc[3], rc[4], 0xFFFFFF90, 3)
+      local iy = ty + gap
+      if S.auto then
+        INV_RECT[ring][pos] = nil
+        centered_text(dl, tx, iy, "inv A", tcol, 9 * fs, false)
+      else
+        ImGui.PushFont(ctx, f)
+        local vw = ImGui.CalcTextSize(ctx, "+3")
+        ImGui.PopFont(ctx)
+        local bw, bh, g = isz * 1.25, isz * 1.15, 2 * fs
+        local x0 = tx - (2 * bw + vw + 2 * g) / 2
+        local y1, y2 = iy - bh / 2, iy + bh / 2
+        local rc = {
+          minus = { x0, y1, x0 + bw, y2 },
+          val   = { x0 + bw + g, y1, x0 + bw + g + vw, y2 },
+          plus  = { x0 + bw + 2 * g + vw, y1, x0 + 2 * bw + 2 * g + vw, y2 },
+        }
+        INV_RECT[ring][pos] = rc
+        local hz = is_hover and hover.inv_zone or nil
+        for _, part in ipairs({ "minus", "plus" }) do
+          local b = rc[part]
+          local bg = (hz == part) and 0xFFFFFFE0 or 0xFFFFFF70
+          ImGui.DrawList_AddRectFilled(dl, b[1], b[2], b[3], b[4], bg, 3)
+          ImGui.DrawList_AddRect(dl, b[1], b[2], b[3], b[4], 0x00000050, 3)
+          centered_text(dl, (b[1] + b[3]) / 2, (b[2] + b[4]) / 2 - 0.5,
+            part == "minus" and "-" or "+", 0x202020FF, 10 * fs, true)
+        end
+        local vcol = (hz == "val") and 0x000000FF or tcol
+        centered_text(dl, (rc.val[1] + rc.val[3]) / 2, iy, inv_value_text(ring, pos), vcol, 9 * fs, true)
       end
-      ImGui.DrawList_AddTextEx(dl, f, isz, tx - iw / 2, ty + gap - ih / 2,
-        on_inv and 0x000000FF or tcol, itxt)
 
       -- top line: degree, and on the major ring the key signature (1#, 3b...)
       local top = label
@@ -424,31 +454,28 @@ local function draw_wheel(size)
         preview_key = nil
       else
         local t = drag.target
-        insert_cell(t.ring, t.pos)
+        if t.inv_zone == "minus" then step_inv(t.ring, t.pos, -1)
+        elseif t.inv_zone == "plus" then step_inv(t.ring, t.pos, 1)
+        elseif t.inv_zone == "val" then step_inv(t.ring, t.pos, nil)
+        else insert_cell(t.ring, t.pos) end
       end
       drag, rot_view = nil, nil
     end
   end
 
-  -- Right click on the inv zone = reset the inversion to 0
+  -- Right click on the inversion buttons = reset the inversion to 0
   if hovered and ImGui.IsMouseClicked(ctx, ImGui.MouseButton_Right) and hover
-     and not hover.center and hover.inv_zone and not S.auto then
-    INV[hover.ring][hover.pos] = 0
-    save_invs()
+     and not hover.center and hover.inv_zone then
+    step_inv(hover.ring, hover.pos, nil)
   end
 
-  -- Mouse wheel: inv zone = inversion, center = octave, elsewhere = rotate
+  -- Mouse wheel: center = octave, elsewhere = rotate
   if hovered then
     local wheel = ImGui.GetMouseWheel(ctx)
     if wheel ~= 0 then
       local step = wheel > 0 and 1 or -1
       if hover and hover.center then
         set("octave", math.max(-1, math.min(9, S.octave + step)))
-      elseif hover and hover.inv_zone and not S.auto then
-        local o = cell_opts(hover.ring, hover.pos)
-        local n = T.ToneCount(o.quality, S.ctype)
-        INV[hover.ring][hover.pos] = math.max(-n, math.min(n, o.inv + step))
-        save_invs()
       else
         set("key_pos", (S.key_pos - step) % 12)
       end
@@ -685,7 +712,7 @@ local function tab_main()
   if status ~= "" and r.time_precise() - status_t < 4 then
     ImGui.TextColored(ctx, 0xE0A040FF, status)
   else
-    ImGui.TextDisabled(ctx, "Click = insert   Wheel on \"inv\" = inversion   Right click on \"inv\" = 0")
+    ImGui.TextDisabled(ctx, "Click = insert   - / + = inversion   Click on the number = 0")
   end
 end
 
