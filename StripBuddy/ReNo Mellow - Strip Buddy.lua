@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.23
+-- @version 1.24
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Nouvelle icône cs_tags_CLP.png ; le strip de base « Clap » passe en [CLP][PRC] (mis à jour une fois s'il n'a pas été modifié)
+-- @changelog Display : taille (10 à 36) et opacité du fond (20 à 100 %) réglables, par clic droit sur la barre ou dans l'onglet Display
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -147,7 +147,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.23"
+local VERSION = "1.24"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -2210,7 +2210,7 @@ end
 local function draw_display_tab()
   ImGui.TextWrapped(ctx, "The Display is a small floating bar: Zoom / View / Scroll / Select on the left, " ..
     "the tags of the project on the right. Turn on one or more options, then pick a tag (or All) in the list. " ..
-    "Mouse wheel over the list = next / previous tag. Right-click the bar for text size and startup.")
+    "Mouse wheel over the list = next / previous tag. Right-click the bar for size, opacity and startup.")
   ImGui.Spacing(ctx)
   if ImGui.Button(ctx, "Open / close the Display") then pending = toggle_display end
   ImGui.Spacing(ctx); ImGui.Separator(ctx); ImGui.Spacing(ctx)
@@ -2220,6 +2220,17 @@ local function draw_display_tab()
   pane_radio("Display Scroll ", "disp_scroll", "tcp")
   ImGui.TextDisabled(ctx, "Scroll brings the first track of the tag to the top (TCP) or to the left (mixer).")
   ImGui.Spacing(ctx); ImGui.Separator(ctx); ImGui.Spacing(ctx)
+  ImGui.SeparatorText(ctx, "Look of the Display")
+  local dsz = math.max(10, math.min(36, math.floor(tonumber(reaper.GetExtState(EXT, "disp_font")) or 16)))
+  ImGui.SetNextItemWidth(ctx, 220)
+  local rvz, vz = ImGui.SliderInt(ctx, "Size", dsz, 10, 36)
+  if rvz then reaper.SetExtState(EXT, "disp_font", tostring(vz), true) end
+  local dop = math.max(0.2, math.min(1, tonumber(reaper.GetExtState(EXT, "disp_opacity")) or 1))
+  ImGui.SetNextItemWidth(ctx, 220)
+  local rvp, vp = ImGui.SliderInt(ctx, "Opacity", math.floor(dop * 100 + 0.5), 20, 100, "%d %%")
+  if rvp then reaper.SetExtState(EXT, "disp_opacity", tostring(vp / 100), true) end
+  ImGui.TextDisabled(ctx, "Size scales the whole bar (text, buttons, icon). Opacity is the background's.")
+  ImGui.Spacing(ctx)
   ImGui.SeparatorText(ctx, "When REAPER starts")
   local mst = reaper.GetExtState(EXT, "main_startup") == "1"
   local rvm, vm = ImGui.Checkbox(ctx, "Open the Strip Buddy window", mst)
