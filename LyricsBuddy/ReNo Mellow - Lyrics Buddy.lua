@@ -236,7 +236,7 @@ local function cleanup(job)
   if not job then return end
   if job.acc then r.DestroyAudioAccessor(job.acc); job.acc = nil end
   if job.fh then job.fh:close(); job.fh = nil end
-  for _, ext in ipairs({ ".wav", ".srt", ".log", ".done", ".bat", ".sh" }) do os.remove(job.base .. ext) end
+  for _, ext in ipairs({ ".wav", ".srt", ".log", ".done", ".bat", ".vbs", ".sh" }) do os.remove(job.base .. ext) end
 end
 
 local function new_job(item)
@@ -311,6 +311,31 @@ local function clean_prompt(s)
   return (s:gsub('["%%$`\\!]', ""):gsub("[\r\n]", " "))
 end
 
+-- Windows: cmd.exe would open a console window, so the .bat is started
+-- hidden through a tiny VBScript (WScript.Shell.Run, window style 0)
+local function utf16le(str)
+  local out = { "\255\254" } -- BOM
+  for _, c in utf8.codes(str) do
+    if c >= 0x10000 then
+      c = c - 0x10000
+      local hi, lo = 0xD800 + (c >> 10), 0xDC00 + (c & 0x3FF)
+      out[#out + 1] = string.char(hi & 255, hi >> 8, lo & 255, lo >> 8)
+    else
+      out[#out + 1] = string.char(c & 255, c >> 8)
+    end
+  end
+  return table.concat(out)
+end
+
+local function hidden_launcher(job, bat)
+  local wscript = (os.getenv("WINDIR") or "C:\\Windows") .. "\\System32\\wscript.exe"
+  if not file_exists(wscript) then return 'cmd.exe /C "' .. bat .. '"' end
+  local vbs = job.base .. ".vbs"
+  local line = 'CreateObject("WScript.Shell").Run "cmd.exe /C ""' .. bat .. '""", 0, False\r\n'
+  if not write_file(vbs, utf16le(line)) then return 'cmd.exe /C "' .. bat .. '"' end
+  return '"' .. wscript .. '" //B //Nologo "' .. vbs .. '"'
+end
+
 local function launch_step(job)
   local args = { '-m "' .. cfg.model .. '"', '-f "' .. job.base .. '.wav"', "-l " .. cfg.lang,
     "-osrt", '-of "' .. job.base .. '"', "-t " .. math.floor(cfg.threads), "-pp" }
@@ -325,7 +350,7 @@ local function launch_step(job)
     script = job.base .. ".bat"
     write_file(script, "@echo off\r\nchcp 65001 >nul\r\n" .. cmd .. ' > "' .. job.base .. '.log" 2>&1\r\n'
       .. 'echo %ERRORLEVEL% > "' .. job.base .. '.done"\r\n')
-    launcher = 'cmd.exe /C "' .. script .. '"'
+    launcher = hidden_launcher(job, script)
   else
     script = job.base .. ".sh"
     write_file(script, "#!/bin/sh\n" .. cmd .. ' > "' .. job.base .. '.log" 2>&1\n'
