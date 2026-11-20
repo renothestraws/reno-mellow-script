@@ -88,6 +88,8 @@ local cfg = {
   replace  = opt("replace", true),
   skip_ns  = opt("skip_ns", true),
   trim     = opt("trim", true),
+  noloop   = opt("noloop", true),
+  vad      = opt("vad", true),
   trim_db  = opt("trim_dbfs", -36), -- absolute threshold (RMS over 10 ms, dBFS)
   font     = opt("font", 14),
 }
@@ -152,11 +154,24 @@ local function list_models()
   while true do
     local f = r.EnumerateFiles(MODELS, i)
     if not f then break end
-    if f:match("%.bin$") and not f:match("encoder") then out[#out + 1] = MODELS .. SEP .. f end
+    if f:match("%.bin$") and not f:match("encoder") and not f:lower():match("silero") then
+      out[#out + 1] = MODELS .. SEP .. f
+    end
     i = i + 1
   end
   table.sort(out)
   return out
+end
+
+local VAD_URL = "https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin"
+local function find_vad()
+  local i = 0
+  while true do
+    local f = r.EnumerateFiles(MODELS, i)
+    if not f then return nil end
+    if f:lower():match("silero") and f:match("%.bin$") then return MODELS .. SEP .. f end
+    i = i + 1
+  end
 end
 
 -- first launch: fill what can be found
@@ -340,6 +355,9 @@ local function launch_step(job)
   local args = { '-m "' .. cfg.model .. '"', '-f "' .. job.base .. '.wav"', "-l " .. cfg.lang,
     "-osrt", '-of "' .. job.base .. '"', "-t " .. math.floor(cfg.threads), "-pp" }
   if not cfg.gpu then args[#args + 1] = "-ng" end
+  if cfg.noloop then args[#args + 1] = "-mc 0" end -- no text context: stops repetition loops
+  local vad = cfg.vad and find_vad()
+  if vad then args[#args + 1] = '--vad -vm "' .. vad .. '"' end
   if cfg.maxlen > 0 then args[#args + 1] = "-ml " .. math.floor(cfg.maxlen) .. " -sow" end
   local p = clean_prompt(cfg.prompt)
   if p ~= "" then args[#args + 1] = '--prompt "' .. p .. '"' end
@@ -388,7 +406,8 @@ end
 local FR = 0.01
 local function trim_to_voice(job, segs)
   local env = job.env
-  if not cfg.trim or not env or #env == 0 then return end
+  if not cfg.trim or not env or #env == 0 then return segs end
+  local kept = {}
   local thr = 10 ^ (cfg.trim_db / 20)
   local need = 8 -- 80 ms above the threshold = voice (ignores clicks and short noises)
   for _, sg in ipairs(segs) do
@@ -412,8 +431,26 @@ local function trim_to_voice(job, segs)
       local na = math.max(sg.a, (first - 1) * FR - 0.05)
       local nb = last and math.min(sg.b, last * FR + 0.15) or sg.b
       if nb > na + 0.1 then sg.a, sg.b = na, nb end
+      kept[#kept + 1] = sg
+    end
+    -- no voice under the phrase: text invented by whisper on silence / noise, dropped
+  end
+  return kept
+end
+
+-- same line repeated right after itself = whisper loop: merged into one item
+local function merge_repeats(segs)
+  local out = {}
+  local function norm(t) return (t:lower():gsub("[%s%p]", "")) end
+  for _, sg in ipairs(segs) do
+    local prev = out[#out]
+    if prev and norm(prev.text) == norm(sg.text) and sg.a - prev.b < 2 then
+      prev.b = math.max(prev.b, sg.b)
+    else
+      out[#out + 1] = sg
     end
   end
+  return out
 end
 
 local function non_speech(text)
@@ -455,8 +492,9 @@ local function create_items(job, segs)
   for _, s in ipairs(segs) do
     if not (cfg.skip_ns and non_speech(s.text)) then list[#list + 1] = s end
   end
+  list = trim_to_voice(job, list)
+  if cfg.noloop then list = merge_repeats(list) end
   if #list == 0 then return 0 end
-  trim_to_voice(job, list)
 
   r.Undo_BeginBlock()
   r.PreventUIRefresh(1)
@@ -469,9 +507,9 @@ local function create_items(job, segs)
       if p < item_end and p + l > pos then r.DeleteTrackMediaItem(tr, it) end
     end
   end
-  local made = 0
+  local made, prev_end = 0, -math.huge
   for i, s in ipairs(list) do
-    local a = pos + job.t0 + s.a
+    local a = math.max(pos + job.t0 + s.a, prev_end)
     local b = pos + job.t0 + s.b
     if list[i + 1] then b = math.min(b, pos + job.t0 + list[i + 1].a) end
     b = math.min(b, item_end)
@@ -483,6 +521,7 @@ local function create_items(job, segs)
       r.GetSetMediaItemInfo_String(it, "P_NOTES", s.text, true)
       r.GetSetMediaItemInfo_String(it, "P_EXT:ReNo_LyricsBuddy", "1", true)
       made = made + 1
+      prev_end = b
     end
   end
   r.PreventUIRefresh(-1)
@@ -713,7 +752,16 @@ local function tab_setup()
   if ch then save("maxlen", v) end
   ch, v = ImGui.Checkbox(ctx, "Skip non-speech ([Music], (applause), notes...)", cfg.skip_ns)
   if ch then save("skip_ns", v) end
-  ch, v = ImGui.Checkbox(ctx, "Trim items to the voice (removes silences)", cfg.trim)
+  ch, v = ImGui.Checkbox(ctx, "Avoid repetition loops", cfg.noloop)
+  if ch then save("noloop", v) end
+  local vad = find_vad()
+  ch, v = ImGui.Checkbox(ctx, "Skip silences before listening (VAD)", cfg.vad)
+  if ch then save("vad", v) end
+  if cfg.vad and not vad then
+    ImGui.SameLine(ctx)
+    ImGui.TextColored(ctx, COL_ERR, "needs the VAD model (see Install)")
+  end
+  ch, v = ImGui.Checkbox(ctx, "Trim items to the voice, drop phrases without voice", cfg.trim)
   if ch then save("trim", v) end
   if cfg.trim then
     ImGui.SetNextItemWidth(ctx, 160)
@@ -749,6 +797,11 @@ local function tab_setup()
     ImGui.TextWrapped(ctx, "3. Download a model (Command Prompt, example: large-v3-turbo):")
     copy_line("win3", 'curl -L -o "' .. MODELS:gsub("/", "\\") .. '\\ggml-large-v3-turbo.bin" ' .. HF .. "ggml-large-v3-turbo.bin")
     ImGui.TextWrapped(ctx, "4. Click Auto-detect, choose the model, then Test.")
+  end
+  if ImGui.CollapsingHeader(ctx, "VAD model (recommended)", nil, find_vad() and 0 or ImGui.TreeNodeFlags_DefaultOpen) then
+    ImGui.TextWrapped(ctx, "A tiny model (under 1 MB) that finds where someone sings or speaks, so whisper does not invent words in the silences. Download it into the models folder:")
+    copy_line("vad1", VAD_URL)
+    ImGui.TextColored(ctx, find_vad() and COL_OK or COL_ERR, find_vad() and ("Found: " .. basename(find_vad())) or "Not found yet.")
   end
   if ImGui.CollapsingHeader(ctx, "Models") then
     for _, m in ipairs(MODEL_LIST) do
