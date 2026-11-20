@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.21
+-- @version 1.22
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Onglet Setup : filtre pour cacher des lignes (dossier, lié à l'onglet Strips, et texte sur le nom, le nom de piste et les tags)
+-- @changelog Option « Open the Strip Buddy window » (onglet Display, When REAPER starts) : la fenêtre principale se rouvre au démarrage de REAPER
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -146,7 +146,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.21"
+local VERSION = "1.22"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -2150,6 +2150,30 @@ end
 -- the startup block of the former "Custom Strips" Display is no longer needed
 remove_startup_block("-- >>> ReNo Mellow Custom Strips Display (auto-start)", "-- <<< ReNo Mellow Custom Strips Display")
 
+-- main window at REAPER startup (option, off by default): own block in __startup.lua
+local MAIN_FILE = ({reaper.get_action_context()})[2]
+local MAIN_A = "-- >>> ReNo Mellow Strip Buddy main window (auto-start)"
+local MAIN_B = "-- <<< ReNo Mellow Strip Buddy main window"
+
+local function ensure_main_startup_block()
+  local f = io.open(START_FILE, "r")
+  local s = ""
+  if f then s = f:read("a") or ""; f:close() end
+  if s:find(MAIN_A, 1, true) then return end
+  local block = MAIN_A .. "\n" ..
+    "do\n" ..
+    "  local p = " .. string.format("%q", MAIN_FILE) .. "\n" ..
+    "  if reaper.file_exists(p) and reaper.GetExtState(\"" .. EXT .. "\", \"main_startup\") == \"1\" then\n" ..
+    "    local id = reaper.AddRemoveReaScript(true, 0, p, true)\n" ..
+    "    if id and id ~= 0 then reaper.Main_OnCommand(id, 0) end\n" ..
+    "  end\n" ..
+    "end\n" .. MAIN_B .. "\n"
+  f = io.open(START_FILE, "w")
+  if f then f:write(s, (s ~= "" and not s:match("\n$")) and "\n" or "", block); f:close() end
+end
+
+if reaper.GetExtState(EXT, "main_startup") == "1" then ensure_main_startup_block() end
+
 local function toggle_display()
   if not reaper.file_exists(DISPLAY_FILE) then
     set_status("Display script not found: " .. DISPLAY_FILE, "err") return
@@ -2181,12 +2205,20 @@ local function draw_display_tab()
   pane_radio("Display Scroll ", "disp_scroll", "tcp")
   ImGui.TextDisabled(ctx, "Scroll brings the first track of the tag to the top (TCP) or to the left (mixer).")
   ImGui.Spacing(ctx); ImGui.Separator(ctx); ImGui.Spacing(ctx)
+  ImGui.SeparatorText(ctx, "When REAPER starts")
+  local mst = reaper.GetExtState(EXT, "main_startup") == "1"
+  local rvm, vm = ImGui.Checkbox(ctx, "Open the Strip Buddy window", mst)
+  if rvm then
+    reaper.SetExtState(EXT, "main_startup", vm and "1" or "0", true)
+    if vm then ensure_main_startup_block() else remove_startup_block(MAIN_A, MAIN_B) end
+  end
   local st = reaper.GetExtState(EXT, "disp_startup") ~= "0"
-  local rv, v = ImGui.Checkbox(ctx, "Reopen the Display when REAPER starts", st)
+  local rv, v = ImGui.Checkbox(ctx, "Open the Display", st)
   if rv then
     reaper.SetExtState(EXT, "disp_startup", v and "1" or "0", true)
     if not v then remove_startup_block() end
   end
+  ImGui.Spacing(ctx)
   ImGui.TextDisabled(ctx, "Zoom fits the tag's tracks to the arrange height (needs js_ReaScriptAPI, or SWS). Zoom All resets the heights.")
 end
 
