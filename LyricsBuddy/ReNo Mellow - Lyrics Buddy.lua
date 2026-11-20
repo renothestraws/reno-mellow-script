@@ -88,7 +88,7 @@ local cfg = {
   replace  = opt("replace", true),
   skip_ns  = opt("skip_ns", true),
   trim     = opt("trim", true),
-  trim_db  = opt("trim_db", -40),
+  trim_db  = opt("trim_dbfs", -36), -- absolute threshold (RMS over 10 ms, dBFS)
   font     = opt("font", 14),
 }
 local function save(k, v) cfg[k] = v; set(k, v) end
@@ -389,10 +389,7 @@ local FR = 0.01
 local function trim_to_voice(job, segs)
   local env = job.env
   if not cfg.trim or not env or #env == 0 then return end
-  local peak = 0
-  for i = 1, #env do if env[i] > peak then peak = env[i] end end
-  if peak <= 0 then return end
-  local thr = peak * 10 ^ (cfg.trim_db / 20)
+  local thr = 10 ^ (cfg.trim_db / 20)
   local need = 8 -- 80 ms above the threshold = voice (ignores clicks and short noises)
   for _, sg in ipairs(segs) do
     local i0 = math.max(1, math.floor(sg.a / FR) + 1)
@@ -720,8 +717,8 @@ local function tab_setup()
   if ch then save("trim", v) end
   if cfg.trim then
     ImGui.SetNextItemWidth(ctx, 160)
-    ch, v = ImGui.SliderInt(ctx, "Trim threshold (dB under the loudest part)", math.floor(cfg.trim_db), -60, -15)
-    if ch then save("trim_db", v) end
+    ch, v = ImGui.SliderInt(ctx, "Voice threshold", math.floor(cfg.trim_db), -70, -12, "%d dBFS")
+    if ch then cfg.trim_db = v; set("trim_dbfs", v) end
   end
   ch, v = ImGui.Checkbox(ctx, "Replace the lyrics already under the item", cfg.replace)
   if ch then save("replace", v) end
