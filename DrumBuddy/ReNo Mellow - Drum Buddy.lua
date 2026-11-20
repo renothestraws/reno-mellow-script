@@ -1,15 +1,15 @@
 -- @description ReNo Mellow - Drum Buddy
 -- @author ReNo Mellow
--- @version 1.2
+-- @version 1.3
 -- @about Fills de batterie par profils de batteurs : 16 chops par batteur (sticking par groupes), insertion à la grille de l'éditeur MIDI
--- @changelog Trois batteurs de base (Charlie rock-pop, Mike metal, Buddie jazz-gospel) ; le Demo drummer est supprimé ; Export et Import de batteurs ; Display : taille du texte et opacité réglables, ouverture au démarrage de REAPER (option)
+-- @changelog « Kick + crash » après le fill désactivé par défaut chez Charlie, Mike et Buddie (et les nouveaux batteurs) : Again et Vary ne sont plus perturbés
 -- @provides
 --   [main] ReNo Mellow - Drum Buddy - Display.lua
 
 -- Requires ReaImGui (0.9 or later)
 
 local SCRIPT_NAME = "ReNo Mellow - Drum Buddy"
-local VERSION = "1.2"
+local VERSION = "1.3"
 local EXT = "ReNo_DrumBuddy"
 
 if not reaper.ImGui_GetBuiltinPath then
@@ -121,7 +121,7 @@ local LENGTHS = {
 local PROFILE_DEFAULT = {
   vacc = 120, vnorm = 90, vghost = 40, flam_ms = 25, drag_ms = 30,
   hum_vel = 8, hum_time = 6, feel = 0, density = 40,
-  crash = true, crash_piece = "crash1", rand_cym = false,
+  crash = false, crash_piece = "crash1", rand_cym = false,
 }
 local P_NUM = { "vacc", "vnorm", "vghost", "flam_ms", "drag_ms", "hum_vel", "hum_time", "feel", "density" }
 local P_BOOL = { "crash", "rand_cym" }
@@ -775,7 +775,7 @@ do
 FACTORY = {
   { name = "Charlie", style = "rock-pop",
     profile = { vacc = 115, vnorm = 90, vghost = 40, flam_ms = 25, drag_ms = 30, hum_vel = 8, hum_time = 5,
-                feel = 0, density = 30, crash = true, crash_piece = "crash1", rand_cym = false },
+                feel = 0, density = 30, crash = false, crash_piece = "crash1", rand_cym = false },
     chops = {
       { "Snare 8",          { { "R> L R L R> L R L", "snare" } } },
       { "Snare to toms",    { { "R> L R L", "snare" }, { "R> L R L", "tom1" }, { "R> L R L", "tom2" }, { "R> L R L", "tom3" } } },
@@ -796,7 +796,7 @@ FACTORY = {
     } },
   { name = "Mike", style = "metal",
     profile = { vacc = 127, vnorm = 110, vghost = 55, flam_ms = 15, drag_ms = 20, hum_vel = 4, hum_time = 2,
-                feel = 0, density = 60, crash = true, crash_piece = "china", rand_cym = false },
+                feel = 0, density = 60, crash = false, crash_piece = "china", rand_cym = false },
     chops = {
       { "SSKK x4",          { { "R L K K", "snare" }, { "R L K K", "snare" }, { "R L K K", "snare" }, { "R L K K", "snare" } } },
       { "SSSSKK",           { { "R L R L K K", "snare" }, { "R L R L K K", "snare" }, { "R L R L", "snare" } } },
@@ -817,7 +817,7 @@ FACTORY = {
     } },
   { name = "Buddie", style = "jazz-gospel",
     profile = { vacc = 105, vnorm = 75, vghost = 30, flam_ms = 30, drag_ms = 35, hum_vel = 15, hum_time = 10,
-                feel = 6, density = 70, crash = true, crash_piece = "crash2", rand_cym = true },
+                feel = 6, density = 70, crash = false, crash_piece = "crash2", rand_cym = true },
     chops = {
       { "Swing triplets",   { { "R- L- R>", "snare" }, { "R- L- R>", "snare" }, { "R- L- R>", "snare" }, { "R- L- R>", "snare" } } },
       { "Comping ghosts",   { { "R- L- R- L> R- L-", "snare" } } },
@@ -880,7 +880,27 @@ end
 end
 
 -- The "Demo drummer" of 1.0-1.1 is replaced by the factory drummers: removed once
+-- 1.3: "Kick + crash" is off by default for the factory drummers (it broke Again and Vary)
 local function remove_demo()
+  if reaper.GetExtState(EXT, "kick_crash_off") ~= "1" then
+    scan_drummers()
+    for _, d in ipairs(drummers) do
+      if d.name == "Charlie" or d.name == "Mike" or d.name == "Buddie" then
+        local path = DRUM_DIR .. "/" .. d.file
+        local h = io.open(path, "r")
+        local txt = h and h:read("a")
+        if h then h:close() end
+        if txt then
+          local fixed = ("\n" .. txt):gsub("\ncrash=1\n", "\ncrash=0\n"):sub(2)
+          if fixed ~= txt then
+            h = io.open(path, "w")
+            if h then h:write(fixed); h:close() end
+          end
+        end
+      end
+    end
+    reaper.SetExtState(EXT, "kick_crash_off", "1", true)
+  end
   if reaper.GetExtState(EXT, "demo_removed") == "1" then return end
   scan_drummers()
   local last = reaper.GetExtState(EXT, "last_drummer")
