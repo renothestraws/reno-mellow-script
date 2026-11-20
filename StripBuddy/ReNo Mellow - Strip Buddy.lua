@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.22
+-- @version 1.23
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Option « Open the Strip Buddy window » (onglet Display, When REAPER starts) : la fenêtre principale se rouvre au démarrage de REAPER
+-- @changelog Nouvelle icône cs_tags_CLP.png ; le strip de base « Clap » passe en [CLP][PRC] (mis à jour une fois s'il n'a pas été modifié)
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -33,6 +33,7 @@
 --   [data] Data/track_icons/cs_tags_CHR.png > track_icons/cs_tags_CHR.png
 --   [data] Data/track_icons/cs_tags_CLK.png > track_icons/cs_tags_CLK.png
 --   [data] Data/track_icons/cs_tags_CLO.png > track_icons/cs_tags_CLO.png
+--   [data] Data/track_icons/cs_tags_CLP.png > track_icons/cs_tags_CLP.png
 --   [data] Data/track_icons/cs_tags_CMT.png > track_icons/cs_tags_CMT.png
 --   [data] Data/track_icons/cs_tags_CNG.png > track_icons/cs_tags_CNG.png
 --   [data] Data/track_icons/cs_tags_CRS.png > track_icons/cs_tags_CRS.png
@@ -146,7 +147,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.22"
+local VERSION = "1.23"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -247,7 +248,7 @@ local GROUP_FLAGS = {
 local DEFAULT_STRIPS = {
   { "Drums", { { "Drums", "DRM" }, { "Kick", "KIK" }, { "Kick in", "KIK" }, { "Kick out", "KIK" }, { "Kick sub", "KIK" }, { "Kick trig", "KIK" }, { "Snare", "SNR" }, { "Snare top", "SNR" }, { "Snare bottom", "SNR" }, { "Snare even", "SNR" }, { "Snare trig", "SNR" }, { "Piccolo", "SNR" }, { "Toms", "TOM" }, { "Tom high", "TOM" }, { "Tom mid", "TOM" }, { "Tom low", "TOM" }, { "Tom trig", "TOM" }, { "Octobans", "OCT" }, { "Rototoms", "ROT" }, { "Gong", "GON" }, { "Overheads", "OHS" }, { "Underheads", "UHS" }, { "Glyn Johns", "GLJ" }, { "Front of kit", "FOK" }, { "Sensor mic", "SNS" }, { "Cymbals", "CYM" }, { "Hi-hat", "HH" }, { "Ride", "RID" }, { "Crash", "CRS" }, { "Splash", "SPL" }, { "China", "CHN" }, { "Stack", "CYM" }, { "Clap cymbal", "CYM" }, { "FX cymbal", "CYM" }, { "Ambiance", "AMB" }, { "Room", "ROO" }, { "Talkback mic", "TLK" }, { "New-York", "NY" }, { "Parallel buss", "PAR" }, { "Trigger", "TRI" } } },
   { "Drum pad", { { "Drum pad", "PAD" }, { "Drum machine", "DRM" }, { "Drum module", "DRM" }, { "Drum replacer", "DRM" }, { "Drum bank", "DRM" }, { "E-drums", "DRM" }, { "SPD", "SPD" }, { "Groovebox", "BOX" }, { "Beat box", "BOX" }, { "808", "808" }, { "909", "909" } } },
-  { "Percussion", { { "Percussion", "PRC" }, { "Clap", "PRC" }, { "Conga", "CNG" }, { "Bongo", "BNG" }, { "Djembe", "PRC" }, { "Cajon", "CAJ" }, { "Frame drum", "PRC" }, { "Hand pan", "PRC" }, { "Steel tongue", "PRC" }, { "Claves", "PRC" }, { "Shaker", "SHK" }, { "Cabasas", "PRC" }, { "Caxixi", "PRC" }, { "Chimes", "PRC" }, { "Tambourine", "TAM" }, { "Bloc", "PRC" }, { "Guiros", "PRC" }, { "Maracas", "PRC" }, { "Vibraslap", "PRC" }, { "Timbales", "PRC" }, { "World percussion", "PRC" } } },
+  { "Percussion", { { "Percussion", "PRC" }, { "Clap", "CLP" }, { "Conga", "CNG" }, { "Bongo", "BNG" }, { "Djembe", "PRC" }, { "Cajon", "CAJ" }, { "Frame drum", "PRC" }, { "Hand pan", "PRC" }, { "Steel tongue", "PRC" }, { "Claves", "PRC" }, { "Shaker", "SHK" }, { "Cabasas", "PRC" }, { "Caxixi", "PRC" }, { "Chimes", "PRC" }, { "Tambourine", "TAM" }, { "Bloc", "PRC" }, { "Guiros", "PRC" }, { "Maracas", "PRC" }, { "Vibraslap", "PRC" }, { "Timbales", "PRC" }, { "World percussion", "PRC" } } },
   { "Bass", { { "Bass", "BSS" }, { "Bass DI", "DI" }, { "Bass amp", "AMP" }, { "Bass pedal", "BSS" }, { "Bass 808", "808" }, { "Sub Bass", "BSS" }, { "Synth bass", "SYB" } } },
   { "Acoustic guitar", { { "Acoustic guitar", "ACG" }, { "Nylon guitar", "ACG" }, { "Classic guitar", "ACG" }, { "Ukulele", "UKE" }, { "Banjo", "BJO" }, { "Mandolin", "MND" }, { "Lap steel", "ACG" } } },
   { "Guitar", { { "Guitar", "GTR" }, { "Guitar DI", "DI" }, { "Guitar amp", "AMP" }, { "Guitar pedal", "GTR" }, { "Electric guitar", "ELG" }, { "Rhythm guitar", "RHY" }, { "Guitar solo", "SOL" } } },
@@ -1082,6 +1083,20 @@ if reaper.GetExtState(EXT, "tag2_120") ~= "1" then
     end
   end
   reaper.SetExtState(EXT, "tag2_120", "1", true)
+end
+
+-- 1.23 : the default strip "Clap" (Percussion) gets its own tag CLP. One-time update
+-- when it still has its old tag PRC and its old icon (or none); edited strips are kept.
+if reaper.GetExtState(EXT, "retag_123") ~= "1" then
+  for _, s in ipairs(strips) do
+    if s.name == "Clap" and s.tag == "PRC" and (s.icon == nil or s.icon == "cs_tags_PRC.png") then
+      s.tag = "CLP"
+      if not s.tag2 then s.tag2 = "PRC" end
+      if reaper.file_exists(ICON_DIR .. "/cs_tags_CLP.png") then s.icon = "cs_tags_CLP.png" end
+      dirty = true
+    end
+  end
+  reaper.SetExtState(EXT, "retag_123", "1", true)
 end
 
 local function set_status(msg, kind)
