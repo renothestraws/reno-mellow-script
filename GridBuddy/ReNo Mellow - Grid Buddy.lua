@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Grid Buddy
 -- @author ReNo Mellow
--- @version 1.2
+-- @version 1.3
 -- @about Grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles de 1/128 à 4, diviseur et limites, snap, lien avec l'éditeur MIDI (option « Use the same grid division »), deux mini Displays indépendants, arrangement et éditeur MIDI (molette = taille), et actions isolées. D'après Gridbox de FeedTheCat. Nécessite ReaImGui.
--- @changelog Deux Displays indépendants (arrangement et éditeur MIDI) ; menu du Display : Frame, Measure et Hide grid en plus des types ; Display MIDI : option Sync to arrange view (40640)
+-- @changelog Displays : Shift+molette sur la grille = straight -> triplet -> dotted
 -- @provides
 --   GB_lib.lua
 --   GB_startup.lua
