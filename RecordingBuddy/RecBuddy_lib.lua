@@ -6,7 +6,7 @@
 -- same thread, so the state is always consistent.
 
 RB = {}
-RB.VERSION = "1.0"
+RB.VERSION = "1.1"
 RB.S  = "ReNoMellow_RecBuddy"     -- saved settings
 RB.RT = "ReNoMellow_RecBuddy_RT"  -- run state (not saved)
 RB.ROLES = { "main", "display", "headless" }

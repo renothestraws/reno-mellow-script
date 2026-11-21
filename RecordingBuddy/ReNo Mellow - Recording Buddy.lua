@@ -1,14 +1,17 @@
 -- @description Recording Buddy (rehearse and record a loop in several passes)
 -- @author ReNo Mellow
--- @version 1.0
+-- @version 1.1
 -- @about Fenêtre à 2 onglets pour répéter puis enregistrer une boucle en plusieurs passes (pré-roll en mesures ou en ms, vitesse de lecture avec hauteur conservée, lecture ou enregistrement en auto-punch, pause entre les passes), mini Display et actions Start-Stop / Stop. Nécessite ReaImGui.
--- @changelog Première version
+-- @changelog Icône de barre d'outils ReNo_RecordingBuddy (100 / 150 / 200 %), installée avec le script
 -- @provides
 --   RecBuddy_lib.lua
 --   RecBuddy_startup.lua
 --   [main] ReNo Mellow - Recording Buddy - Display.lua
 --   [main] ReNo Mellow - Recording Buddy - Start-Stop.lua
 --   [main] ReNo Mellow - Recording Buddy - Stop.lua
+--   [data] Data/toolbar_icons/ReNo_RecordingBuddy.png > toolbar_icons/ReNo_RecordingBuddy.png
+--   [data] Data/toolbar_icons/150/ReNo_RecordingBuddy.png > toolbar_icons/150/ReNo_RecordingBuddy.png
+--   [data] Data/toolbar_icons/200/ReNo_RecordingBuddy.png > toolbar_icons/200/ReNo_RecordingBuddy.png
 
 local dir = ({ reaper.get_action_context() })[2]:match("^(.*[/\\])")
 dofile(dir .. "RecBuddy_lib.lua")
