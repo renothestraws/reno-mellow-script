@@ -97,8 +97,10 @@ build("ReNo Mellow - Tool Buddy", "ReNo_Mellow_Tool_Buddy", header(main, "versio
 # --- Recording Buddy -------------------------------------------------------------
 d = os.path.join(ROOT, "RecordingBuddy")
 main = os.path.join(d, "ReNo Mellow - Recording Buddy.lua")
+files = [f for f in walk(d, BASE + "/RecordingBuddy") if "/RecordingBuddy/Data/" not in f[1]]
+files += walk(os.path.join(d, "Data"), "Data")          # icône de barre d'outils
 build("ReNo Mellow - Recording Buddy", "ReNo_Mellow_Recording_Buddy", header(main, "version"),
-      header(main, "changelog"), walk(d, BASE + "/RecordingBuddy"),
+      header(main, "changelog"), files,
       no_reg=[BASE + "/RecordingBuddy/RecBuddy_lib.lua", BASE + "/RecordingBuddy/RecBuddy_startup.lua"])
 
 # --- Grid Buddy (grille fixe / adaptative, Display, service ; actions Arrange + MIDI Editor) ---

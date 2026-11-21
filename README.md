@@ -127,6 +127,8 @@ Anciennement **Swiss Army Knife** : au premier lancement, Tool Buddy reprend aut
   clic droit = ouvrir l'onglet Set up. Se rouvre au démarrage de REAPER (bloc ajouté à `Scripts/__startup.lua`),
   relancer le script la ferme.
 - Actions isolées : **Start-Stop** (sans fenêtre, relancer = arrêter) et **Stop**.
+- Icône de barre d'outils **ReNo_RecordingBuddy** (100 / 150 / 200 %), installée avec le script : à choisir dans
+  Customize toolbars pour l'action de la fenêtre principale (verte quand la fenêtre est ouverte).
 
 **Extensions :** ReaImGui (obligatoire).
 
@@ -222,7 +224,8 @@ https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mello
 `ReNo Mellow - Tool Buddy - Toolbox.lua` : elle ajoute toutes les autres actions (Main et MIDI Editor).
 
 **Recording Buddy** : copier le dossier `RecordingBuddy` dans le dossier `Scripts` de REAPER, puis charger et lancer
-`ReNo Mellow - Recording Buddy.lua` : il ajoute les actions Display, Start-Stop et Stop.
+`ReNo Mellow - Recording Buddy.lua` : il ajoute les actions Display, Start-Stop et Stop. Pour l'icône, copier le contenu
+de `RecordingBuddy/Data/toolbar_icons` dans `Data/toolbar_icons` de REAPER.
 
 **Grid Buddy** : copier le dossier `GridBuddy` dans le dossier `Scripts` de REAPER, puis charger et lancer
 `ReNo Mellow - Grid Buddy.lua` : il ajoute les deux Displays et toutes les actions (Main et MIDI Editor).
