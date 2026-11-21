@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.26
+-- @version 1.27
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, FX d'entrée, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Tag des reverbs REV -> RVB : nouvelle icône cs_tags_RVB.png, strip de base Reverb en [RVB], strips tagués REV mis à jour une fois (l'icône REV reste installée pour les projets existants)
+-- @changelog Onglet Strips : retour à la ligne automatique des noms trop longs sur les boutons (deux lignes centrées, « … » si ça ne tient toujours pas)
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -148,7 +148,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.26"
+local VERSION = "1.27"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -1296,6 +1296,53 @@ local function draw_folder_list()
   if ImGui.Button(ctx, "+ New folder", -FLT_MIN) then open_fnew, fnew_buf = true, "" end
 end
 
+-- split a button label into at most 2 lines that fit maxw (current font):
+-- by words first, a word too long is cut by characters, overflow ends with "…"
+local function utf8_chars(str)
+  local t = {}
+  for _, c in utf8.codes(str) do t[#t + 1] = utf8.char(c) end
+  return t
+end
+
+local function fit_chars(str, maxw, ellipsis)
+  local ch = utf8_chars(str)
+  local out = ""
+  for k = 1, #ch do
+    local try = out .. ch[k]
+    if ImGui.CalcTextSize(ctx, try .. (ellipsis and "…" or "")) > maxw then
+      return out .. (ellipsis and "…" or ""), table.concat(ch, "", k)
+    end
+    out = try
+  end
+  return out, ""
+end
+
+local function wrap_label(label, maxw)
+  if ImGui.CalcTextSize(ctx, label) <= maxw then return { label } end
+  local words = {}
+  for w in label:gmatch("%S+") do words[#words + 1] = w end
+  local line1, rest = "", nil
+  for k, w in ipairs(words) do
+    local try = (line1 == "") and w or (line1 .. " " .. w)
+    if ImGui.CalcTextSize(ctx, try) <= maxw then
+      line1 = try
+    else
+      if line1 == "" then -- first word alone is too long: cut it
+        local a, b = fit_chars(w, maxw, false)
+        line1 = a
+        rest = b .. ((k < #words) and (" " .. table.concat(words, " ", k + 1)) or "")
+      else
+        rest = table.concat(words, " ", k)
+      end
+      break
+    end
+  end
+  if not rest or rest == "" then return { line1 } end
+  local line2 = rest
+  if ImGui.CalcTextSize(ctx, line2) > maxw then line2 = fit_chars(rest, maxw, true) end
+  return { line1, line2 }
+end
+
 local function draw_strip_buttons()
   local shown = {}
   for i, s in ipairs(strips) do if strip_in_view(s) then shown[#shown + 1] = i end end
@@ -1329,7 +1376,23 @@ local function draw_strip_buttons()
     end
     local label = nonempty(s.name) or "(no name)"
     ImGui.PushFont(ctx, STRIP_FONT)
-    if ImGui.Button(ctx, label .. "##strip", bw, bh) then do_apply(i) end
+    local lines = wrap_label(label, bw - 8)
+    if #lines == 1 then
+      if ImGui.Button(ctx, label .. "##strip", bw, bh) then do_apply(i) end
+    else
+      -- long name: two centred lines drawn over an empty button
+      if ImGui.Button(ctx, "##strip", bw, bh) then do_apply(i) end
+      local x1, y1 = ImGui.GetItemRectMin(ctx)
+      local dl = ImGui.GetWindowDrawList(ctx)
+      local col = ImGui.GetColor(ctx, ImGui.Col_Text)
+      local lh = ImGui.GetTextLineHeight(ctx)
+      local y = y1 + math.floor((bh - lh * #lines) / 2)
+      for _, ln in ipairs(lines) do
+        local w = ImGui.CalcTextSize(ctx, ln)
+        ImGui.DrawList_AddText(dl, x1 + math.floor((bw - w) / 2), y, col, ln)
+        y = y + lh
+      end
+    end
     ImGui.PopFont(ctx)
     if pushed > 0 then ImGui.PopStyleColor(ctx, pushed) end
 
