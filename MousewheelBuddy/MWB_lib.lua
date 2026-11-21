@@ -139,6 +139,111 @@ function MWB.reset(ctx, mod)
   end
 end
 
+---------------------------------------------------------------- banks
+-- A bank = every wheel action (both sections, 8 key combinations, all zones) + the
+-- direction and zoom center settings, saved as a small text file:
+--   Data/ReNo_MousewheelBuddy/Banks/<name>.mwbank
+-- Lines "key=value"; an empty value = default action, "-" = do nothing.
+local BANK_EXT = ".mwbank"
+MWB.BANK_DIR = r.GetResourcePath() .. "/Data/ReNo_MousewheelBuddy/Banks"
+
+local function bank_keys()
+  local keys = {}
+  for _, c in ipairs({ "main", "midi" }) do
+    for _, m in ipairs(MWB.MODS) do
+      for _, z in ipairs(MWB.CONTEXTS[c].zones) do
+        keys[#keys + 1] = akey(c, m.key, z.key, "up")
+        keys[#keys + 1] = akey(c, m.key, z.key, "down")
+      end
+    end
+    for _, o in ipairs({ "invert_", "hzoom_", "vzoom_" }) do keys[#keys + 1] = "opt_" .. o .. c end
+  end
+  return keys
+end
+
+local function clean_name(name)
+  name = (name or ""):gsub("[\\/:%*%?\"<>|]", ""):match("^%s*(.-)%s*$")
+  return name
+end
+MWB.clean_bank_name = clean_name
+
+function MWB.bank_path(name) return MWB.BANK_DIR .. "/" .. name .. BANK_EXT end
+
+function MWB.list_banks()
+  local t, i = {}, 0
+  r.EnumerateFiles(MWB.BANK_DIR, -1)  -- refresh the file cache
+  while true do
+    local f = r.EnumerateFiles(MWB.BANK_DIR, i)
+    if not f then break end
+    local n = f:match("^(.*)%" .. BANK_EXT .. "$")
+    if n then t[#t + 1] = n end
+    i = i + 1
+  end
+  table.sort(t, function(a, b) return a:lower() < b:lower() end)
+  return t
+end
+
+-- returns true, or nil + error text
+function MWB.save_bank(name)
+  name = clean_name(name)
+  if name == "" then return nil, "Type a name for the bank first." end
+  r.RecursiveCreateDirectory(MWB.BANK_DIR, 0)
+  local f = io.open(MWB.bank_path(name), "w")
+  if not f then return nil, "Cannot write the file:\n" .. MWB.bank_path(name) end
+  f:write("# ReNo Mellow - Mousewheel Buddy bank 1\n")
+  for _, k in ipairs(bank_keys()) do f:write(k, "=", gets(k), "\n") end
+  f:close()
+  sets("bank_current", name)
+  return true
+end
+
+-- path = any .mwbank file (a bank of the list or an imported file)
+function MWB.load_bank(path)
+  local f = io.open(path, "r")
+  if not f then return nil, "Cannot read the file:\n" .. path end
+  local first = f:read("l") or ""
+  if not first:find("Mousewheel Buddy bank", 1, true) then
+    f:close()
+    return nil, "This file is not a Mousewheel Buddy bank."
+  end
+  local vals = {}
+  for line in f:lines() do
+    local k, v = line:match("^([%w_]+)=(.*)$")
+    if k then vals[k] = v end
+  end
+  f:close()
+  for _, k in ipairs(bank_keys()) do  -- keys missing from the file go back to their default
+    local v = vals[k] or ""
+    if v == "" then r.DeleteExtState(S, k, true) else sets(k, v) end
+  end
+  local name = path:match("([^/\\]+)%" .. BANK_EXT .. "$") or path:match("([^/\\]+)$")
+  sets("bank_current", name)
+  return true
+end
+
+-- copies an outside .mwbank file into the bank folder (same name), then loads it
+function MWB.import_bank(path)
+  local f = io.open(path, "rb")
+  if not f then return nil, "Cannot read the file:\n" .. path end
+  local data = f:read("a")
+  f:close()
+  if not data:find("Mousewheel Buddy bank", 1, true) then return nil, "This file is not a Mousewheel Buddy bank." end
+  local name = clean_name(path:match("([^/\\]+)%.%w+$") or path:match("([^/\\]+)$") or "Imported")
+  r.RecursiveCreateDirectory(MWB.BANK_DIR, 0)
+  local dest = MWB.bank_path(name)
+  local o = io.open(dest, "wb")
+  if not o then return nil, "Cannot write the file:\n" .. dest end
+  o:write(data)
+  o:close()
+  return MWB.load_bank(dest)
+end
+
+function MWB.delete_bank(name)
+  return os.remove(MWB.bank_path(name))
+end
+
+function MWB.current_bank() return gets("bank_current") end
+
 function MWB.setting(k, default)
   local v = gets("opt_" .. k)
   if v == "" then return default end
