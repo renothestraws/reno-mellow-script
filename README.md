@@ -137,7 +137,7 @@ Anciennement **Custom Strips** : au premier lancement, Strip Buddy reprend autom
 - Les strips sont enregistrés dans `Data/ReNo_StripBuddy/strips.lua`.
 - **Export / Import** (onglet Setup) : sauver tous les strips ou un seul dossier dans un fichier `.rnstrips` (par défaut dans `Data/ReNo_StripBuddy/Exports`), puis le recharger en ajout (dossiers de même nom fusionnés, doublons ignorés) ou en remplacement. **Clear all strips** efface tous les strips (et, au choix, les dossiers) après confirmation.
 
-**Icônes de piste :** 134 icônes `cs_tags_XXX.png` (le tag en blanc, 128 × 128), une par tag des strips de base, installées dans `Data/track_icons` ; les strips de base créés par Load default strips les utilisent (normalisation désactivée).
+**Icônes de piste :** 135 icônes `cs_tags_XXX.png` (le tag en blanc, 128 × 128), une par tag des strips de base, installées dans `Data/track_icons` ; les strips de base créés par Load default strips les utilisent (normalisation désactivée).
 
 **Icône de barre d'outils :** `ReNo_StripBuddy.png` (style TCP, 3 états), installée avec le script dans `Data/toolbar_icons` (+ 150 / 200 %).
 
