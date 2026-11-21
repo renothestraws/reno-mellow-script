@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.27
+-- @version 1.28
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, FX d'entrée, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Onglet Strips : retour à la ligne automatique des noms trop longs sur les boutons (deux lignes centrées, « … » si ça ne tient toujours pas)
+-- @changelog Correctif : New folder, Rename folder et Rename strip ne prenaient pas le nom saisi en cliquant sur OK (seule la touche Entrée fonctionnait)
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -148,7 +148,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.27"
+local VERSION = "1.28"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -2184,8 +2184,11 @@ local function name_modal(title, open_flag, buf, on_ok)
   if ImGui.BeginPopupModal(ctx, title, nil, ImGui.WindowFlags_AlwaysAutoResize) then
     if ImGui.IsWindowAppearing(ctx) then ImGui.SetKeyboardFocusHere(ctx) end
     ImGui.SetNextItemWidth(ctx, 250)
-    local enter
-    enter, buf = ImGui.InputText(ctx, "##name", buf, ImGui.InputTextFlags_EnterReturnsTrue)
+    -- plain InputText: with the "Enter returns true" flag the typed text only reached buf
+    -- on Enter, so clicking OK saw an empty name
+    local _
+    _, buf = ImGui.InputText(ctx, "##name", buf)
+    local enter = ImGui.IsKeyPressed(ctx, ImGui.Key_Enter) or ImGui.IsKeyPressed(ctx, ImGui.Key_KeypadEnter)
     if ImGui.Button(ctx, "OK", 80) then enter = true end
     ImGui.SameLine(ctx)
     if ImGui.Button(ctx, "Cancel", 80) then ImGui.CloseCurrentPopup(ctx) end
@@ -2237,8 +2240,9 @@ local function draw_modals()
   if ImGui.BeginPopupModal(ctx, "Rename strip", nil, ImGui.WindowFlags_AlwaysAutoResize) then
     if ImGui.IsWindowAppearing(ctx) then ImGui.SetKeyboardFocusHere(ctx) end
     ImGui.SetNextItemWidth(ctx, 250)
-    local enter
-    enter, rename_buf = ImGui.InputText(ctx, "##rename", rename_buf, ImGui.InputTextFlags_EnterReturnsTrue)
+    local _
+    _, rename_buf = ImGui.InputText(ctx, "##rename", rename_buf)
+    local enter = ImGui.IsKeyPressed(ctx, ImGui.Key_Enter) or ImGui.IsKeyPressed(ctx, ImGui.Key_KeypadEnter)
     if ImGui.Button(ctx, "OK", 80) then enter = true end
     ImGui.SameLine(ctx)
     if ImGui.Button(ctx, "Cancel", 80) then ImGui.CloseCurrentPopup(ctx) end
