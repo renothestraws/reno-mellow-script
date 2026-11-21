@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.24
--- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Display : taille (10 à 36) et opacité du fond (20 à 100 %) réglables, par clic droit sur la barre ou dans l'onglet Display
+-- @version 1.25
+-- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, FX d'entrée, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
+-- @changelog FX chain : choix par strip entre ajouter (Add) et remplacer (Rep) les effets existants ; nouvelle colonne Input FX chain (effets d'entrée), avec le même choix
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -147,7 +147,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.24"
+local VERSION = "1.25"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -578,6 +578,28 @@ local function chunk_add(tr, env_names, fx_lines)
   return reaper.SetTrackStateChunk(tr, table.concat(L, "\n") .. "\n", false)
 end
 
+-- adds the lines of a .RfxChain to the input FX (<FXCHAIN_REC block)
+local function chunk_add_rec(tr, fx_lines)
+  local ok, chunk = reaper.GetTrackStateChunk(tr, "", false)
+  if not ok then return false end
+  local L = split_lines(chunk)
+  local children, track_end = scan_track_chunk(L)
+  local rec, first_item
+  for _, c in ipairs(children) do
+    if c.name == "FXCHAIN_REC" and not rec then rec = c end
+    if c.name == "ITEM" and not first_item then first_item = c end
+  end
+  if rec then
+    L = insert_lines(L, rec.e, fx_lines)
+  else
+    local blk = { "<FXCHAIN_REC", "SHOW 0", "LASTSEL 0", "DOCKED 0" }
+    for _, l in ipairs(fx_lines) do blk[#blk + 1] = l end
+    blk[#blk + 1] = ">"
+    L = insert_lines(L, (first_item and first_item.s) or track_end, blk)
+  end
+  return reaper.SetTrackStateChunk(tr, table.concat(L, "\n") .. "\n", false)
+end
+
 --------------------------------------------------------------------------------
 -- Apply one strip to the selected tracks
 --------------------------------------------------------------------------------
@@ -590,17 +612,24 @@ local function set_env_visible(env)
   if n ~= ch then reaper.SetEnvelopeStateChunk(env, n, false) end
 end
 
-local function add_fxchain(tr, path, warn)
-  local before = reaper.TrackFX_GetCount(tr)
+-- loads an FX chain on the track FX (rec = false) or on the input FX (rec = true);
+-- replace = true removes the FX already there first, otherwise the chain is added after them
+local REC_OFS = 0x1000000
+local function add_fxchain(tr, path, warn, rec, replace)
+  local function count() return rec and reaper.TrackFX_GetRecCount(tr) or reaper.TrackFX_GetCount(tr) end
+  if replace then
+    for i = count() - 1, 0, -1 do reaper.TrackFX_Delete(tr, rec and (REC_OFS + i) or i) end
+  end
+  local before = count()
   local p = norm_path(path)
   local rel = p
   if p:lower():sub(1, #FXC_DIR + 1) == (FXC_DIR .. "/"):lower() then rel = p:sub(#FXC_DIR + 2) end
-  reaper.TrackFX_AddByName(tr, rel, false, -1)
-  if reaper.TrackFX_GetCount(tr) > before then return end
+  reaper.TrackFX_AddByName(tr, rel, rec and true or false, -1)
+  if count() > before then return end
   -- fallback: insert the chain file into the track chunk
   local lines = read_fxchain_lines(path)
   if not lines then warn["FX chain file not found: " .. basename(path)] = true; return end
-  chunk_add(tr, nil, lines)
+  if rec then chunk_add_rec(tr, lines) else chunk_add(tr, nil, lines) end
 end
 
 local function take_norm_gain(item, take, ntype, target)
@@ -800,8 +829,9 @@ local function apply_strip(s)
       local v = (cur & ~(1 | 30)) | s.meter.mode
       reaper.SetMediaTrackInfo_Value(tr, "I_VUMODE", v)
     end
-    -- 8 : FX chain (added after existing FX)
-    if s.fxchain then add_fxchain(tr, s.fxchain, warn) end
+    -- 8 : FX chain and input FX chain (added after the existing FX, or replacing them)
+    if s.fxchain then add_fxchain(tr, s.fxchain, warn, false, s.fxchain_replace) end
+    if s.fxin then add_fxchain(tr, s.fxin, warn, true, s.fxin_replace) end
     -- 9 : envelopes (existing ones made visible now, missing ones created below)
     for _, d in ipairs(want_env) do
       local env = reaper.GetTrackEnvelopeByChunkName(tr, "<" .. d.chunk)
@@ -935,7 +965,8 @@ local function describe(s)
   add("Output", sum_output(s.output))
   add("Pan mode", pan_mode_label(s.panmode))
   add("Metering", sum_meter(s.meter))
-  add("FX chain", s.fxchain and basename(s.fxchain))
+  add("FX chain", s.fxchain and (basename(s.fxchain) .. (s.fxchain_replace and " (replace)" or " (add)")))
+  add("Input FX", s.fxin and (basename(s.fxin) .. (s.fxin_replace and " (replace)" or " (add)")))
   add("Envelopes", sum_envs(s.envelopes))
   add("Item name", s.item_name)
   add("Normalize", sum_norm(s.normalize))
@@ -1667,18 +1698,29 @@ local function draw_row(i, s)
     ImGui.EndPopup(ctx)
   end
 
-  -- 8 FX chain
-  ImGui.TableNextColumn(ctx)
-  if ImGui.Button(ctx, (s.fxchain and basename(s.fxchain):gsub("%.[Rr][Ff][Xx][Cc]hain$", "") or "Browse...") .. "##fx",
-      s.fxchain and 110 or 0) then
-    local f = file_browse("Choose an FX chain", FXC_DIR, "RfxChain",
-      "FX chains (*.RfxChain)\0*.RfxChain\0All files (*.*)\0*.*\0\0")
-    if f then s.fxchain = f; mark() end
+  -- 8 FX chain / 8b input FX chain: file + Add / Replace
+  local function fx_cell(key, rkey, id, title)
+    ImGui.TableNextColumn(ctx)
+    local path = s[key]
+    if ImGui.Button(ctx, (path and basename(path):gsub("%.[Rr][Ff][Xx][Cc]hain$", "") or "Browse...") .. "##" .. id,
+        path and 82 or 0) then
+      local f = file_browse(title, FXC_DIR, "RfxChain",
+        "FX chains (*.RfxChain)\0*.RfxChain\0All files (*.*)\0*.*\0\0")
+      if f then s[key] = f; mark() end
+    end
+    if path then
+      if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, path) end
+      ImGui.SameLine(ctx, 0, 2)
+      if ImGui.SmallButton(ctx, (s[rkey] and "Rep" or "Add") .. "##m" .. id) then s[rkey] = (not s[rkey]) or nil; mark() end
+      if ImGui.IsItemHovered(ctx) then
+        ImGui.SetTooltip(ctx, s[rkey] and "Replace: the FX already on the track are removed first.\nClick to add after them instead."
+          or "Add: the chain goes after the FX already on the track.\nClick to replace them instead.")
+      end
+      if clear_btn(id) then s[key] = nil; s[rkey] = nil; mark() end
+    end
   end
-  if s.fxchain then
-    if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, s.fxchain) end
-    if clear_btn("fx") then s.fxchain = nil; mark() end
-  end
+  fx_cell("fxchain", "fxchain_replace", "fx", "Choose an FX chain")
+  fx_cell("fxin", "fxin_replace", "fxin", "Choose an input FX chain")
 
   -- 9 envelopes
   ImGui.TableNextColumn(ctx)
@@ -1787,7 +1829,7 @@ end
 
 local COLUMNS = {
   { "#", 24 }, { "Strip name *", 130 }, { "Track name", 110 }, { "Tag", 44 }, { "Tag 2", 44 }, { "Colour", 52 },
-  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Output", 130 }, { "Pan mode", 130 }, { "Metering", 120 }, { "FX chain", 130 },
+  { "Icon", 130 }, { "Layout", 100 }, { "Record input", 150 }, { "Output", 130 }, { "Pan mode", 130 }, { "Metering", 120 }, { "FX chain", 150 }, { "Input FX chain", 150 },
   { "Envelopes", 110 }, { "Item name", 110 }, { "Normalize", 130 }, { "Group", 130 }, { "", 100 },
 }
 
