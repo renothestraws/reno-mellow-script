@@ -14,6 +14,8 @@ Chaque .lua dont l'en-tête contient "-- @description" devient un paquet :
        "--   [midi_editor] MIDI/x.lua > MIDI/x.lua"     = action de l'éditeur MIDI (dans un sous-dossier)
        "--   [webinterface] www/page.html > page.html" = fichier d'un autre type (data, webinterface,
                                                         projecttpl...) ; après ">" : chemin d'installation
+  -- @metapackage : le .lua n'est pas installé, seuls les fichiers du @provides le sont
+                   (ex. ToolbarIcons : uniquement des icônes).
 Les fichiers fournis par un paquet portent "@noindex".
 Aucune installation n'est nécessaire (Python 3 seul).
 """
@@ -119,7 +121,8 @@ def main():
             x.append('      <version name=%s author=%s time=%s>' % (quoteattr(t["version"]), quoteattr(t["author"]), quoteattr(now)))
             if "changelog" in t:
                 x.append('        <changelog><![CDATA[%s]]></changelog>' % t["changelog"])
-            x.append('        <source main="main">%s</source>' % url(rel))
+            if "metapackage" not in t:      # méta-paquet : seul ce qu'il fournit est installé
+                x.append('        <source main="main">%s</source>' % url(rel))
             for path, target, secs, kind in provides:
                 if not os.path.isfile(os.path.join(root, cat, path)):
                     sys.exit("%s : fichier fourni introuvable : %s" % (fn, path))

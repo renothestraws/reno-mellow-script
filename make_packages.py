@@ -133,3 +133,9 @@ main = os.path.join(d, "ReNo Mellow - Mousewheel Buddy.lua")
 build("ReNo Mellow - Mousewheel Buddy", "ReNo_Mellow_Mousewheel_Buddy", header(main, "version"),
       header(main, "changelog"), walk(d, BASE + "/MousewheelBuddy"),
       no_reg=[BASE + "/MousewheelBuddy/MWB_lib.lua", BASE + "/MousewheelBuddy/MIDI/*"])
+
+# --- Toolbar icons (données seules : aucune action) -------------------------------
+d = os.path.join(ROOT, "ToolbarIcons")
+main = os.path.join(d, "ReNo Mellow - Toolbar icons.lua")
+build("ReNo Mellow - Toolbar icons", "ReNo_Mellow_Toolbar_Icons", header(main, "version"),
+      header(main, "changelog"), walk(os.path.join(d, "Data"), "Data"))
