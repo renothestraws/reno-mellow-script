@@ -16,6 +16,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 | **ReNo Mellow - Drum Buddy** | Fills de batterie dans l'éditeur MIDI, pensés comme un batteur. Trois batteurs fournis : Charlie (rock-pop), Mike (metal), Buddie (jazz-gospel). Chaque projet a son **batteur** : sa drum map, sa façon de jouer (vélocités, flas et drags, humanize, Rush / Laid back, densité) et ses **16 chops** sur des pads (un clic = chop inséré au curseur). Les chops ne contiennent que les groupes et le sticking : un coup = un pas de la grille de l'éditeur MIDI. **Editor** : presets de rudiments et de découpages (3+3+2, 5+5+6…), groupes, sticking (R / L / K / fla / drag, accents, ghost notes) et orchestration coup par coup ou par groupe. **Again**, **Vary** (nouvelle orchestration), **Random** (nouveau fill dans le style du batteur), **Display** flottant. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/DrumBuddy/DrumBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/DrumBuddy/DrumBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Mousewheel Buddy** | Molette intelligente pour l'arrangement et l'éditeur MIDI : l'action lancée dépend de la zone survolée (règle, item, enveloppe, piste, zone vide, mixer, transport ; dans l'éditeur MIDI : règle, notes, lignes CC) et des touches tenues : 8 actions molette par section (sans modificateur, Ctrl, Shift, Alt et leurs combinaisons ; Cmd / Opt sur Mac). Actions molette vers le haut / vers le bas choisies zone par zone dans une fenêtre de réglage (Pick… dans la liste d'actions, page qui suit les touches tenues, zone survolée en vert, inversion du sens, centre du zoom prioritaire sur les préférences, banques de réglages à sauver / charger). Le TCP et le clavier du piano roll restent gérés par REAPER. Nécessite SWS ; ReaImGui pour la fenêtre. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/MousewheelBuddy/MousewheelBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/MousewheelBuddy/MousewheelBuddy_manual_EN.pdf) |
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
+| **ReNo Mellow - Toolbar icons** | 143 icônes de barre d'outils au style ReNo Mellow (tuiles arrondies à 3 états : repos, survol, allumé en vert ; 100 / 150 / 200 %) : actions de l'arrangement (projet, options, marqueurs, pistes, Edit Tools, tempo), éditeur MIDI (fenêtre, notes, CC, formes de courbe), REABACK et 41 icônes génériques. Aucune action ajoutée. [Aperçu](ToolbarIcons/preview.png) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
 ### ReNo StemSplit
@@ -156,6 +157,15 @@ Anciennement **Custom Strips** : au premier lancement, Strip Buddy reprend autom
 
 **Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manual_EN.pdf)
 
+### ReNo Mellow - Toolbar icons
+
+Jeu de 143 icônes `toolbar_icons_reno_<outil>.png` (90 × 30 pour les trois états ; dossiers `150` et `200` pour les écrans à haute résolution). Le paquet n'installe que les icônes dans `Data/toolbar_icons` : il n'ajoute aucune action.
+
+- **Choisir une icône** : clic droit sur une barre d'outils > *Customize toolbar…*, sélectionner le bouton > *Icon…*.
+- **Familles** : arrangement (project_settings, undo, auto_crossfade, solo_in_front, ripple_editing, metronome, razor_edit…), marqueurs (insert_marker, insert_region, renumber_markers, save_marker_set…), pistes (insert_new_track, insert_aux, insert_click_track…), Edit Tools (split_at_grid, nudge, spectral_edit…), éditeur MIDI préfixées `midi_` (midi_quantize, midi_legato, midi_cc_bezier…), REABACK (`reaback_…`) et génériques (add, delete, up, down, left, right, copy, paste, play, stop, record, zoom_in…).
+- **Exception** : `render_project` est un bouton large (trois fois plus large que haut).
+- Aperçu de toutes les icônes : [ToolbarIcons/preview.png](ToolbarIcons/preview.png). Générateur : `ToolbarIcons/make_icons.py` (Python + Pillow).
+
 ### REABACK
 
 - **REABACK** : fenêtre principale (liste des régions réordonnable, renumérotation des IDs, sets de régions,
@@ -186,13 +196,17 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation en un fichier (REAPER 7.86 et plus)
 
-Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy, Grid Buddy, Chord Buddy, Drum Buddy, Mousewheel Buddy).
+Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy, Grid Buddy, Chord Buddy, Drum Buddy, Mousewheel Buddy, Toolbar icons).
 Télécharger le fichier, puis l'ouvrir avec REAPER : les scripts sont installés et ajoutés à la liste d'actions,
 et le paquet peut être désinstallé proprement. Pas de mises à jour automatiques : pour cela, préférer ReaPack.
 
 Tool Buddy en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Tool_Buddy.ReaperPkg>
 (la version éditeur MIDI est ajoutée à la section MIDI Editor au premier lancement de la Toolbox).
+
+Toolbar icons en téléchargement direct :
+<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Toolbar_Icons.ReaperPkg>
+(icônes seulement, aucune action).
 
 Strip Buddy en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Strip_Buddy.ReaperPkg>
