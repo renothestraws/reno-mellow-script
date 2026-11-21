@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Mousewheel Buddy
 -- @author ReNo Mellow
--- @version 1.0
+-- @version 1.1
 -- @about Molette intelligente pour l'arrangement et l'éditeur MIDI : l'action lancée dépend de la zone survolée (règle, items, enveloppes, pistes, mixer, transport, notes, lignes CC…), réglable zone par zone (molette vers le haut / vers le bas) et pour chaque combinaison de Ctrl / Shift / Alt (Cmd / Opt sur Mac) : 8 actions molette pour l'arrangement, 8 pour l'éditeur MIDI. Nécessite SWS (et ReaImGui pour la fenêtre Setup).
--- @changelog Première version : 8 actions molette (sans modificateur, Ctrl, Shift, Alt et leurs combinaisons) pour l'arrangement et pour l'éditeur MIDI, fenêtre (choix des actions par zone, Pick… dans la liste d'actions, inversion du sens, zone survolée mise en évidence, centre du zoom horizontal / vertical propre à la molette, prioritaire sur les préférences).
+-- @changelog Onglet Banks : sauver, charger, supprimer et importer des banques de réglages de la molette (toutes les actions, les 8 combinaisons, Arrange et MIDI Editor, sens et centre du zoom).
 -- @provides
 --   MWB_lib.lua
 --   [main] ReNo Mellow - Mousewheel Buddy - Wheel.lua
@@ -27,7 +27,7 @@ local dir = ({ r.get_action_context() })[2]:match("^(.*[/\\])")
 dofile(dir .. "MWB_lib.lua")
 
 local TITLE = "Mousewheel Buddy"
-local VERSION = "1.0"
+local VERSION = "1.1"
 
 if not r.ImGui_GetBuiltinPath then
   r.MB("This window needs ReaImGui.\nInstall it with ReaPack (ReaTeam Extensions), then restart REAPER.\n\n" ..
@@ -277,6 +277,119 @@ local function draw_context(c)
   end
 end
 
+---------------------------------------------------------------- banks
+local banks = MWB.list_banks()
+local bank_name = MWB.current_bank()
+
+local function reload_all()
+  for _, c in ipairs({ "main", "midi" }) do
+    for _, m in ipairs(MWB.MODS) do reload(c, m.key) end
+  end
+end
+
+local function bank_exists(name)
+  for _, b in ipairs(banks) do if b:lower() == name:lower() then return true end end
+  return false
+end
+
+local function do_save(name)
+  name = MWB.clean_bank_name(name)
+  if name ~= "" and bank_exists(name) and
+     r.MB("The bank \"" .. name .. "\" already exists. Replace it?", TITLE, 1) ~= 1 then return end
+  local ok, err = MWB.save_bank(name)
+  if not ok then r.MB(err, TITLE, 0) return end
+  bank_name = MWB.clean_bank_name(name)
+  banks = MWB.list_banks()
+end
+
+local function do_load(name)
+  if r.MB("Load the bank \"" .. name .. "\"?\nThe current wheel actions are replaced " ..
+          "(save them first in a bank if you want to keep them).", TITLE, 1) ~= 1 then return end
+  local ok, err = MWB.load_bank(MWB.bank_path(name))
+  if not ok then r.MB(err, TITLE, 0) return end
+  bank_name = name
+  reload_all()
+end
+
+local function do_import()
+  local ok, path = r.GetUserFileNameForRead("", "Import a Mousewheel Buddy bank", "mwbank")
+  if not ok or path == "" then return end
+  local done, err = MWB.import_bank(path)
+  if not done then r.MB(err, TITLE, 0) return end
+  bank_name = MWB.current_bank()
+  banks = MWB.list_banks()
+  reload_all()
+end
+
+local function open_folder()
+  r.RecursiveCreateDirectory(MWB.BANK_DIR, 0)
+  if r.CF_ShellExecute then r.CF_ShellExecute(MWB.BANK_DIR)
+  else r.MB(MWB.BANK_DIR, TITLE, 0) end
+end
+
+local function draw_banks()
+  ImGui.TextWrapped(ctx, "A bank keeps all the wheel actions (Arrange and MIDI Editor, every key combination) " ..
+    "with the wheel direction and zoom center settings.")
+  local cur = MWB.current_bank()
+  ImGui.Text(ctx, "Current bank:")
+  ImGui.SameLine(ctx)
+  if cur ~= "" then ImGui.TextColored(ctx, COL_GREEN, cur) else ImGui.TextColored(ctx, COL_GREY, "none") end
+
+  ImGui.Separator(ctx)
+  ImGui.SetNextItemWidth(ctx, size_of() * 16)
+  local ch, txt = ImGui.InputTextWithHint(ctx, "##bankname", "Bank name", bank_name or "")
+  if ch then bank_name = txt end
+  ImGui.SameLine(ctx)
+  if ImGui.Button(ctx, "Save") then
+    local n = bank_name
+    later(function() do_save(n) end)
+  end
+  if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, "Save the current wheel actions under this name") end
+  ImGui.SameLine(ctx)
+  if ImGui.Button(ctx, "Import file...") then later(do_import) end
+  ImGui.SameLine(ctx)
+  if ImGui.Button(ctx, "Open folder") then later(open_folder) end
+  if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, MWB.BANK_DIR) end
+
+  local flags = ImGui.TableFlags_Borders | ImGui.TableFlags_RowBg | ImGui.TableFlags_ScrollY
+  if ImGui.BeginTable(ctx, "banks", 2, flags) then
+    ImGui.TableSetupScrollFreeze(ctx, 0, 1)
+    ImGui.TableSetupColumn(ctx, "Bank")
+    ImGui.TableSetupColumn(ctx, "##act", ImGui.TableColumnFlags_WidthFixed, size_of() * 8)
+    ImGui.TableHeadersRow(ctx)
+    if #banks == 0 then
+      ImGui.TableNextRow(ctx)
+      ImGui.TableNextColumn(ctx)
+      ImGui.TextColored(ctx, COL_GREY, "No bank yet: type a name and click Save.")
+    end
+    for i, b in ipairs(banks) do
+      ImGui.TableNextRow(ctx)
+      ImGui.TableNextColumn(ctx)
+      local is_cur = (b == cur)
+      if ImGui.Selectable(ctx, b .. "##b" .. i, is_cur, ImGui.SelectableFlags_AllowDoubleClick) then
+        bank_name = b
+        if ImGui.IsMouseDoubleClicked(ctx, 0) then later(function() do_load(b) end) end
+      end
+      if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, "Double-click to load") end
+      ImGui.TableNextColumn(ctx)
+      ImGui.PushID(ctx, "bk" .. i)
+      if ImGui.SmallButton(ctx, "Load") then later(function() do_load(b) end) end
+      ImGui.SameLine(ctx)
+      if ImGui.SmallButton(ctx, "Delete") then
+        later(function()
+          if r.MB("Delete the bank \"" .. b .. "\"?", TITLE, 1) == 1 then
+            MWB.delete_bank(b)
+            banks = MWB.list_banks()
+          end
+        end)
+      end
+      ImGui.PopID(ctx)
+    end
+    ImGui.EndTable(ctx)
+  end
+  ImGui.TextColored(ctx, COL_GREY, "Custom actions and scripts (_RS...) can have other IDs on another computer.")
+end
+
 local function draw_options()
   ImGui.SetNextItemWidth(ctx, 160)
   local ch, v = ImGui.SliderInt(ctx, "Text size", size_of(), FONT_MIN, FONT_MAX)
@@ -325,6 +438,7 @@ local function loop()
     if ImGui.BeginTabBar(ctx, "tabs") then
       if ImGui.BeginTabItem(ctx, "Arrange") then draw_context("main"); ImGui.EndTabItem(ctx) end
       if ImGui.BeginTabItem(ctx, "MIDI Editor") then draw_context("midi"); ImGui.EndTabItem(ctx) end
+      if ImGui.BeginTabItem(ctx, "Banks") then draw_banks(); ImGui.EndTabItem(ctx) end
       if ImGui.BeginTabItem(ctx, "Options") then draw_options(); ImGui.EndTabItem(ctx) end
       ImGui.EndTabBar(ctx)
     end
