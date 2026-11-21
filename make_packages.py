@@ -124,3 +124,10 @@ d = os.path.join(ROOT, "DrumBuddy")
 main = os.path.join(d, "ReNo Mellow - Drum Buddy.lua")
 build("ReNo Mellow - Drum Buddy", "ReNo_Mellow_Drum_Buddy", header(main, "version"),
       header(main, "changelog"), walk(d, BASE + "/DrumBuddy"))
+
+# --- Mousewheel Buddy (8 actions molette Main + 8 MIDI Editor, fenêtre de réglage) ---
+d = os.path.join(ROOT, "MousewheelBuddy")
+main = os.path.join(d, "ReNo Mellow - Mousewheel Buddy.lua")
+build("ReNo Mellow - Mousewheel Buddy", "ReNo_Mellow_Mousewheel_Buddy", header(main, "version"),
+      header(main, "changelog"), walk(d, BASE + "/MousewheelBuddy"),
+      no_reg=[BASE + "/MousewheelBuddy/MWB_lib.lua", BASE + "/MousewheelBuddy/MIDI/*"])
