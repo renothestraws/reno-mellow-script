@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Tool Buddy
 -- @author ReNo Mellow
--- @version 1.10
+-- @version 1.11
 -- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Swiss Army Knife devient Tool Buddy : nouveaux noms d'actions, dossier ToolBuddy, outils et réglages repris automatiquement depuis Swiss Army Knife.
+-- @changelog Display : au survol du nom de l'outil, une bulle décrit ses trois actions (main, alt, alt2) ; ailleurs, la bulle d'aide habituelle.
 -- @provides
 --   [main] ReNo Mellow - Tool Buddy (alt).lua
 --   [main] ReNo Mellow - Tool Buddy (alt2).lua

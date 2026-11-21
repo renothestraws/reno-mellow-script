@@ -228,12 +228,24 @@ local function loop()
     local cy = ImGui.GetCursorPosY(ctx)
     ImGui.SetCursorPosY(ctx, cy + (h * 1.4 - h) / 2)
     ImGui.TextColored(ctx, COL_NAME, name)
+    local name_hovered = ImGui.IsItemHovered(ctx)
 
     if ImGui.IsWindowHovered(ctx) then
       if ImGui.IsMouseDoubleClicked(ctx, ImGui.MouseButton_Left) then open_toolbox() end
       local wheel = ImGui.GetMouseWheel(ctx)
       if wheel and wheel ~= 0 then step(wheel > 0 and -1 or 1) end
-      ImGui.SetTooltip(ctx, "Double-click: open the Toolbox\nMouse wheel: previous / next tool\nRight-click: options\nDrag: move")
+      if name_hovered then
+        -- over the tool name: what its three actions do
+        local t = TB.get_tool(cur)
+        local function desc(id)
+          if id == "" then return "(none)" end
+          return TB.action_name(id) or ("not found: " .. id)
+        end
+        ImGui.SetTooltip(ctx, string.format("%s\nMain:  %s\nAlt:   %s\nAlt 2: %s",
+          name, desc(t.main), desc(t.alt), desc(t.alt2)))
+      else
+        ImGui.SetTooltip(ctx, "Double-click: open the Toolbox\nMouse wheel: previous / next tool\nRight-click: options\nDrag: move")
+      end
     end
 
     draw_menu()
