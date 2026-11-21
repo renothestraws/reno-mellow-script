@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.25
+-- @version 1.26
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, FX d'entrée, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog FX chain : choix par strip entre ajouter (Add) et remplacer (Rep) les effets existants ; nouvelle colonne Input FX chain (effets d'entrée), avec le même choix
+-- @changelog Tag des reverbs REV -> RVB : nouvelle icône cs_tags_RVB.png, strip de base Reverb en [RVB], strips tagués REV mis à jour une fois (l'icône REV reste installée pour les projets existants)
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -104,6 +104,7 @@
 --   [data] Data/track_icons/cs_tags_ROO.png > track_icons/cs_tags_ROO.png
 --   [data] Data/track_icons/cs_tags_ROT.png > track_icons/cs_tags_ROT.png
 --   [data] Data/track_icons/cs_tags_RSP.png > track_icons/cs_tags_RSP.png
+--   [data] Data/track_icons/cs_tags_RVB.png > track_icons/cs_tags_RVB.png
 --   [data] Data/track_icons/cs_tags_SAX.png > track_icons/cs_tags_SAX.png
 --   [data] Data/track_icons/cs_tags_SC.png > track_icons/cs_tags_SC.png
 --   [data] Data/track_icons/cs_tags_SCR.png > track_icons/cs_tags_SCR.png
@@ -147,7 +148,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.25"
+local VERSION = "1.26"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -260,7 +261,7 @@ local DEFAULT_STRIPS = {
   { "Orchestral percussion", { { "Orchestral percussion", "ORC" }, { "Xylophone", "ORC" }, { "Glockenspiel", "ORC" }, { "Tubular Bells", "ORC" }, { "Celesta", "ORC" }, { "Vibraphone", "ORC" } } },
   { "Choir", { { "Choir", "CHO" }, { "Sopranos", "CHO" }, { "Alto", "CHO" }, { "Tenors", "CHO" }, { "Baritone", "CHO" }, { "Basses", "CHO" } } },
   { "Vocals", { { "Vocals", "VOC" }, { "Lead vocals", "LDV" }, { "Background vocals", "BGV" }, { "Harmonies", "HAR" }, { "Gang", "GNG" }, { "Screams", "SCR" }, { "Dialogue", "DIA" }, { "Master of ceremonies", "MC" }, { "Talkback", "TLK" }, { "Listenback", "LIS" }, { "Doubles", "DBL" }, { "Ad-libs", "ADL" }, { "Rap", "RAP" }, { "Chorus vocals", "CHR" }, { "Talkbox", "TBX" }, { "Vocal bus", "VOX" } } },
-  { "Mix", { { "Reverb", "REV" }, { "Delay", "DLY" }, { "Effects", "FX" }, { "Sidechain", "SC" }, { "Master bus", "MST" }, { "Stems", "STM" }, { "Reference", "REF" }, { "Music", "MUS" }, { "Background", "BKG" }, { "Alternate take", "ALT" }, { "Temporary", "TMP" }, { "Spare", "RSP" }, { "Comment", "CMT" } } },
+  { "Mix", { { "Reverb", "RVB" }, { "Delay", "DLY" }, { "Effects", "FX" }, { "Sidechain", "SC" }, { "Master bus", "MST" }, { "Stems", "STM" }, { "Reference", "REF" }, { "Music", "MUS" }, { "Background", "BKG" }, { "Alternate take", "ALT" }, { "Temporary", "TMP" }, { "Spare", "RSP" }, { "Comment", "CMT" } } },
   { "Live", { { "Monitor mix", "MIX" }, { "In-ears", "IEM" }, { "Monitors", "MON" }, { "Talkback return", "TBK" }, { "Timecode track", "TC" }, { "LTC", "LTC" }, { "MTC", "MTC" }, { "Sampler", "SMP" }, { "Loop", "LOP" }, { "Ghost track", "GHO" } } },
   { "Miscellaneous", { { "Miscellaneous", "MSC" }, { "Playback", "PLB" }, { "Production", "PRD" }, { "Click", "CLK" }, { "Metronome", "CLK" }, { "Cues", "CUE" }, { "Timecode", "TMC" }, { "MIDI", "MID" }, { "DMX", "DMX" }, { "Video", "VID" }, { "Image", "IMG" }, { "Lyrics", "LYR" }, { "Chords", "CHD" }, { "Auxiliary", "AUX" }, { "Busses", "BUS" }, { "Dca", "DCA" }, { "Vca", "VCA" }, { "Group", "GRP" }, { "Subgroup", "SUB" }, { "Matrix", "MTX" }, { "Master", "MLR" } } },
 }
@@ -1128,6 +1129,22 @@ if reaper.GetExtState(EXT, "retag_123") ~= "1" then
     end
   end
   reaper.SetExtState(EXT, "retag_123", "1", true)
+end
+
+-- 1.26 : reverb tag REV -> RVB. One-time update of every strip tagged REV (tag 1 or 2);
+-- the icon follows when it is the old REV icon or empty.
+if reaper.GetExtState(EXT, "retag_126") ~= "1" then
+  for _, s in ipairs(strips) do
+    if s.tag == "REV" then
+      s.tag = "RVB"
+      if (s.icon == nil or s.icon == "cs_tags_REV.png") and reaper.file_exists(ICON_DIR .. "/cs_tags_RVB.png") then
+        s.icon = "cs_tags_RVB.png"
+      end
+      dirty = true
+    end
+    if s.tag2 == "REV" then s.tag2 = "RVB"; dirty = true end
+  end
+  reaper.SetExtState(EXT, "retag_126", "1", true)
 end
 
 local function set_status(msg, kind)
