@@ -1,8 +1,8 @@
 -- @description Default 7.0 RM Teal (thème + Theme Adjuster)
 -- @author ReNo Mellow
--- @version 1.0
+-- @version 1.1
 -- @about Thème REAPER Default 7.0 RM Teal : le thème Default 7.0 aux couleurs des plug-ins ReNo Mellow (gris RM, accent vert RM #6CD9C7), potards argentés, faders argentés, transport plat, armement rond, VU-mètres en dégradé vert / jaune (vers -18 dB) / rouge, police Arial. Installe le thème (ColorThemes) et son Theme Adjuster (action Default_7.0_RM_Teal_theme_adjuster).
--- @changelog Première version du thème Default 7.0 RM Teal
+-- @changelog Boutons de transport réalignés (même taille, plus de chevauchement Rec / Play / Repeat)
 -- @provides
 --   [theme] Default_7.0_RM_Teal.ReaperThemeZip
 --   RM_Teal_theme_adjuster_images/always_hide.png > RM_Teal_theme_adjuster_images/always_hide.png
