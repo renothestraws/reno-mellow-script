@@ -139,3 +139,25 @@ d = os.path.join(ROOT, "ToolbarIcons")
 main = os.path.join(d, "ReNo Mellow - Toolbar icons.lua")
 build("ReNo Mellow - Toolbar icons", "ReNo_Mellow_Toolbar_Icons", header(main, "version"),
       header(main, "changelog"), walk(os.path.join(d, "Data"), "Data"))
+
+
+# --- Toolbar icons RM Orange / RM Teal (données seules : aucune action) ---------------
+for tag, nom in (("RMO", "Orange"), ("RMT", "Teal")):
+    d = os.path.join(ROOT, "ToolbarIcons" + tag)
+    main = os.path.join(d, "ReNo Mellow - Toolbar icons RM %s.lua" % nom)
+    build("ReNo Mellow - Toolbar icons RM %s" % nom, "ReNo_Mellow_Toolbar_Icons_RM_%s" % nom, header(main, "version"),
+          header(main, "changelog"), walk(os.path.join(d, "Data"), "Data"))
+
+# --- Thèmes Default 7.0 RM Orange / RM Teal ---------------------------------------
+# Le .ReaperPkg installe le Theme Adjuster (script + images) ; le thème lui-même est
+# copié tel quel dans packages/ (.ReaperThemeZip à glisser dans REAPER).
+import shutil
+d = os.path.join(ROOT, "ThemeRM")
+for nom in ("Orange", "Teal"):
+    T = "RM_" + nom
+    main = os.path.join(d, "Default_7.0_%s_theme_adjuster.lua" % T)
+    files = [(main, BASE + "/ThemeRM/" + os.path.basename(main))]
+    files += walk(os.path.join(d, T + "_theme_adjuster_images"), BASE + "/ThemeRM/" + T + "_theme_adjuster_images")
+    build("Default 7.0 RM %s Theme Adjuster" % nom, "Default_7.0_%s_Theme_Adjuster" % T, header(main, "version"),
+          header(main, "changelog"), files)
+    shutil.copy(os.path.join(d, "Default_7.0_%s.ReaperThemeZip" % T), os.path.join(OUT, "Default_7.0_%s.ReaperThemeZip" % T))
