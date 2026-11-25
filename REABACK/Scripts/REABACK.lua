@@ -1,8 +1,8 @@
 -- @description REABACK (backing tracks on stage: setlist of regions, transport, remote control)
 -- @author ReNo Mellow
--- @version 1.4
+-- @version 1.5
 -- @about Setlist de scène pour lancer les backing tracks : une chanson = une région mère. Liste des régions réordonnable par glisser-déposer avec renumérotation des IDs (régions filles = ID mère x 100 + n), sets de régions, gros bouton Play/Stop, Previous / Next, Live loop, Metronome, Count-in, Auto stop, Smooth seek, export txt. Contrôle à distance depuis un téléphone (REABACK.html) et prompteur de paroles / accords pour tablette (Reaback-prompter.html) via l'interface web de REAPER. Fournit aussi le project template ReaBack et les icônes de barre d'outils. Nécessite l'extension ReaImGui (ReaPack > ReaTeam Extensions) ; SWS conseillée, js_ReaScriptAPI optionnelle.
--- @changelog Nouvelles icônes de barre d'outils au style ReNo Mellow (tuiles à 3 états, 30 px, setlist commune) + icône REABACK_Toolbar pour ouvrir la barre d'outils REABACK
+-- @changelog Reaback Set up : nouvelle section « Export to B.Beat » pour le B.Beat Manager (M-Live) : stems WAV nommés par sortie (1 à 16), click généré, MIDI fusionné + paroles du prompteur, vidéo MP4, grilles PDF par piste et feuille de paroles, templates de sortie, Copy title / Open folder
 -- @provides
 --   [main] Scripts/REABACK_PlayStop.lua
 --   [main] Scripts/REABACK_Stop.lua
@@ -11,6 +11,7 @@
 --   [main] Scripts/REABACK_LiveLoop.lua
 --   [main] Scripts/Reaback Set up.lua
 --   [main] Scripts/Reaback-prompter.lua
+--   Scripts/Reaback_BBeat_export.lua
 --   [webinterface] reaper_www_root/REABACK.html > REABACK.html
 --   [webinterface] reaper_www_root/Reaback-prompter.html > Reaback-prompter.html
 --   [projecttpl] ProjectTemplates/ReaBack.rpp > ReaBack.rpp
