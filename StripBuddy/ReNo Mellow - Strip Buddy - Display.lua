@@ -330,13 +330,24 @@ local function step_tag(dir)
   run(current)
 end
 
+-- docking: right-click menu "Dock in REAPER docker"; the dock id (negative = REAPER
+-- docker, 0 = floating) is kept in an ExtState and restored at launch
+local dock_next = tonumber(get("disp_dock", "0")) or 0 -- applied on the first frame
+local is_docked = false
+
 local function draw()
-  local flags = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoDocking | ImGui.WindowFlags_AlwaysAutoResize |
-                ImGui.WindowFlags_NoScrollbar | ImGui.WindowFlags_NoCollapse
+  local flags = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoScrollbar | ImGui.WindowFlags_NoCollapse
+  if dock_next then ImGui.SetNextWindowDockID(ctx, dock_next); dock_next = nil end
+  if not is_docked then flags = flags | ImGui.WindowFlags_AlwaysAutoResize end
   font_size, opacity = read_size(), read_opacity()
   ImGui.SetNextWindowBgAlpha(ctx, opacity)
   local visible, open = ImGui.Begin(ctx, TITLE, true, flags)
   if not visible then return open end
+  local docked_now = ImGui.IsWindowDocked(ctx)
+  if docked_now ~= is_docked then
+    is_docked = docked_now
+    set("disp_dock", docked_now and tostring(ImGui.GetWindowDockID(ctx)) or "0")
+  end
   ImGui.PushFont(ctx, fonts[font_size] or fonts[16])
 
   -- Strip Buddy button: the toolbar icon (normal / hover / on), click = open or close the window
@@ -425,6 +436,9 @@ local function draw()
     local rvo, vo = ImGui.SliderInt(ctx, "Opacity##dop", math.floor(opacity * 100 + 0.5), 20, 100, "%d %%")
     if rvo then set("disp_opacity", vo / 100) end
     ImGui.Separator(ctx)
+    if ImGui.MenuItem(ctx, "Dock in REAPER docker", nil, is_docked) then
+      dock_next = is_docked and 0 or -1
+    end
     local st = get("disp_startup", "1") ~= "0"
     if ImGui.MenuItem(ctx, "Reopen when REAPER starts", nil, st) then
       set("disp_startup", st and "0" or "1")

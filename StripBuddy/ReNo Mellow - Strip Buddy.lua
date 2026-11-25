@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.30
+-- @version 1.31
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, FX d'entrée, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Clic droit sur un strip : « Apply tags, colour and icon to selected tracks » applique aussi l'icône (avant : couleur et tags seulement)
+-- @changelog Display dockable : clic droit sur la barre > « Dock in REAPER docker » (cocher / décocher), état retenu au prochain lancement
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -148,7 +148,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.30"
+local VERSION = "1.31"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
