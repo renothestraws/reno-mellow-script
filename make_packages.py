@@ -69,7 +69,8 @@ files = walk(os.path.join(d, "Scripts"), BASE + "/REABACK")
 files += walk(os.path.join(d, "reaper_www_root"), "reaper_www_root")
 files += walk(os.path.join(d, "ProjectTemplates"), "ProjectTemplates")
 files += walk(os.path.join(d, "Data"), "Data")
-build("REABACK", "REABACK", header(main, "version"), header(main, "changelog"), files)
+build("REABACK", "REABACK", header(main, "version"), header(main, "changelog"), files,
+      no_reg=[BASE + "/REABACK/Reaback_BBeat_export.lua"])
 
 # --- MIDI cleaner ---------------------------------------------------------------
 main = os.path.join(ROOT, "MIDI", "ReNo Mellow - MIDI cleaner.lua")

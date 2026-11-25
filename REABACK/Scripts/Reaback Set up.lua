@@ -5,6 +5,7 @@
 -- Every button looks for its REAPER action BY NAME (English action list), then falls back to a known ID.
 -- Hover a button to see which action it will run; the line at the bottom of the window shows what was run.
 -- If a name does not match on your REAPER version, edit the matching entry in the ACTIONS table below.
+-- Section "Export to B.Beat": see Reaback_BBeat_export.lua (same folder).
 
 local TITLE = "Reaback Set up"
 
@@ -15,6 +16,12 @@ if not reaper.ImGui_GetBuiltinPath then
 end
 package.path = reaper.ImGui_GetBuiltinPath() .. '/?.lua'
 local ImGui = require 'imgui' '0.9.2'
+
+-- Export to B.Beat (library next to this script)
+local SCRIPT_DIR = ({ reaper.get_action_context() })[2]:match("^(.*[\\/])") or ""
+local okBB, BBeat = pcall(dofile, SCRIPT_DIR .. "Reaback_BBeat_export.lua")
+local bbeatErr = (not okBB) and tostring(BBeat) or nil
+if not okBB then BBeat = nil end
 
 local ctx = ImGui.CreateContext(TITLE)
 local font = ImGui.CreateFont('sans-serif', 14)
@@ -391,6 +398,15 @@ local function draw()
   spec_btn("16. Windows set (screenset) manager", "windowsets")
 
   ImGui.Spacing(ctx)
+  ImGui.SeparatorText(ctx, "Export to B.Beat")
+  if BBeat then
+    local ok, err = pcall(BBeat.draw, ctx, ImGui, say)
+    if not ok then say("Export to B.Beat: " .. tostring(err), true) end
+  else
+    ImGui.TextWrapped(ctx, "Reaback_BBeat_export.lua could not be loaded: " .. tostring(bbeatErr))
+  end
+
+  ImGui.Spacing(ctx)
   ImGui.Separator(ctx)
   if statusErr then ImGui.PushStyleColor(ctx, ImGui.Col_Text, 0xFF6B5AFF) end
   ImGui.TextWrapped(ctx, status)
@@ -401,7 +417,7 @@ end
 -- Main loop
 ------------------------------------------------------------------------
 local function loop()
-  ImGui.SetNextWindowSize(ctx, 430, 760, ImGui.Cond_FirstUseEver)
+  ImGui.SetNextWindowSize(ctx, 560, 900, ImGui.Cond_FirstUseEver)
   ImGui.PushFont(ctx, font)
   local visible, open = ImGui.Begin(ctx, TITLE, true)
   if visible then
@@ -409,6 +425,10 @@ local function loop()
     ImGui.End(ctx)
   end
   ImGui.PopFont(ctx)
+  if BBeat and open then                -- renders and dialogs run outside of the ImGui frame
+    local ok, err = pcall(BBeat.run_pending, say)
+    if not ok then say("Export to B.Beat: " .. tostring(err), true) end
+  end
   if open then reaper.defer(loop) end
 end
 

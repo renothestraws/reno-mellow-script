@@ -7,7 +7,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 
 | Script | Description |
 |---|---|
-| **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils |
+| **REABACK** | Lancement des backing tracks sur scène : setlist de régions (une chanson = une région mère), transport, Live loop, contrôle à distance depuis un téléphone et prompteur de paroles / accords pour tablette. Fournit 8 actions, 2 pages web, un project template et des icônes de barre d'outils. **Export to B.Beat** (Reaback Set up) : stems nommés par sortie, click, MIDI + paroles, vidéo et grilles PDF prêts pour le B.Beat Manager. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/REABACK/REABACK_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/REABACK/REABACK_manual_EN.pdf) |
 | **ReNo Mellow - Recording Buddy** | Répéter puis enregistrer une boucle en plusieurs passes : chaque passe a son pré-roll (mesures ou ms), sa vitesse de lecture (hauteur conservée), son mode (Listen, Play avec les pistes armées muettes sous la boucle, Record en auto punch, Move on pour avancer dans l'arrangement), sa pause et, au choix, sa propre boucle. Séquences sauvegardables (Default, 4 takes, Practice fournies), mini Display et actions Start-Stop / Stop. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/RecordingBuddy/RecordingBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/RecordingBuddy/RecordingBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Strip Buddy** | Fenêtre de « strips » (presets de pistes) : un clic applique le strip aux pistes sélectionnées (nom numéroté, tag [ABC] et tag 2 ([KIK][DRM]), couleur, icône, layouts TCP/MCP, entrée d'enregistrement ou record output (stereo, mono, MIDI), sorties (master / parent, sorties hardware audio et MIDI), pan mode, type de metering, FX chain (ajoutée ou en remplacement, au choix), FX d'entrée, enveloppes visibles, nom des items, normalisation LUFS / RMS / peak, groupe et ses flags). Onglet Setup en tableau, une case vide est ignorée. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/StripBuddy/StripBuddy_manual_EN.pdf) |
 | **ReNo Mellow - Tool Buddy** (ex Swiss Army Knife) | Un même raccourci, plusieurs outils : on choisit l'outil actif dans une toolbox et trois raccourcis au choix (ex. W / Shift+W / Ctrl+W) lancent son action principale, alt ou alt 2. Deux versions séparées, arrangement (section Main) et éditeur MIDI (section MIDI Editor), chacune avec sa toolbox, sa bulle Display qui affiche l'outil actif, 24 outils, Next / Previous tool. Manuel : [FR](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manuel_FR.pdf) · [EN](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ToolBuddy/ToolBuddy_manual_EN.pdf) |
@@ -174,7 +174,18 @@ Jeu de 143 icônes `toolbar_icons_reno_<outil>.png` (90 × 30 pour les trois ét
   Play/Stop, Previous / Next, Live loop, Metronome, Count-in, Auto stop, Smooth seek, export txt).
 - Actions isolées à associer à des raccourcis clavier ou MIDI : **REABACK_PlayStop**, **_Stop**, **_Previous**,
   **_Next**, **_LiveLoop**.
-- **Reaback Set up** : raccourcis de configuration et de construction de la session.
+- **Reaback Set up** : raccourcis de configuration et de construction de la session, et section **Export to B.Beat**.
+- **Export to B.Beat** (dans Reaback Set up) : prépare en un clic, pour chaque région mère cochée, un dossier
+  `Export to BBeat/<MORCEAU>` à côté du .rpp, prêt à glisser dans le B.Beat Manager (M-Live) :
+  - un WAV 24 bits par piste sélectionnée de type *Audio* (post-FX, post-fader, mono ou stéréo), nommé par sa sortie
+    (`1-2-KEYS-…`, `3-GTR B-…` : sorties 1 à 16) ;
+  - un click généré d'après la carte de tempo (`5-CLICK REAPER-…`, accent sur le premier temps) ;
+  - un seul `.mid` : pistes de type *MIDI* fusionnées (canaux inchangés) + paroles de la piste Lyrics, lues par le
+    prompteur B.Beat (temps exacts, UTF-8) ;
+  - la vidéo des pistes de type *Video* rendue en MP4 (format choisi une fois dans la fenêtre Render) ;
+  - une grille PDF par piste de type *PDF* (accords en mesures, parties = régions imbriquées, commentaires) et,
+    au choix, une feuille de paroles PDF.
+  - Templates de sortie (communs à tous les projets), boutons *Copy title* et *Open folder* pour chaque morceau.
 - **Reaback-prompter** : envoie les notes des items des pistes Lyrics (jaune), Chords (rouge) et Comment (blanc italique)
   vers la page `Reaback-prompter.html` (tablette ou téléphone).
 - Nouvelle session : **File > Project templates > ReaBack**.
@@ -183,6 +194,8 @@ Jeu de 143 icônes `toolbar_icons_reno_<outil>.png` (90 × 30 pour les trois ét
 - Icônes : clic droit sur une barre d'outils > Customize toolbar > Choose icon, puis l'icône du même nom.
 
 **Extensions :** ReaImGui (obligatoire, via ReaPack > ReaTeam Extensions), SWS (conseillée), js_ReaScriptAPI (optionnelle).
+
+**Paquet direct :** <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/REABACK.ReaperPkg>
 
 ### Thèmes Default 7.0 RM Orange et RM Teal
 
