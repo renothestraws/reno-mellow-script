@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Mousewheel Buddy
 -- @author ReNo Mellow
--- @version 1.1
+-- @version 1.2
 -- @about Molette intelligente pour l'arrangement et l'éditeur MIDI : l'action lancée dépend de la zone survolée (règle, items, enveloppes, pistes, mixer, transport, notes, lignes CC…), réglable zone par zone (molette vers le haut / vers le bas) et pour chaque combinaison de Ctrl / Shift / Alt (Cmd / Opt sur Mac) : 8 actions molette pour l'arrangement, 8 pour l'éditeur MIDI. Nécessite SWS (et ReaImGui pour la fenêtre Setup).
--- @changelog Onglet Banks : sauver, charger, supprimer et importer des banques de réglages de la molette (toutes les actions, les 8 combinaisons, Arrange et MIDI Editor, sens et centre du zoom).
+-- @changelog Molette rapide : plus de retours en arrière ni de crans perdus quand on tourne vite (cumul des crans, sens conservé).
 -- @provides
 --   MWB_lib.lua
 --   [main] ReNo Mellow - Mousewheel Buddy - Wheel.lua
@@ -27,7 +27,7 @@ local dir = ({ r.get_action_context() })[2]:match("^(.*[/\\])")
 dofile(dir .. "MWB_lib.lua")
 
 local TITLE = "Mousewheel Buddy"
-local VERSION = "1.1"
+local VERSION = "1.2"
 
 if not r.ImGui_GetBuiltinPath then
   r.MB("This window needs ReaImGui.\nInstall it with ReaPack (ReaTeam Extensions), then restart REAPER.\n\n" ..

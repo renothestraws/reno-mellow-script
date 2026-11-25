@@ -398,7 +398,27 @@ function MWB.run_wheel(from_ctx, ac)
 
   if zone == "none" then return end  -- zone left to REAPER
 
-  local up = val > 0
+  -- Fast wheel turns: REAPER adds up several notches in one value, which can overflow
+  -- and come back with the wrong sign (the view jumps backwards). A change of direction
+  -- less than 120 ms after the previous notch is treated as an overflow: same direction
+  -- as before, and the real number of notches is rebuilt.
+  local now = r.time_precise()
+  local unit = tonumber(gets("wheel_unit")) or 15          -- smallest value seen = one notch
+  local a = math.abs(val)
+  if a < unit then unit = a; sets("wheel_unit", unit) end
+  local dir = (val > 0) and 1 or -1
+  local last_dir = tonumber(r.GetExtState(S, "last_dir")) or 0
+  local last_t = tonumber(r.GetExtState(S, "last_t")) or 0
+  if last_dir ~= 0 and dir ~= last_dir and (now - last_t) < 0.12 then
+    dir = last_dir
+    local range = (res and res > 0) and (res + 1) or 128
+    if a < range then a = range - a end
+  end
+  r.SetExtState(S, "last_dir", tostring(dir), false)
+  r.SetExtState(S, "last_t", tostring(now), false)
+  local steps = math.max(1, math.min(10, math.floor(a / unit + 0.5)))
+
+  local up = dir > 0
   if MWB.setting("invert_" .. ctx, false) then up = not up end
   local id = MWB.get_action(ctx, mod, zone, up and "up" or "down")
   local c = MWB.resolve(id)
@@ -406,8 +426,8 @@ function MWB.run_wheel(from_ctx, ac)
     r.SetExtState(S, "last_info", r.GetExtState(S, "last_info") .. " | no action", false)
     return
   end
-  run_cmd(ctx, c)
-  r.SetExtState(S, "last_info", r.GetExtState(S, "last_info") .. " | ran " .. id, false)
-  -- no extra "ReaScript: Run" undo point: the action called makes its own (if any)
-  r.defer(function() end)
+  for _ = 1, steps do run_cmd(ctx, c) end
+  r.SetExtState(S, "last_info", r.GetExtState(S, "last_info") .. " | ran " .. id ..
+    (steps > 1 and (" x" .. steps) or ""), false)
+  -- no r.defer here: the script ends at once, so a fast next notch never finds it still running
 end
