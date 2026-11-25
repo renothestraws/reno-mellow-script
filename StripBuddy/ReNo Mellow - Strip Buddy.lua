@@ -1,8 +1,8 @@
 -- @description Strip Buddy (track presets window)
 -- @author ReNo Mellow
--- @version 1.29
+-- @version 1.30
 -- @about Fenêtre à 2 onglets : appliquer ses « strips » favoris aux pistes sélectionnées (nom, tag, couleur, icône, layout, entrée / record output, sorties, pan mode, metering, FX chain, FX d'entrée, enveloppes, items, normalisation, groupe) et les configurer. Nécessite ReaImGui.
--- @changelog Onglet Strips, clic droit sur un strip : « Apply only colour and tags to selected tracks » (applique seulement la couleur et les tags, le nom de la piste et les autres réglages ne bougent pas)
+-- @changelog Clic droit sur un strip : « Apply tags, colour and icon to selected tracks » applique aussi l'icône (avant : couleur et tags seulement)
 -- @provides
 --   [main] ReNo Mellow - Strip Buddy - Display.lua
 --   [data] Data/toolbar_icons/ReNo_StripBuddy.png > toolbar_icons/ReNo_StripBuddy.png
@@ -148,7 +148,7 @@
 -- ReaImGui check
 --------------------------------------------------------------------------------
 local SCRIPT_TITLE = "ReNo Mellow - Strip Buddy"
-local VERSION = "1.29"
+local VERSION = "1.30"
 
 if not reaper.ImGui_GetBuiltinPath then
   reaper.MB("This script needs the ReaImGui extension.\n\n" ..
@@ -1183,15 +1183,15 @@ local function do_apply(i)
   set_status(msg, (not ok and "err") or (w and "warn") or "ok")
 end
 
--- applies only the colour and the tags of a strip: the track keeps its name (the tags
--- are written after it) and every other setting
+-- applies only the tags, the colour and the icon of a strip: the track keeps its name
+-- (the tags are written after it) and every other setting
 local function do_apply_color_tags(i)
   local s = strips[i]
   if not s then return end
-  if not (s.color or s.tag or s.tag2) then
-    set_status("This strip has no colour and no tag.", "warn") return
+  if not (s.color or s.tag or s.tag2 or s.icon) then
+    set_status("This strip has no tag, colour or icon.", "warn") return
   end
-  local part = { name = (s.name or "") .. " (colour and tags)", color = s.color, tag = s.tag, tag2 = s.tag2 }
+  local part = { name = (s.name or "") .. " (tags, colour and icon)", color = s.color, tag = s.tag, tag2 = s.tag2, icon = s.icon }
   local ok, msg, w = apply_strip(part)
   set_status(msg, (not ok and "err") or (w and "warn") or "ok")
 end
@@ -1201,7 +1201,7 @@ end
 --------------------------------------------------------------------------------
 local function strip_menu_items(i)
   if ImGui.MenuItem(ctx, "Apply to selected tracks") then do_apply(i) end
-  if ImGui.MenuItem(ctx, "Apply only colour and tags to selected tracks") then do_apply_color_tags(i) end
+  if ImGui.MenuItem(ctx, "Apply tags, colour and icon to selected tracks") then do_apply_color_tags(i) end
   if ImGui.MenuItem(ctx, "Rename...") then open_rename, rename_idx, rename_buf = true, i, strips[i].name or "" end
   if ImGui.MenuItem(ctx, "Edit in Setup") then goto_setup, scroll_row, setup_filter = true, i, "" end
   if ImGui.MenuItem(ctx, "Duplicate") then
