@@ -128,7 +128,7 @@ Anciennement **Swiss Army Knife** : au premier lancement, Tool Buddy reprend aut
   REAPER et active la conservation du pitch ; tout est remis comme avant à la fin.
 - **Display** : petite fenêtre sans barre de titre ; double-clic = démarrer, Ctrl+Alt+double-clic = stop forcé,
   clic droit = ouvrir l'onglet Set up. Se rouvre au démarrage de REAPER (bloc ajouté à `Scripts/__startup.lua`),
-  relancer le script la ferme.
+  relancer le script la ferme. Case « Dock the Display in a REAPER docker » dans l'onglet Set up pour la ranger dans un docker de REAPER.
 - Actions isolées : **Start-Stop** (sans fenêtre, relancer = arrêter) et **Stop**.
 - Icône de barre d'outils **ReNo_RecordingBuddy** (100 / 150 / 200 %), installée avec le script : à choisir dans
   Customize toolbars pour l'action de la fenêtre principale (verte quand la fenêtre est ouverte).

@@ -1,8 +1,8 @@
 -- @description Recording Buddy (rehearse and record a loop in several passes)
 -- @author ReNo Mellow
--- @version 1.1
+-- @version 1.2
 -- @about Fenêtre à 2 onglets pour répéter puis enregistrer une boucle en plusieurs passes (pré-roll en mesures ou en ms, vitesse de lecture avec hauteur conservée, lecture ou enregistrement en auto-punch, pause entre les passes), mini Display et actions Start-Stop / Stop. Nécessite ReaImGui.
--- @changelog Icône de barre d'outils ReNo_RecordingBuddy (100 / 150 / 200 %), installée avec le script
+-- @changelog Display dockable : case « Dock the Display in a REAPER docker » dans l'onglet Set up, état retenu au prochain lancement
 -- @provides
 --   RecBuddy_lib.lua
 --   RecBuddy_startup.lua
@@ -581,6 +581,12 @@ local function tab_setup(v)
   if ch then RB.set("disp_font", val) end
   ImGui.SameLine(ctx, 0, 20)
   if ImGui.Button(ctx, RB.alive("display") and "Hide Display" or "Show Display") then later(launch_display) end
+  local docked = (tonumber(reaper.GetExtState("ReNo_Buddy_Dock", "RecordingBuddy")) or 0) ~= 0
+  local chd, vd = ImGui.Checkbox(ctx, "Dock the Display in a REAPER docker", docked)
+  if chd then
+    reaper.SetExtState("ReNo_Buddy_Dock", "RecordingBuddy", vd and "-1" or "0", true)
+    reaper.SetExtState("ReNo_Buddy_Dock", "RecordingBuddy_req", vd and "-1" or "0", false)
+  end
 end
 
 ---------------------------------------------------------------- main loop
