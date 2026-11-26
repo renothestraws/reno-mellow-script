@@ -162,3 +162,11 @@ for nom in ("Orange", "Teal"):
     build("Default 7.0 RM %s Theme Adjuster" % nom, "Default_7.0_%s_Theme_Adjuster" % T, header(main, "version"),
           header(main, "changelog"), files)
     shutil.copy(os.path.join(d, "Default_7.0_%s.ReaperThemeZip" % T), os.path.join(OUT, "Default_7.0_%s.ReaperThemeZip" % T))
+
+# --- Toolbar icons Flat RM Orange / RM Teal (données seules : aucune action) ------
+d = os.path.join(ROOT, "ToolbarIconsFlat")
+for k, nom in (("rmo", "Orange"), ("rmt", "Teal")):
+    main = os.path.join(d, "ReNo Mellow - Toolbar icons Flat RM %s.lua" % nom)
+    files = [f for f in walk(os.path.join(d, "Data"), "Data") if "/toolbar_icons_%s_flat_" % k in f[1]]
+    build("ReNo Mellow - Toolbar icons Flat RM %s" % nom, "ReNo_Mellow_Toolbar_Icons_Flat_RM_%s" % nom,
+          header(main, "version"), header(main, "changelog"), files)
