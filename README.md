@@ -18,6 +18,7 @@ Les plug-ins JSFX **ReNo Mellow** (compresseurs, EQ, couleur, instruments) sont 
 | **ReNo Mellow - MIDI cleaner** | Nettoie les items MIDI sélectionnés : supprime SysEx, Program Change, pitch bend et tous les CC sauf CC4, CC11 et CC64, passe tout sur le canal 1 et règle le timebase sur Beats (position, length, rate) |
 | **ReNo Mellow - Toolbar icons** | 143 icônes de barre d'outils au style ReNo Mellow (tuiles arrondies à 3 états : repos, survol, allumé en vert ; 100 / 150 / 200 %) : actions de l'arrangement (projet, options, marqueurs, pistes, Edit Tools, tempo), éditeur MIDI (fenêtre, notes, CC, formes de courbe), REABACK et 41 icônes génériques. Aucune action ajoutée. [Aperçu](ToolbarIcons/preview.png) |
 | **Default 7.0 RM Orange / RM Teal** (thèmes) | Le thème Default 7.0 de REAPER aux couleurs des plug-ins ReNo Mellow : gris RM, accent orange (#FF941F) ou vert RM (#6CD9C7), potards et faders argentés, transport plat, armement rond, VU-mètres en dégradé vert / jaune (vers -18 dB) / rouge, police Arial. Chaque thème a son Theme Adjuster aux mêmes couleurs. |
+| **ReNo Mellow - Toolbar icons Flat RM Orange / RM Teal** | Version plate des icônes ReNo Mellow, assortie aux thèmes RM : 143 icônes par jeu (`toolbar_icons_rmo_flat_…` orange, `toolbar_icons_rmt_flat_…` vert) ; dessin seul gris clair au repos, plus clair au survol, tuile d'accent quand allumée ; 100 / 150 / 200 %. Aucune action ajoutée. Aperçus : [orange](ToolbarIconsFlat/preview_rmo.png), [vert](ToolbarIconsFlat/preview_rmt.png) |
 | **ReNo Mellow - Toolbar icons RM Orange / RM Teal** | Les icônes de barre d'outils ReNo Mellow assorties aux thèmes RM : 147 icônes par jeu (`toolbar_icons_rmo_…` orange, `toolbar_icons_rmt_…` vert), tuiles plates à 3 états, 100 / 150 / 200 %. Aucune action ajoutée. Aperçus : [orange](ToolbarIconsRMO/preview.png), [vert](ToolbarIconsRMT/preview.png) |
 | **ReNo StemSplit** | Séparation de stems par IA, en local (esprit Stem Splitter de Logic Pro). Trois actions : **Stems** (voix, batterie, basse, guitare, piano, autres – 6 ou 4 stems), **Drums** (kick, snare, toms, cymbales – 4, 5 ou 6 pièces, depuis un mix complet ou une piste de batterie seule) et **Install** (installation / réparation du moteur) |
 
@@ -208,6 +209,13 @@ Le thème Default 7.0 de REAPER, recoloré et retouché dans le style des plug-i
 
 **Manuel d'utilisation :** [français (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ThemeRM/ThemeRM_manuel_FR.pdf) · [English (PDF)](https://github.com/renothestraws/reno-mellow-manuals/raw/main/scripts/ThemeRM/ThemeRM_manual_EN.pdf)
 
+### ReNo Mellow - Toolbar icons Flat RM Orange / RM Teal
+
+Les icônes de *ReNo Mellow - Toolbar icons* en version plate, aux couleurs des thèmes RM : pas de tuile au repos (dessin gris clair), dessin plus clair au survol, tuile d'accent RM (orange #FF941F ou vert #6CD9C7, assombri sur le gris RM) avec dessin clair quand l'icône est allumée.
+
+- Fichiers `toolbar_icons_rmo_flat_<outil>.png` et `toolbar_icons_rmt_flat_<outil>.png`, dans `Data/toolbar_icons` (+ `150`, `200`) ; ils s'installent à côté des autres jeux sans rien remplacer. Dans *Customize toolbar > Icon*, taper « flat » dans le filtre.
+- Générateur : `ToolbarIconsFlat/make_flat.py` (reprend les dessins de `ToolbarIcons/make_icons.py`, Python + Pillow).
+
 ### ReNo Mellow - Toolbar icons RM Orange / RM Teal
 
 Les mêmes outils que *ReNo Mellow - Toolbar icons* (arrangement, éditeur MIDI, REABACK, génériques) plus Grid, Strip, Recording et Tool Buddy, dessinés dans la charte des thèmes RM : tuile plate presque carrée à contour noir, gris RM au repos et au survol, accent RM avec dessin foncé quand l'icône est allumée.
@@ -229,7 +237,7 @@ Les mises à jour arrivent ensuite automatiquement (Extensions > ReaPack > Synch
 
 ## Installation en un fichier (REAPER 7.86 et plus)
 
-Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy, Grid Buddy, Chord Buddy, Drum Buddy, Mousewheel Buddy, Toolbar icons, Toolbar icons RM Orange / RM Teal, Theme Adjusters RM Orange / RM Teal).
+Le dossier `packages` contient un fichier `.ReaperPkg` par script (ReNo StemSplit, REABACK, MIDI cleaner, Strip Buddy, Tool Buddy, Recording Buddy, Grid Buddy, Chord Buddy, Drum Buddy, Mousewheel Buddy, Toolbar icons, Toolbar icons RM Orange / RM Teal, Toolbar icons Flat RM Orange / RM Teal, Theme Adjusters RM Orange / RM Teal).
 Télécharger le fichier, puis l'ouvrir avec REAPER : les scripts sont installés et ajoutés à la liste d'actions,
 et le paquet peut être désinstallé proprement. Pas de mises à jour automatiques : pour cela, préférer ReaPack.
 
@@ -245,6 +253,10 @@ Thèmes en téléchargement direct (glisser le fichier dans REAPER) :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/Default_7.0_RM_Orange.ReaperThemeZip> et <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/Default_7.0_RM_Teal.ReaperThemeZip>
 Leurs Theme Adjusters :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/Default_7.0_RM_Orange_Theme_Adjuster.ReaperPkg> et <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/Default_7.0_RM_Teal_Theme_Adjuster.ReaperPkg>
+
+Toolbar icons Flat RM en téléchargement direct :
+<https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Toolbar_Icons_Flat_RM_Orange.ReaperPkg> et <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Toolbar_Icons_Flat_RM_Teal.ReaperPkg>
+(icônes seulement, aucune action).
 
 Toolbar icons RM en téléchargement direct :
 <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Toolbar_Icons_RM_Orange.ReaperPkg> et <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/ReNo_Mellow_Toolbar_Icons_RM_Teal.ReaperPkg>
@@ -302,6 +314,8 @@ de `RecordingBuddy/Data/toolbar_icons` dans `Data/toolbar_icons` de REAPER.
 `ReNo Mellow - Mousewheel Buddy.lua` et les actions `ReNo Mellow - Mousewheel Buddy - Wheel….lua` voulues dans la section Main ; la fenêtre ajoute les actions MIDI.
 
 **Thèmes RM** : copier `ThemeRM/Default_7.0_RM_Orange.ReaperThemeZip` (ou `RM_Teal`) dans le dossier `ColorThemes` de REAPER ; pour l'adjuster, copier le script `Default_7.0_RM_…_theme_adjuster.lua` et son dossier d'images `RM_…_theme_adjuster_images` ensemble dans `Scripts`, puis charger le script.
+
+**Toolbar icons Flat RM** : copier le contenu de `ToolbarIconsFlat/Data/toolbar_icons` dans `Data/toolbar_icons` de REAPER.
 
 **Toolbar icons RM** : copier le contenu de `ToolbarIconsRMO/Data/toolbar_icons` (ou `ToolbarIconsRMT`) dans `Data/toolbar_icons` de REAPER.
 
