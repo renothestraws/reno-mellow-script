@@ -1,8 +1,8 @@
 -- @description REABACK (backing tracks on stage: setlist of regions, transport, remote control)
 -- @author ReNo Mellow
--- @version 1.6
+-- @version 1.7
 -- @about Setlist de scène pour lancer les backing tracks : une chanson = une région mère. Liste des régions réordonnable par glisser-déposer avec renumérotation des IDs (régions filles = ID mère x 100 + n), sets de régions, gros bouton Play/Stop, Previous / Next, Live loop, Metronome, Count-in, Auto stop, Smooth seek, export txt. Contrôle à distance depuis un téléphone (REABACK.html) et prompteur de paroles / accords pour tablette (Reaback-prompter.html) via l'interface web de REAPER. Fournit aussi le project template ReaBack et les icônes de barre d'outils. Nécessite l'extension ReaImGui (ReaPack > ReaTeam Extensions) ; SWS conseillée, js_ReaScriptAPI optionnelle.
--- @changelog Reaback Set up : Lock / Unlock items of the region prennent maintenant les items qui commencent dans la région (même si leur fin dépasse), curseur sur le bord accepté, sélection temporelle en secours, message clair si aucun item
+-- @changelog Reaback Set up : nouveau bouton « 10. Live preferences » : fenêtre qui applique les préférences REAPER de scène (projet au démarrage, template ReaBack, seeking / smooth seek, carte son, tiny fades, boutons des items, vidéo) à partir d'un profil capturé, avec Learn, Restore et vérification des extensions (SWS requise pour écrire)
 -- @provides
 --   [main] Scripts/REABACK_PlayStop.lua
 --   [main] Scripts/REABACK_Stop.lua
@@ -12,6 +12,7 @@
 --   [main] Scripts/Reaback Set up.lua
 --   [main] Scripts/Reaback-prompter.lua
 --   Scripts/Reaback_BBeat_export.lua
+--   Scripts/Reaback_LivePrefs.lua
 --   [webinterface] reaper_www_root/REABACK.html > REABACK.html
 --   [webinterface] reaper_www_root/Reaback-prompter.html > Reaback-prompter.html
 --   [projecttpl] ProjectTemplates/ReaBack.rpp > ReaBack.rpp

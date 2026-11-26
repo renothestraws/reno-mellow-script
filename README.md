@@ -176,6 +176,12 @@ Jeu de 143 icônes `toolbar_icons_reno_<outil>.png` (90 × 30 pour les trois ét
 - Actions isolées à associer à des raccourcis clavier ou MIDI : **REABACK_PlayStop**, **_Stop**, **_Previous**,
   **_Next**, **_LiveLoop**.
 - **Reaback Set up** : raccourcis de configuration et de construction de la session, et section **Export to B.Beat**.
+- **Live preferences** (bouton 10 de Reaback Set up) : applique en un clic les préférences REAPER de scène
+  (projet au démarrage, template ReaBack, seeking / smooth seek, carte son ouverte, tiny fades, boutons des items, vidéo).
+  *Capture my current settings* enregistre les valeurs d'un REAPER déjà réglé dans `Data/REABACK/live_prefs.txt`
+  (à copier sur un autre ordinateur), *Learn* trouve un réglage non détecté, *Apply* les écrit (SWS requise) et
+  *Restore* remet les anciennes valeurs. Vérifie aussi les extensions (ReaImGui, js_ReaScriptAPI, ReaPack, SWS) ;
+  les réglages de la page ReaImGui se font à la main (bouton qui ouvre la page).
 - **Export to B.Beat** (dans Reaback Set up) : prépare en un clic, pour chaque région mère cochée, un dossier
   `Export to BBeat/<MORCEAU>` à côté du .rpp, prêt à glisser dans le B.Beat Manager (M-Live) :
   - un WAV 24 bits par piste sélectionnée de type *Audio* (post-FX, post-fader, mono ou stéréo), nommé par sa sortie
@@ -194,7 +200,7 @@ Jeu de 143 icônes `toolbar_icons_reno_<outil>.png` (90 × 30 pour les trois ét
   `http://<adresse IP de l'ordinateur>:<port>/REABACK.html` (ou `/Reaback-prompter.html`).
 - Icônes : clic droit sur une barre d'outils > Customize toolbar > Choose icon, puis l'icône du même nom.
 
-**Extensions :** ReaImGui (obligatoire, via ReaPack > ReaTeam Extensions), SWS (conseillée), js_ReaScriptAPI (optionnelle).
+**Extensions :** ReaImGui (obligatoire, via ReaPack > ReaTeam Extensions), SWS (conseillée ; requise pour Live preferences), js_ReaScriptAPI (optionnelle).
 
 **Paquet direct :** <https://github.com/renothestraws/reno-mellow-script/raw/main/packages/REABACK.ReaperPkg>
 
