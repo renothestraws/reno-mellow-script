@@ -1,8 +1,8 @@
 -- @description REABACK (backing tracks on stage: setlist of regions, transport, remote control)
 -- @author ReNo Mellow
--- @version 1.5
+-- @version 1.6
 -- @about Setlist de scène pour lancer les backing tracks : une chanson = une région mère. Liste des régions réordonnable par glisser-déposer avec renumérotation des IDs (régions filles = ID mère x 100 + n), sets de régions, gros bouton Play/Stop, Previous / Next, Live loop, Metronome, Count-in, Auto stop, Smooth seek, export txt. Contrôle à distance depuis un téléphone (REABACK.html) et prompteur de paroles / accords pour tablette (Reaback-prompter.html) via l'interface web de REAPER. Fournit aussi le project template ReaBack et les icônes de barre d'outils. Nécessite l'extension ReaImGui (ReaPack > ReaTeam Extensions) ; SWS conseillée, js_ReaScriptAPI optionnelle.
--- @changelog Reaback Set up : nouvelle section « Export to B.Beat » pour le B.Beat Manager (M-Live) : stems WAV nommés par sortie (1 à 16), click généré, MIDI fusionné + paroles du prompteur, vidéo MP4, grilles PDF par piste et feuille de paroles, templates de sortie, Copy title / Open folder
+-- @changelog Reaback Set up : Lock / Unlock items of the region prennent maintenant les items qui commencent dans la région (même si leur fin dépasse), curseur sur le bord accepté, sélection temporelle en secours, message clair si aucun item
 -- @provides
 --   [main] Scripts/REABACK_PlayStop.lua
 --   [main] Scripts/REABACK_Stop.lua

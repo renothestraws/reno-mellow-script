@@ -314,36 +314,51 @@ local function timecode_track()
   end
 end
 
--- items fully inside the widest region that contains the edit cursor
+-- items that START inside the widest region containing the edit cursor
+-- (a stem whose tail goes past the region end is included; no time selection needed)
 local function lock_items(lock)
+  local eps = 0.000001
   local c = reaper.GetCursorPosition()
   local rs, re
   for i = 0, reaper.CountProjectMarkers(0) - 1 do
     local _, isrgn, pos, rend = reaper.EnumProjectMarkers3(0, i)
-    if isrgn and c >= pos and c < rend then
+    if isrgn and c >= pos - eps and c <= rend + eps then
       if not rs or (rend - pos) > (re - rs) then rs, re = pos, rend end
     end
   end
-  if not rs then say("No region under the edit cursor.", true); return end
-  local eps, n = 1e-6, 0
+  if not rs then
+    local s, e = time_selection()
+    if e - s > 0 then rs, re = s, e end
+  end
+  if not rs then say("Place the edit cursor inside a region (or make a time selection).", true); return end
+  local n = 0
   reaper.Undo_BeginBlock()
+  reaper.PreventUIRefresh(1)
   for t = 0, reaper.CountTracks(0) - 1 do
     local tr = reaper.GetTrack(0, t)
     for i = 0, reaper.CountTrackMediaItems(tr) - 1 do
       local it = reaper.GetTrackMediaItem(tr, i)
       local p = reaper.GetMediaItemInfo_Value(it, "D_POSITION")
-      local e = p + reaper.GetMediaItemInfo_Value(it, "D_LENGTH")
-      if p >= rs - eps and e <= re + eps then
-        local v = math.floor(reaper.GetMediaItemInfo_Value(it, "C_LOCK"))
-        v = lock and (v | 1) or (v & ~1)
+      if p >= rs - eps and p < re - eps then
+        local v = math.floor(reaper.GetMediaItemInfo_Value(it, "C_LOCK") + 0.5)
+        if lock then
+          if v % 2 == 0 then v = v + 1 end
+        else
+          if v % 2 == 1 then v = v - 1 end
+        end
         reaper.SetMediaItemInfo_Value(it, "C_LOCK", v)
         n = n + 1
       end
     end
   end
+  reaper.PreventUIRefresh(-1)
   reaper.Undo_EndBlock(lock and "Reaback: lock items in region" or "Reaback: unlock items in region", -1)
   reaper.UpdateArrange()
-  say(string.format("%s %d item(s) in the widest region under the edit cursor.", lock and "Locked" or "Unlocked", n))
+  if n == 0 then
+    say("No item starts inside this region.", true)
+  else
+    say(string.format("%s %d item(s) of the region.", lock and "Locked" or "Unlocked", n))
+  end
 end
 
 ------------------------------------------------------------------------
@@ -393,8 +408,8 @@ local function draw()
   btn("11. Comment item + notes, selection shifted", "Same on the track containing 'Comment'", function() note_item("comment") end)
   btn("12. MIDI item + MIDI editor (docked, synced)", "Empty MIDI item over the time selection on the selected track", midi_item)
   btn("13. Timecode track: clear, insert, source props", "Track containing 'Timecode': cleared, no master send, timecode generator over the whole project", timecode_track)
-  btn("14. Lock items of the region", "Widest region under the edit cursor", function() lock_items(true) end)
-  btn("15. Unlock items of the region", "Widest region under the edit cursor", function() lock_items(false) end)
+  btn("14. Lock items of the region", "Items starting in the widest region under the edit cursor (or in the time selection)", function() lock_items(true) end)
+  btn("15. Unlock items of the region", "Items starting in the widest region under the edit cursor (or in the time selection)", function() lock_items(false) end)
   spec_btn("16. Windows set (screenset) manager", "windowsets")
 
   ImGui.Spacing(ctx)
