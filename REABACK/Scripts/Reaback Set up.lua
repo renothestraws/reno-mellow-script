@@ -6,6 +6,7 @@
 -- Hover a button to see which action it will run; the line at the bottom of the window shows what was run.
 -- If a name does not match on your REAPER version, edit the matching entry in the ACTIONS table below.
 -- Section "Export to B.Beat": see Reaback_BBeat_export.lua (same folder).
+-- Button "10. Live preferences": see Reaback_LivePrefs.lua (same folder).
 
 local TITLE = "Reaback Set up"
 
@@ -22,6 +23,11 @@ local SCRIPT_DIR = ({ reaper.get_action_context() })[2]:match("^(.*[\\/])") or "
 local okBB, BBeat = pcall(dofile, SCRIPT_DIR .. "Reaback_BBeat_export.lua")
 local bbeatErr = (not okBB) and tostring(BBeat) or nil
 if not okBB then BBeat = nil end
+
+-- Live preferences (library next to this script)
+local okLP, LivePrefs = pcall(dofile, SCRIPT_DIR .. "Reaback_LivePrefs.lua")
+local lpErr = (not okLP) and tostring(LivePrefs) or nil
+if not okLP then LivePrefs = nil end
 
 local ctx = ImGui.CreateContext(TITLE)
 local font = ImGui.CreateFont('sans-serif', 14)
@@ -392,6 +398,12 @@ local function draw()
   spec_btn("7. Routing matrix", "routing")
   spec_btn("8. Video window", "video")
   spec_btn("9. External synchronization settings", "ext_sync")
+  btn("10. Live preferences (stage settings)",
+      "Opens a window that applies the REAPER preferences needed on stage\n(startup project, ReaBack template, seeking, audio device, item buttons, video...).\nRequires SWS to write the preferences.",
+      function()
+        if LivePrefs then LivePrefs.toggle()
+        else say("Reaback_LivePrefs.lua could not be loaded: " .. tostring(lpErr), true) end
+      end)
 
   ImGui.Spacing(ctx)
   ImGui.SeparatorText(ctx, "Session Built")
@@ -438,6 +450,10 @@ local function loop()
   if visible then
     draw()
     ImGui.End(ctx)
+  end
+  if LivePrefs and open then           -- second window, same context and font
+    local ok, err = pcall(LivePrefs.draw_window, ctx, ImGui, say)
+    if not ok then say("Live preferences: " .. tostring(err), true) end
   end
   ImGui.PopFont(ctx)
   if BBeat and open then                -- renders and dialogs run outside of the ImGui frame
