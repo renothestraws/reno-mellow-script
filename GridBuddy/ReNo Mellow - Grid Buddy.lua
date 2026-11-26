@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Grid Buddy
 -- @author ReNo Mellow
--- @version 1.5
+-- @version 1.6
 -- @about Grille de l'arrangement et de l'éditeur MIDI dans une fenêtre à 2 onglets : type (straight, triplet, quintolet, septolet, pointé, swing), tailles de 1/128 à 4, diviseur et limites, snap, lien avec l'éditeur MIDI (option « Use the same grid division »), deux mini Displays indépendants, arrangement et éditeur MIDI (molette = taille), et actions isolées. D'après Gridbox de FeedTheCat. Nécessite ReaImGui.
--- @changelog Molette des Displays moins sensible (lissage + réglage Wheel sensitivity dans Set up, 1,5 cran par pas par défaut)
+-- @changelog Display dockable : « Dock in REAPER docker » dans son menu (cocher / décocher), état retenu au prochain lancement (clic sur le Display, en bas du menu de grille)
 -- @provides
 --   GB_lib.lua
 --   GB_startup.lua
