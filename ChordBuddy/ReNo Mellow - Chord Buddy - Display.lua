@@ -126,9 +126,22 @@ local function big_font()
   return FONTS[sz]
 end
 
-local FLAGS = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoDocking |
-              ImGui.WindowFlags_AlwaysAutoResize | ImGui.WindowFlags_NoScrollbar |
-              ImGui.WindowFlags_NoCollapse
+-- docking (opt-in, right-click / menu "Dock in REAPER docker"): the dock id is kept
+-- between launches (negative = REAPER docker, 0 = floating)
+local DOCK_SEC, DOCK_KEY = "ReNo_Buddy_Dock", "ChordBuddy"
+local function dock_saved() return tonumber(r.GetExtState(DOCK_SEC, DOCK_KEY)) or 0 end
+local dock_next, is_docked = nil, false
+local function dock_track()
+  local d = ImGui.IsWindowDocked(ctx)
+  if d ~= is_docked then
+    is_docked = d
+    r.SetExtState(DOCK_SEC, DOCK_KEY, d and tostring(ImGui.GetWindowDockID(ctx)) or "0", true)
+  end
+end
+local function dock_menu_item()
+  if ImGui.MenuItem(ctx, "Dock in REAPER docker", nil, is_docked) then dock_next = is_docked and 0 or -1 end
+end
+dock_next = dock_saved() -- applied on the first frame
 
 local function loop()
   r.SetExtState(EXT, "disp_running", tostring(r.time_precise()), false)
@@ -141,8 +154,12 @@ local function loop()
   update_chord()
 
   ImGui.SetNextWindowBgAlpha(ctx, cfg.opacity)
-  local visible, open = ImGui.Begin(ctx, TITLE, true, FLAGS)
+  if dock_next then ImGui.SetNextWindowDockID(ctx, dock_next); dock_next = nil end
+  local flags = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoScrollbar | ImGui.WindowFlags_NoCollapse
+  if not is_docked then flags = flags | ImGui.WindowFlags_AlwaysAutoResize end
+  local visible, open = ImGui.Begin(ctx, TITLE, true, flags)
   if visible then
+    dock_track()
     ImGui.PushFont(ctx, FONT_UI)
 
     -- chord name
@@ -179,6 +196,15 @@ local function loop()
 
     if status ~= "" and r.time_precise() - status_t < 3 then
       ImGui.TextColored(ctx, 0xE0A040FF, status)
+    end
+
+    -- right-click on an empty spot of the bar
+    if ImGui.BeginPopupContextWindow(ctx, "cbdmenu", ImGui.PopupFlags_MouseButtonRight | ImGui.PopupFlags_NoOpenOverItems) then
+      if ImGui.MenuItem(ctx, "Open Chord Buddy") then open_main() end
+      ImGui.Separator(ctx)
+      dock_menu_item()
+      if ImGui.MenuItem(ctx, "Close") then open = false end
+      ImGui.EndPopup(ctx)
     end
 
     ImGui.PopFont(ctx)

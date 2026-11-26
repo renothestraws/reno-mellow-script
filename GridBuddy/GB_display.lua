@@ -62,6 +62,21 @@ local SWING_AMOUNTS = { 53, 55, 57, 59, 61, 64, 67, 70, 73, 75 }
 local ctx
 local fonts = {}
 local first_frame = true
+-- docking (opt-in, right-click / menu "Dock in REAPER docker"): the dock id is kept
+-- between launches (negative = REAPER docker, 0 = floating)
+local DOCK_SEC, DOCK_KEY = "ReNo_Buddy_Dock", IS_MIDI and "GridBuddy_MIDI" or "GridBuddy"
+local function dock_saved() return tonumber(reaper.GetExtState(DOCK_SEC, DOCK_KEY)) or 0 end
+local dock_next, is_docked = nil, false
+local function dock_track()
+  local d = ImGui.IsWindowDocked(ctx)
+  if d ~= is_docked then
+    is_docked = d
+    reaper.SetExtState(DOCK_SEC, DOCK_KEY, d and tostring(ImGui.GetWindowDockID(ctx)) or "0", true)
+  end
+end
+local function dock_menu_item()
+  if ImGui.MenuItem(ctx, "Dock in REAPER docker", nil, is_docked) then dock_next = is_docked and 0 or -1 end
+end
 local hover_since = nil
 local editor_since = nil
 local post = nil
@@ -144,6 +159,8 @@ local function menu()
   if IS_MIDI and ImGui.MenuItem(ctx, "Sync to arrange view", nil, GB.midi_sync_on()) then
     later(GB.toggle_midi_sync)
   end
+  ImGui.Separator(ctx)
+  dock_menu_item()
   ImGui.EndPopup(ctx)
 end
 
@@ -258,7 +275,7 @@ local function create_context()
     fonts[sz] = ImGui.CreateFont("sans-serif", sz)
     ImGui.Attach(ctx, fonts[sz])
   end
-  first_frame = true
+  first_frame, is_docked = true, false
 end
 
 local function loop()
@@ -288,14 +305,16 @@ local function loop()
   ImGui.PushStyleColor(ctx, ImGui.Col_WindowBg, COL_BG)
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowRounding, 6)
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowPadding, 8, 4)
-  if first_frame then ImGui.SetNextWindowDockID(ctx, 0) first_frame = false end
+  if first_frame then dock_next = dock_saved(); first_frame = false end
+  if dock_next then ImGui.SetNextWindowDockID(ctx, dock_next); dock_next = nil end
 
   local flags = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoScrollbar
     | ImGui.WindowFlags_NoScrollWithMouse | ImGui.WindowFlags_NoCollapse
-    | ImGui.WindowFlags_AlwaysAutoResize | ImGui.WindowFlags_NoDocking
+  if not is_docked then flags = flags | ImGui.WindowFlags_AlwaysAutoResize end
   local title = IS_MIDI and "Grid Buddy MIDI - Display" or "Grid Buddy - Display"
   local visible, open = ImGui.Begin(ctx, title, true, flags)
   if visible then
+    dock_track()
     local h = ImGui.GetTextLineHeight(ctx)
     local dl = ImGui.GetWindowDrawList(ctx)
 

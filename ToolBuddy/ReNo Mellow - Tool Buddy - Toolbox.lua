@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Tool Buddy
 -- @author ReNo Mellow
--- @version 1.11
+-- @version 1.12
 -- @about Un même raccourci, plusieurs outils, dans l'arrangement et dans l'éditeur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.
--- @changelog Display : au survol du nom de l'outil, une bulle décrit ses trois actions (main, alt, alt2) ; ailleurs, la bulle d'aide habituelle.
+-- @changelog Display dockable : « Dock in REAPER docker » dans son menu (cocher / décocher), état retenu au prochain lancement (clic droit sur le Display)
 -- @provides
 --   [main] ReNo Mellow - Tool Buddy (alt).lua
 --   [main] ReNo Mellow - Tool Buddy (alt2).lua

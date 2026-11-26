@@ -91,6 +91,21 @@ local fonts = {}
 local icon = nil
 local close_request = false
 local first_frame = true
+-- docking (opt-in, right-click / menu "Dock in REAPER docker"): the dock id is kept
+-- between launches (negative = REAPER docker, 0 = floating)
+local DOCK_SEC, DOCK_KEY = "ReNo_Buddy_Dock", (CTX == "midi") and "ToolBuddy_MIDI" or "ToolBuddy"
+local function dock_saved() return tonumber(reaper.GetExtState(DOCK_SEC, DOCK_KEY)) or 0 end
+local dock_next, is_docked = nil, false
+local function dock_track()
+  local d = ImGui.IsWindowDocked(ctx)
+  if d ~= is_docked then
+    is_docked = d
+    reaper.SetExtState(DOCK_SEC, DOCK_KEY, d and tostring(ImGui.GetWindowDockID(ctx)) or "0", true)
+  end
+end
+local function dock_menu_item()
+  if ImGui.MenuItem(ctx, "Dock in REAPER docker", nil, is_docked) then dock_next = is_docked and 0 or -1 end
+end
 
 local function text_size()
   return math.max(FONT_MIN, math.min(FONT_MAX, math.floor(opt("font", 16))))
@@ -129,6 +144,7 @@ local function draw_menu()
     local ch, v = ImGui.SliderInt(ctx, "Text size", text_size(), FONT_MIN, FONT_MAX)
     if ch then set_opt("font", v) end
     ImGui.Separator(ctx)
+    dock_menu_item()
     if ImGui.MenuItem(ctx, "Close") then
       TB.csets("disp_wanted", "0")
       close_request = true
@@ -142,6 +158,7 @@ local editor_since = nil
 -- (re)creates the ImGui context with its fonts and icon
 local function create_context()
   ctx = ImGui.CreateContext((CTX == "midi") and "ReNo Mellow - Tool Buddy MIDI Display" or "ReNo Mellow - Tool Buddy Display")
+  first_frame, is_docked = true, false
   fonts = {}
   for sz = FONT_MIN, FONT_MAX do
     fonts[sz] = ImGui.CreateFont("sans-serif", sz)
@@ -187,15 +204,16 @@ local function loop()
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowRounding, 8)
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowPadding, 12, 6)
 
-  -- undock a window that was docked with version 1.4
-  if first_frame then ImGui.SetNextWindowDockID(ctx, 0) first_frame = false end
+  if first_frame then dock_next = dock_saved(); first_frame = false end
+  if dock_next then ImGui.SetNextWindowDockID(ctx, dock_next); dock_next = nil end
 
   local flags = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoScrollbar
     | ImGui.WindowFlags_NoScrollWithMouse | ImGui.WindowFlags_NoCollapse
-    | ImGui.WindowFlags_AlwaysAutoResize | ImGui.WindowFlags_NoDocking
+  if not is_docked then flags = flags | ImGui.WindowFlags_AlwaysAutoResize end
   local title = (CTX == "midi") and "Tool Buddy MIDI - Active tool" or "Tool Buddy - Active tool"
   local visible, open = ImGui.Begin(ctx, title, true, flags)
   if visible then
+    dock_track()
     local cur = TB.get_current()
     local name = TB.display_name(cur)
     local h = ImGui.GetTextLineHeight(ctx)

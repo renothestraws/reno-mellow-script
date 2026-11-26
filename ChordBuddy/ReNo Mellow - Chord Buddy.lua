@@ -1,8 +1,8 @@
 -- @description ReNo Mellow - Chord Buddy
 -- @author ReNo Mellow
--- @version 1.2
+-- @version 1.3
 -- @about Roue des quintes pour créer des accords dans l'éditeur MIDI (inversions, voicings, auto voice leading) + Display du nom de l'accord et export
--- @changelog Inversion réglée avec des boutons - / + sur chaque case (clic sur le chiffre = 0) au lieu de la molette
+-- @changelog Display dockable : « Dock in REAPER docker » dans son menu (cocher / décocher), état retenu au prochain lancement (clic droit sur une zone vide du Display)
 -- @provides
 --   [main] ReNo Mellow - Chord Buddy - Display.lua
 --   ChordBuddy_theory.lua
@@ -12,7 +12,7 @@
 -- Requires ReaImGui (0.9 or later)
 
 local r = reaper
-local VERSION = "1.2"
+local VERSION = "1.3"
 local EXT = "ReNo_ChordBuddy"
 local TITLE = "Chord Buddy"
 

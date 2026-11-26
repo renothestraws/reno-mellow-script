@@ -12,7 +12,7 @@
 -- portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 GB = {}
-GB.VERSION = "1.5"
+GB.VERSION = "1.6"
 GB.S  = "ReNoMellow_GridBuddy"     -- saved settings
 GB.RT = "ReNoMellow_GridBuddy_RT"  -- run state (not saved)
 GB.ROOT = debug.getinfo(1, "S").source:match("^@(.*[/\\])") or ""
