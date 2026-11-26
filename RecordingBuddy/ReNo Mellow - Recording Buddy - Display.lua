@@ -79,6 +79,11 @@ local COL_ERR     = 0xE05555FF
 local ctx
 local fonts = {}
 local first_frame = true
+-- docking (opt-in, box "Dock the Display in a REAPER docker" in the Set up tab): the dock id
+-- is kept between launches (negative = REAPER docker, 0 = floating); the window asks with a
+-- one-shot request key read here
+local DOCK_SEC, DOCK_KEY = "ReNo_Buddy_Dock", "RecordingBuddy"
+local dock_next, is_docked = nil, false
 local hover_since = nil
 local post = nil
 
@@ -121,13 +126,24 @@ local function loop()
   ImGui.PushStyleColor(ctx, ImGui.Col_WindowBg, COL_BG)
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowRounding, 8)
   ImGui.PushStyleVar(ctx, ImGui.StyleVar_WindowPadding, 10, 6)
-  if first_frame then ImGui.SetNextWindowDockID(ctx, 0) first_frame = false end
+  if first_frame then
+    dock_next = tonumber(reaper.GetExtState(DOCK_SEC, DOCK_KEY)) or 0
+    first_frame = false
+  end
+  local req = reaper.GetExtState(DOCK_SEC, DOCK_KEY .. "_req")
+  if req ~= "" then dock_next = tonumber(req) or 0; reaper.DeleteExtState(DOCK_SEC, DOCK_KEY .. "_req", false) end
+  if dock_next then ImGui.SetNextWindowDockID(ctx, dock_next); dock_next = nil end
 
   local flags = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoScrollbar
     | ImGui.WindowFlags_NoScrollWithMouse | ImGui.WindowFlags_NoCollapse
-    | ImGui.WindowFlags_AlwaysAutoResize | ImGui.WindowFlags_NoDocking
+  if not is_docked then flags = flags | ImGui.WindowFlags_AlwaysAutoResize end
   local visible, open = ImGui.Begin(ctx, "Recording Buddy - Display", true, flags)
   if visible then
+    local d = ImGui.IsWindowDocked(ctx)
+    if d ~= is_docked then
+      is_docked = d
+      reaper.SetExtState(DOCK_SEC, DOCK_KEY, d and tostring(ImGui.GetWindowDockID(ctx)) or "0", true)
+    end
     local h = ImGui.GetTextLineHeight(ctx)
     local dl = ImGui.GetWindowDrawList(ctx)
     local col = kind_color(v.kind)

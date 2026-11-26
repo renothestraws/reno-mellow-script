@@ -6,7 +6,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Roue des quintes pour cr\u233?er des accords dans l'\u233?diteur MIDI (inversions, voicings, auto voice leading) + Display du nom de l'accord et export}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.3" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.3" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Display dockable : « Dock in REAPER docker » dans son menu (cocher / décocher), état retenu au prochain lancement (clic droit sur une zone vide du Display)]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ChordBuddy/ReNo%20Mellow%20-%20Chord%20Buddy.lua</source>
         <source main="main" file="ReNo Mellow - Chord Buddy - Display.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ChordBuddy/ReNo%20Mellow%20-%20Chord%20Buddy%20-%20Display.lua</source>
@@ -22,7 +22,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Fills de batterie par profils de batteurs : 16 chops par batteur (sticking par groupes), insertion \u224? la grille de l'\u233?diteur MIDI}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.3" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.3" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[« Kick + crash » après le fill désactivé par défaut chez Charlie, Mike et Buddie (et les nouveaux batteurs) : Again et Vary ne sont plus perturbés]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/DrumBuddy/ReNo%20Mellow%20-%20Drum%20Buddy.lua</source>
         <source main="main" file="ReNo Mellow - Drum Buddy - Display.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/DrumBuddy/ReNo%20Mellow%20-%20Drum%20Buddy%20-%20Display.lua</source>
@@ -35,7 +35,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Grille de l'arrangement et de l'\u233?diteur MIDI dans une fen\u234?tre \u224? 2 onglets : type (straight, triplet, quintolet, septolet, point\u233?, swing), tailles de 1/128 \u224? 4, diviseur et limites, snap, lien avec l'\u233?diteur MIDI (option \u171? Use the same grid division \u187?), deux mini Displays ind\u233?pendants, arrangement et \u233?diteur MIDI (molette = taille), et actions isol\u233?es. D'apr\u232?s Gridbox de FeedTheCat. N\u233?cessite ReaImGui.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.6" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.6" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Display dockable : « Dock in REAPER docker » dans son menu (cocher / décocher), état retenu au prochain lancement (clic sur le Display, en bas du menu de grille)]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/GridBuddy/ReNo%20Mellow%20-%20Grid%20Buddy.lua</source>
         <source file="GB_lib.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/GridBuddy/GB_lib.lua</source>
@@ -63,7 +63,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Nettoie les items MIDI s\u233?lectionn\u233?s : supprime les SysEx, les Program Change, le pitch bend et tous les CC sauf CC4 (foot controller), CC11 (expression) et CC64 (sustain) ; passe tous les \u233?v\u233?nements restants sur le canal MIDI 1 ; r\u232?gle le timebase de l'item sur "Beats (position, length, rate)".}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.1" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.1" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Suppression des messages SysEx]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/MIDI/ReNo%20Mellow%20-%20MIDI%20cleaner.lua</source>
       </version>
@@ -75,7 +75,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Molette intelligente pour l'arrangement et l'\u233?diteur MIDI : l'action lanc\u233?e d\u233?pend de la zone survol\u233?e (r\u232?gle, items, enveloppes, pistes, mixer, transport, notes, lignes CC\u8230?), r\u233?glable zone par zone (molette vers le haut / vers le bas) et pour chaque combinaison de Ctrl / Shift / Alt (Cmd / Opt sur Mac) : 8 actions molette pour l'arrangement, 8 pour l'\u233?diteur MIDI. N\u233?cessite SWS (et ReaImGui pour la fen\u234?tre Setup).}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.2" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.2" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Molette rapide : plus de retours en arrière ni de crans perdus quand on tourne vite (cumul des crans, sens conservé).]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/MousewheelBuddy/ReNo%20Mellow%20-%20Mousewheel%20Buddy.lua</source>
         <source file="MWB_lib.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/MousewheelBuddy/MWB_lib.lua</source>
@@ -104,7 +104,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Setlist de sc\u232?ne pour lancer les backing tracks : une chanson = une r\u233?gion m\u232?re. Liste des r\u233?gions r\u233?ordonnable par glisser-d\u233?poser avec renum\u233?rotation des IDs (r\u233?gions filles = ID m\u232?re x 100 + n), sets de r\u233?gions, gros bouton Play/Stop, Previous / Next, Live loop, Metronome, Count-in, Auto stop, Smooth seek, export txt. Contr\u244?le \u224? distance depuis un t\u233?l\u233?phone (REABACK.html) et prompteur de paroles / accords pour tablette (Reaback-prompter.html) via l'interface web de REAPER. Fournit aussi le project template ReaBack et les ic\u244?nes de barre d'outils. N\u233?cessite l'extension ReaImGui (ReaPack > ReaTeam Extensions) ; SWS conseill\u233?e, js_ReaScriptAPI optionnelle.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.5" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.5" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Reaback Set up : nouvelle section « Export to B.Beat » pour le B.Beat Manager (M-Live) : stems WAV nommés par sortie (1 à 16), click généré, MIDI fusionné + paroles du prompteur, vidéo MP4, grilles PDF par piste et feuille de paroles, templates de sortie, Copy title / Open folder]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/REABACK/Scripts/REABACK.lua</source>
         <source main="main" file="REABACK_PlayStop.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/REABACK/Scripts/REABACK_PlayStop.lua</source>
@@ -154,8 +154,8 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Fen\u234?tre \u224? 2 onglets pour r\u233?p\u233?ter puis enregistrer une boucle en plusieurs passes (pr\u233?-roll en mesures ou en ms, vitesse de lecture avec hauteur conserv\u233?e, lecture ou enregistrement en auto-punch, pause entre les passes), mini Display et actions Start-Stop / Stop. N\u233?cessite ReaImGui.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.1" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
-        <changelog><![CDATA[Icône de barre d'outils ReNo_RecordingBuddy (100 / 150 / 200 %), installée avec le script]]></changelog>
+      <version name="1.2" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
+        <changelog><![CDATA[Display dockable : case « Dock the Display in a REAPER docker » dans l'onglet Set up, état retenu au prochain lancement]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/RecordingBuddy/ReNo%20Mellow%20-%20Recording%20Buddy.lua</source>
         <source file="RecBuddy_lib.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/RecordingBuddy/RecBuddy_lib.lua</source>
         <source file="RecBuddy_startup.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/RecordingBuddy/RecBuddy_startup.lua</source>
@@ -174,7 +174,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 S\u233?paration de stems par IA en local, inspir\u233?e du Stem Splitter de Logic Pro. Stems : voix, batterie, basse, guitare, piano, autres (6 ou 4 stems). Drums : batterie d\u233?coup\u233?e en kick, snare, toms, cymbales (4, 5 ou 6 pi\u232?ces). N\u233?cessite Python 3.10 \u224? 3.13 ; le moteur (environ 1,5 Go, 4,5 Go avec GPU NVIDIA) s'installe une seule fois via le bouton Install engine, puis tout fonctionne hors ligne.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.10" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.10" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Fenêtre d'installation : commande d'installation de Python 3.12 adaptée au système (Windows, macOS, Linux) avec bouton Copy, et rappel de redémarrer REAPER après l'installation de Python]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/ReNo%20StemSplit%20-%20Stems.lua</source>
         <source main="main" file="ReNo StemSplit - Drums.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StemSplit/ReNo%20StemSplit%20-%20Drums.lua</source>
@@ -191,7 +191,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Fen\u234?tre \u224? 2 onglets : appliquer ses \u171? strips \u187? favoris aux pistes s\u233?lectionn\u233?es (nom, tag, couleur, ic\u244?ne, layout, entr\u233?e / record output, sorties, pan mode, metering, FX chain, FX d'entr\u233?e, enveloppes, items, normalisation, groupe) et les configurer. N\u233?cessite ReaImGui.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.31" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.31" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Display dockable : clic droit sur la barre > « Dock in REAPER docker » (cocher / décocher), état retenu au prochain lancement]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StripBuddy/ReNo%20Mellow%20-%20Strip%20Buddy.lua</source>
         <source main="main" file="ReNo Mellow - Strip Buddy - Display.lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/StripBuddy/ReNo%20Mellow%20-%20Strip%20Buddy%20-%20Display.lua</source>
@@ -342,7 +342,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Th\u232?me REAPER Default 7.0 RM Orange : le th\u232?me Default 7.0 aux couleurs des plug-ins ReNo Mellow (gris RM, accent orange #FF941F), potards argent\u233?s, faders argent\u233?s, transport plat, armement rond, VU-m\u232?tres en d\u233?grad\u233? vert / jaune (vers -18 dB) / rouge, police Arial. Installe le th\u232?me (ColorThemes) et son Theme Adjuster (action Default_7.0_RM_Orange_theme_adjuster).}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.2" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.2" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Dégradé des vu-mètres recalé : jaune à -18 dBFS (échelle -90 à +6 dB)]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ThemeRM/Default_7.0_RM_Orange_theme_adjuster.lua</source>
         <source type="theme" file="Default_7.0_RM_Orange.ReaperThemeZip">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ThemeRM/Default_7.0_RM_Orange.ReaperThemeZip</source>
@@ -627,7 +627,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Th\u232?me REAPER Default 7.0 RM Teal : le th\u232?me Default 7.0 aux couleurs des plug-ins ReNo Mellow (gris RM, accent vert RM #6CD9C7), potards argent\u233?s, faders argent\u233?s, transport plat, armement rond, VU-m\u232?tres en d\u233?grad\u233? vert / jaune (vers -18 dB) / rouge, police Arial. Installe le th\u232?me (ColorThemes) et son Theme Adjuster (action Default_7.0_RM_Teal_theme_adjuster).}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.2" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.2" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Dégradé des vu-mètres recalé : jaune à -18 dBFS (échelle -90 à +6 dB)]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ThemeRM/Default_7.0_RM_Teal_theme_adjuster.lua</source>
         <source type="theme" file="Default_7.0_RM_Teal.ReaperThemeZip">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ThemeRM/Default_7.0_RM_Teal.ReaperThemeZip</source>
@@ -914,7 +914,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Un m\u234?me raccourci, plusieurs outils, dans l'arrangement et dans l'\u233?diteur MIDI : choix de l'outil actif (actions main / alt / alt2) dans une toolbox ReaImGui, avec armement par clic droit.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.12" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.12" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Display dockable : « Dock in REAPER docker » dans son menu (cocher / décocher), état retenu au prochain lancement (clic droit sur le Display)]]></changelog>
         <source main="main">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ToolBuddy/ReNo%20Mellow%20-%20Tool%20Buddy%20-%20Toolbox.lua</source>
         <source main="main" file="ReNo Mellow - Tool Buddy (alt).lua">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ToolBuddy/ReNo%20Mellow%20-%20Tool%20Buddy%20%28alt%29.lua</source>
@@ -944,7 +944,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Jeu de 143 ic\u244?nes de barre d'outils au style ReNo Mellow (tuiles arrondies \u224? 3 \u233?tats : repos, survol, allum\u233? en vert), en 100 / 150 / 200 %. Actions natives de l'arrangement (projet, options, marqueurs, pistes, \u233?dition, tempo), \u233?diteur MIDI (fen\u234?tre, notes, CC et formes de courbe), REABACK et 41 ic\u244?nes g\u233?n\u233?riques (add, delete, fl\u232?ches, copier / coller, transport, zoom...). Fichiers toolbar_icons_reno_<outil>.png, \u224? choisir dans Customize toolbars > Icon. N'ajoute aucune action.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.0" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.0" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Première version : 143 icônes (arrangement, marqueurs, pistes, Edit Tools, éditeur MIDI, CC, REABACK, génériques)]]></changelog>
         <source type="data" file="toolbar_icons/toolbar_icons_reno_add.png">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ToolbarIcons/Data/toolbar_icons/toolbar_icons_reno_add.png</source>
         <source type="data" file="toolbar_icons/toolbar_icons_reno_auto_crossfade.png">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ToolbarIcons/Data/toolbar_icons/toolbar_icons_reno_auto_crossfade.png</source>
@@ -1384,7 +1384,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Jeu de 147 ic\u244?nes de barre d'outils assorti au th\u232?me Default 7.0 RM Orange : tuiles plates \u224? 3 \u233?tats (repos et survol gris RM, allum\u233? orange #FF941F avec dessin fonc\u233?), en 100 / 150 / 200 %. M\u234?mes outils que ReNo Mellow - Toolbar icons (arrangement, \u233?diteur MIDI, REABACK, ic\u244?nes g\u233?n\u233?riques) plus Grid, Strip, Recording et Tool Buddy. Fichiers toolbar_icons_rmo_<outil>.png, \u224? choisir dans Customize toolbars > Icon. N'ajoute aucune action.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.0" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.0" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Première version : 147 icônes RM Orange (toolbar_icons_rmo_)]]></changelog>
         <source type="data" file="toolbar_icons/toolbar_icons_rmo_add.png">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ToolbarIconsRMO/Data/toolbar_icons/toolbar_icons_rmo_add.png</source>
         <source type="data" file="toolbar_icons/toolbar_icons_rmo_auto_crossfade.png">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ToolbarIconsRMO/Data/toolbar_icons/toolbar_icons_rmo_auto_crossfade.png</source>
@@ -1836,7 +1836,7 @@
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}}\f0\fs20 Jeu de 147 ic\u244?nes de barre d'outils assorti au th\u232?me Default 7.0 RM Teal : tuiles plates \u224? 3 \u233?tats (repos et survol gris RM, allum\u233? vert RM #6CD9C7 avec dessin fonc\u233?), en 100 / 150 / 200 %. M\u234?mes outils que ReNo Mellow - Toolbar icons (arrangement, \u233?diteur MIDI, REABACK, ic\u244?nes g\u233?n\u233?riques) plus Grid, Strip, Recording et Tool Buddy. Fichiers toolbar_icons_rmt_<outil>.png, \u224? choisir dans Customize toolbars > Icon. N'ajoute aucune action.}]]></description>
         <link rel="website" href="https://github.com/renothestraws/reno-mellow-script">GitHub</link>
       </metadata>
-      <version name="1.0" author="ReNo Mellow" time="2026-11-26T07:08:18Z">
+      <version name="1.0" author="ReNo Mellow" time="2026-11-26T07:43:57Z">
         <changelog><![CDATA[Première version : 147 icônes RM Teal (toolbar_icons_rmt_)]]></changelog>
         <source type="data" file="toolbar_icons/toolbar_icons_rmt_add.png">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ToolbarIconsRMT/Data/toolbar_icons/toolbar_icons_rmt_add.png</source>
         <source type="data" file="toolbar_icons/toolbar_icons_rmt_auto_crossfade.png">https://raw.githubusercontent.com/renothestraws/reno-mellow-script/main/ToolbarIconsRMT/Data/toolbar_icons/toolbar_icons_rmt_auto_crossfade.png</source>
