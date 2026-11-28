@@ -189,7 +189,9 @@ Jeu de 143 icônes `toolbar_icons_reno_<outil>.png` (90 × 30 pour les trois ét
   - un click généré d'après la carte de tempo (`5-CLICK REAPER-…`, accent sur le premier temps) ;
   - un seul `.mid` : pistes de type *MIDI* fusionnées (canaux inchangés) + paroles de la piste Lyrics, lues par le
     prompteur B.Beat (temps exacts, UTF-8) ;
-  - la vidéo des pistes de type *Video* rendue en MP4 (format choisi une fois dans la fenêtre Render) ;
+  - la vidéo des pistes de type *Video* rendue en MP4 avec le **preset B.Beat intégré** (H.264 10 Mbps,
+    1920 × 1080, 25 fps, encodeur Windows Media), sans réglage à faire ; un autre format peut être capturé depuis
+    la fenêtre Render (*Capture from Render dialog*, obligatoire sur macOS) et *Use B.Beat preset* revient au preset ;
   - une grille PDF par piste de type *PDF* (accords en mesures, parties = régions imbriquées, commentaires) et,
     au choix, une feuille de paroles PDF.
   - Templates de sortie (communs à tous les projets), boutons *Copy title* et *Open folder* pour chaque morceau.
