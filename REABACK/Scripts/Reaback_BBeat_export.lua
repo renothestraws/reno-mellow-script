@@ -4,7 +4,7 @@
 --   <OUT>-<NAME>-<SONG>.wav  one 24-bit WAV per selected Audio track (post-FX, post-fader), mono or stereo
 --   <OUT>-METRONOME-<SONG>.wav  the click (REAPER click source over the region), optional
 --   <SONG>.mid   all selected MIDI tracks merged (channels untouched) + lyrics of the "lyrics" track
---   <SONG>.mp4   the selected Video tracks rendered together (format captured from the Render dialog)
+--   <SONG>.mp4   the selected Video tracks rendered together (built-in B.Beat preset, or a format captured from the Render dialog)
 --   <SONG>.pdf   chord chart: bars, sections (nested regions), chords ("chords" track), comments ("comment" track)
 -- The file name prefix (1, 3-4 ...) is read by the B.Beat Manager to assign the outputs.
 
@@ -14,6 +14,9 @@ local SEC        = "REABACK_BBeat"          -- project ExtState section (per pro
 local GSEC       = "REABACK_BBeat"          -- global ExtState section (templates, video format)
 local EXPORT_DIR = "Export to BBeat"
 local WAV24      = "ZXZhdxgAAA=="           -- render format string: WAV, 24 bit
+-- built-in video preset for the B.Beat (captured in REAPER): Windows Media encoder, MPEG-4,
+-- H.264 10000 kbps, AAC 128 kbps, 1920 x 1080, 25 fps. B.Beat video: H.264, max 1920 x 1080, MP4 or MOV.
+local BBEAT_VIDEO = "IEZNVwAAAAAAAAAAECcAAAAAAACAAAAAgAcAADgEAAAAAMhBAQAAAF8AAAAAAA=="
 local PPQ        = 960
 local DISABLED_BASE = 10000                 -- REABACK: region ID >= 10000 = disabled region
 local EPS        = 1e-6
@@ -111,6 +114,27 @@ local function format_fourcc(fmt)
   local raw = base64_decode(fmt)
   if #raw < 4 then return "?" end
   return raw:sub(1, 4):reverse()
+end
+
+-- video format used by the export: the captured one, else the built-in B.Beat preset
+local function video_format()
+  local v = reaper.GetExtState(GSEC, "video_fmt")
+  if v == "" then return BBEAT_VIDEO end
+  return v
+end
+
+-- readable description of a video render format
+local function describe_video(fmt)
+  if fmt == BBEAT_VIDEO then return "B.Beat preset (MP4, H.264 10 Mbps, 1920x1080, 25 fps)" end
+  local raw = base64_decode(fmt)
+  local cc = format_fourcc(fmt)
+  if cc == "WMF " and #raw >= 36 and string.unpack then
+    local vk, _, _, w, h, fps = string.unpack("<i4i4i4i4i4f", raw, 13)
+    if w > 0 and h > 0 then
+      return string.format("custom (Windows Media MP4, %d kbps, %dx%d, %g fps)", vk, w, h, fps)
+    end
+  end
+  return "custom (" .. cc .. ")"
 end
 
 ------------------------------------------------------------------------
@@ -942,9 +966,8 @@ function M.export(list, rows, click)
     elseif r.s.type == "PDF" then pdfs[#pdfs + 1] = r
     elseif r.s.type == "Lyrics" and r.s.out == "MIDI + PDF" then lyr[#lyr + 1] = r end
   end
-  local vfmt = reaper.GetExtState(GSEC, "video_fmt")
+  local vfmt = video_format()
   local warn = {}
-  if #video > 0 and vfmt == "" then warn[#warn + 1] = "video skipped (capture the video format first)" end
 
   local sel = save_selection()
   local rset = save_render()
@@ -983,7 +1006,7 @@ function M.export(list, rows, click)
       if not ok then warn[#warn + 1] = "click not written (" .. tostring(err) .. ")" end
     end
     -- video
-    if #video > 0 and vfmt ~= "" then
+    if #video > 0 then
       select_only(video)
       local saved = {}
       for _, tr in ipairs(video) do
@@ -1200,15 +1223,31 @@ function M.draw(ctx, ImGui, say)
   if ImGui.SmallButton(ctx, "Save as...") then ui.pending = { kind = "tpl_save", rows = rows, click = click } end
 
   -- Video format
-  local vfmt = reaper.GetExtState(GSEC, "video_fmt")
-  ImGui.Text(ctx, "Video format: " .. (vfmt ~= "" and format_fourcc(vfmt) or "not captured"))
-  ImGui.SameLine(ctx)
+  local vfmt = video_format()
+  ImGui.Text(ctx, "Video format: " .. describe_video(vfmt))
+  if ImGui.IsItemHovered(ctx) then
+    ImGui.SetTooltip(ctx, "Format used to render <song>.mp4 from the Video tracks.\n" ..
+                          "The B.Beat plays H.264 video up to 1920 x 1080 (MP4 or MOV).")
+  end
+  if vfmt ~= BBEAT_VIDEO then
+    if ImGui.SmallButton(ctx, "Use B.Beat preset") then
+      reaper.DeleteExtState(GSEC, "video_fmt", true)
+      say("Video format: " .. describe_video(BBEAT_VIDEO))
+    end
+    if ImGui.IsItemHovered(ctx) then
+      ImGui.SetTooltip(ctx, "Built-in preset: MP4 (Windows Media encoder), H.264 10000 kbps,\n" ..
+                            "AAC 128 kbps, 1920 x 1080, 25 fps. Ready for the B.Beat.\n" ..
+                            "Windows only: on macOS, capture an H.264 format from the Render dialog.")
+    end
+    ImGui.SameLine(ctx)
+  end
   if ImGui.SmallButton(ctx, "Render dialog...") then ui.pending = { kind = "render_dialog" } end
-  if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, "Opens File > Render (action 40015) to choose the video format.") end
+  if ImGui.IsItemHovered(ctx) then ImGui.SetTooltip(ctx, "Opens File > Render (action 40015) to choose another video format.") end
   ImGui.SameLine(ctx)
   if ImGui.SmallButton(ctx, "Capture from Render dialog") then ui.pending = { kind = "capture" } end
   if ImGui.IsItemHovered(ctx) then
-    ImGui.SetTooltip(ctx, "1. File > Render...: choose a video format (MP4 / H.264 + AAC) and its settings.\n" ..
+    ImGui.SetTooltip(ctx, "Only if you want other settings than the B.Beat preset:\n" ..
+                          "1. File > Render...: choose a video format (H.264, max 1920 x 1080) and its settings.\n" ..
                           "2. Click 'Save changes and close'.\n3. Click this button: the format is kept for all projects.")
   end
 
@@ -1250,8 +1289,9 @@ function M.run_pending(say)
     if fmt == "" or cc == "evaw" or cc == "?" then
       say("The Render dialog is not set to a video format (found: " .. cc .. "). Choose a video format there first.", true)
     else
-      reaper.SetExtState(GSEC, "video_fmt", fmt, true)
-      say("Video format captured: " .. cc)
+      if fmt == BBEAT_VIDEO then reaper.DeleteExtState(GSEC, "video_fmt", true)
+      else reaper.SetExtState(GSEC, "video_fmt", fmt, true) end
+      say("Video format captured: " .. describe_video(fmt))
     end
   end
 end
